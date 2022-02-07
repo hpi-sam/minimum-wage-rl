@@ -48,8 +48,9 @@ class AICountry:
         self.wage_threshold = 50
         self.negative_reward = -1 
     
-    def collect_observations(self, state_values):
-    
+    def collect_observations(self):
+        
+        state_values = []
         self.inflationRate = self.country.market.inflationRate # Inflation remains static in our simulations
         self.productPrice = 30 * self.country.market.productPrice
         self.unemploymentRate = self.country.unemploymentRate
@@ -64,6 +65,8 @@ class AICountry:
         state_values.append(self.povertyRate)
         state_values.append(self.minimumWage)
         state_values.append(self.averageSalary - self.productPrice) # NEW ADDITION
+
+        return state_values
 
     def __on_action_received(self,vectorAction):
 
@@ -107,8 +110,7 @@ class AICountry:
         pass
 
     def get_state(self):
-        state_values = []
-        self.collect_observations(state_values)
+        state_values = self.collect_observations()
         return torch.tensor(state_values, dtype=torch.float32)
         
     def take_action(self, action):

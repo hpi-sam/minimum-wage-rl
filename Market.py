@@ -56,7 +56,7 @@ class Market:
         self.citizensToRemove = list() # List<MWEmployee>
 
         self.run = None # int
-        self.slowDown = None # int - Slows down simulation for demo purposes (remove when training)
+        # self.slowDown = None # int - Slows down simulation for demo purposes (remove when training)
         self.training = False # bool - Flag for AI training - CHANGED PROGRAMATICALLY
 
         # private float[] inflations = { 0.0025f, 0.005f, 0.0075f, 0.01f };
@@ -87,7 +87,7 @@ class Market:
     
         self.day = self.month = self.year = 0
         self.initialProductPrice = self.productPrice
-        self.slowDown = 0
+        # self.slowDown = 0
         
         self.testingCountry = Country.get_instance()
         self.em = AICountry.get_instance()        
@@ -123,46 +123,44 @@ class Market:
     
         self.inflationRate = inflation
         self.testingCountry.initialNumOfCitizens = num_of_citizens
-        self.testingCountry.initialNumSB =  small_business
+        self.testingCountry.initial_num_small_business =  small_business
         self.testingCountry.initialNumMB = medium_business
         self.testingCountry.initialNumLB = large_business
 
     def ExitToMenu(self):
         self.ResetMarket()        
     
+    def step(self, action):
+        # Step 1 - Change minimum wage
+        self.testingCountry.minimumWage = action
+
+        # Step 2 - Change inflation rate : fixed
+        
+        # Step 3 - run market step
+        self.run_market()
+        
+        return self.get_state()
+
+    def get_state(self):
+        return self.testingCountry.get_current_state_reward()
+
     def FixedUpdate(self):
+        
+        if self.year <= 3000:
             
-        if True:  # ~3X slowdown of simulation for demo
-        
-            if self.year <= 3000:
-                
-                print("year - ", self.year , ", month - ", self.month%12)
-                # Executed only when training
-                if self.aiScenario and self.training:                    
-                    self.Train_network()                
-                else:                    
-                    self.run_market()
-            else:            
-                # Give rewards and reset the market
-                if self.aiScenario and self.training:            
-                    self.run = self.run + 1 
-                    self.ResetMarket()
-                print("<========== Ending Simulation =========>")
-        
-        self.slowDown = self.slowDown + 1
+            print("year - ", self.year , ", month - ", self.month%12)
+            # Executed only when training
+            if self.aiScenario and self.training:                    
+                self.Train_network()                
+            else:                    
+                self.run_market()
+        else:            
+            # Give rewards and reset the market
+            if self.aiScenario and self.training:            
+                self.run = self.run + 1 
+                self.ResetMarket()
+            print("<========== Ending Simulation =========>")        
     
-    # /*
-    # private void changeInflation()
-    # {
-    #     if (inflationIdx >= 3)
-    #     {
-    #         inflationIdx = 0;
-    #     }
-    #     else
-    #     {
-    #         inflationIdx++;
-    #     }
-    # }*/
 
     def ResetMarket(self):
     
@@ -180,7 +178,7 @@ class Market:
         countryCitizens = self.testingCountry.citizens # Dictionary<int, MWEmployee> 
         speedup = 30.415  # 365/12 is the speedup
 
-        # Companies must pay employees and employees must give value back to the companies        
+        # 1. Companies must pay employees and employees must give value back to the companies        
         for _,V in countryCompanies.items():
         
             company = V
@@ -194,18 +192,17 @@ class Market:
                 company.accountBalance += employee.skillLevel
                 company.yearIncome += (employee.skillLevel - employee.salary)        
 
-        # People must buy products YO
-        # Employee Iteration
-        
+        # 2. People must buy products YO
+        # Employee Iteration  
         for _,V in countryCitizens.items():        
             citizen = V # MWEmployee
             citizen.BuyProducts(speedup)
         
-        # Yearly 
+        # 3. Check if year to be increased. Yearly 
         if self.month % 12 == 0:
             self.year = self.year + 1 
 
-            # Add new citizens
+            # 4. Every year - Add new citizens
             self.testingCountry.add_new_citizens(self.amountOfNewCitizens)
             if self.amountOfNewCitizens < self.num_citizens_limit:
                 self.amountOfNewCitizens += 1
@@ -213,20 +210,20 @@ class Market:
             totalOpenPositions = 0
             totalUnemployed = self.testingCountry.totalUnemployed
 
-            # Company Iteration
+            # 5. Every year - Company Iteration
             for _,V in countryCompanies.items():            
                 company = V # MWCompany 
                 company.EvaluateAndReset() # Step 1. Evaluate year and reset
                 totalOpenPositions += company.OpenJobPositions() # Step 2. Open new job positions based on balance and company size
             
-            # Employee Iteration
+            # 6. Every year - Employee Iteration
             for _,V in countryCitizens.items():
                 citizen = V # MWEmployee 
                 citizen.EvaluateAndGrow()
                 if citizen.hasCompany or citizen.age > self.citizen_max_age:
                     self.citizensToRemove.append(citizen)
 
-            # Removing citizens that have created their own companies or HAVE DIED
+            # 7. Every year - Removing citizens that have created their own companies or HAVE DIED
             # MWEmployee
             for citizen in self.citizensToRemove:
                 if not(citizen.hasCompany):
@@ -236,14 +233,17 @@ class Market:
             
             self.citizensToRemove = list()
 
-            # CHANGE THIS TO FIT ALL SCENARIOS
-            if self.aiScenario and not(self.training):
-                self.__request_decision()
+            # 8. Every year - Upadating Minimum Wage CHANGE THIS TO FIT ALL SCENARIOS
+            # if self.aiScenario and not(self.training):
+            #     self.__request_decision()
             
-            else:
-                self.testingCountry.UpdateMinimumWage(self.year)
+            # else:
+            #     self.testingCountry.UpdateMinimumWage()
 
+            # 9. Every year - Updating product prices
             self.__update_product_prices()
+
+            # 10. Every year - Calculate Stats
             countryStatsOutput = self.testingCountry.calculate_statistics() # string 
             self.marketValueYear = 0            
                         
@@ -314,7 +314,7 @@ class Market:
         self.em.take_action(action)
         reward = self.em.give_rewards()
 
-        # Run Market
+        # Run Market - this should return states
         self.run_market()
 
         # Get next state

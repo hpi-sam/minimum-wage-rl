@@ -7,11 +7,11 @@ large_business=1
 product_price=0.1
 
 [scenario]
-unregulated=0
+unregulated=1
 adjusted=0
 dramatic=0
-ai_scenario=1
-training=1
+ai_scenario=0
+training=0
 
 [file]
 training_file=train_data_test.xlsx

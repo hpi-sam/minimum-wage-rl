@@ -22,7 +22,7 @@ class Country:
         else:
             Country.__country_instance = self
 
-        self.companies = None # Dictionary<int, MWCompany>
+
         self.countryCode = None # The name of the country
     
         # /***
@@ -49,7 +49,7 @@ class Country:
         self.numOfLargeBusinesses = None
         
         # ========================== CHECK THIS ==========================
-        self.initialNumSB = 3
+        self.initial_num_small_business = 3
         self.initialNumMB = 2
         self.initialNumLB = 1
         
@@ -73,6 +73,13 @@ class Country:
         self.fixed_cash_printing = None
         self.total_money_printed = None
         self.number_of_banks = 1
+
+        self.weight_lb = 2
+        self.weight_mb = 1.5
+        self.weight_sb = 1
+
+        self.wage_threshold = 50
+        self.negative_reward = -1 
         
         # dictionary<int, Bank>
         self.banks = dict()
@@ -90,7 +97,7 @@ class Country:
         self.totalUnemployed = 0
         self.bank_index = 0
         self.totalJuniorPos = self.totalSeniorPos = self.totalExecutivePos = 0
-        self.numOfSmallBusinesses = self.initialNumSB
+        self.numOfSmallBusinesses = self.initial_num_small_business
         self.numOfMediumBusinesses = self.initialNumMB
         self.numOfLargeBusinesses = self.initialNumLB
 
@@ -147,7 +154,7 @@ class Country:
         self.companies = dict()
         self.citizens = dict()
         self.minimumWage = 2
-        self.numOfSmallBusinesses = self.initialNumSB
+        self.numOfSmallBusinesses = self.initial_num_small_business
         self.numOfMediumBusinesses = self.initialNumMB
         self.numOfLargeBusinesses = self.initialNumLB
 
@@ -231,7 +238,7 @@ class Country:
 
         return statisticsString
 
-    def UpdateMinimumWage(self,year):
+    def UpdateMinimumWage(self):
 
         if self.policyCode == 0:
             # No minimum wage regulation
@@ -258,6 +265,40 @@ class Country:
 
         # ELSE policy is decided by the AI
     
+    def get_current_state_reward(self):
+        
+        state_values = []
+
+        state_values.append(self.unemploymentRate)
+        state_values.append(self.povertyRate)
+        state_values.append(self.minimumWage)
+        state_values.append(self.averageIncome - 30 * self.market.productPrice)
+
+        reward = self.calculate_reward()
+
+        state_reward = dict()
+        state_reward["state"] = state_values
+        state_reward["reward"] = reward
+
+        return state_reward
+
+    def calculate_reward(self):
+        # 3. Companies
+        r1 = self.weight_lb * np.log10(self.numOfLargeBusinesses/self.minimumWage + 1)
+        r2 = self.weight_mb * np.log10(self.numOfMediumBusinesses / self.minimumWage + 1)
+        r3 = self.weight_sb * np.log10(self.numOfSmallBusinesses / self.minimumWage + 1)
+        r4 = 0.0
+
+        # r1 = 1/self.povertyRate
+        # r2 = 1/self.unemploymentRate
+
+        if self.minimumWage > self.wage_threshold:
+            r4 = self.negative_reward
+
+        # return torch.tensor([r1 + r2 + r3 + r4])
+        return r1 + r2 + r3 + r4
+        # return r1 + r2
+
     def print_money(self, banks):
         
         self.total_money_printed += self.fixed_cash_printing
