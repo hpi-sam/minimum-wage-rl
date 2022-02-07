@@ -39,16 +39,25 @@ def save_data(filename):
     my_df.to_excel(filename)
 # ===================== SAVE data - END ====================
 
-
+# Making singleton instance
 market = Market.get_instance()
 
+# Initialize:
+# Create singleton instance of Country
+# Create Company objects (Initial set of companies)
+# Create Employee objects (Equal to number of citizens)
+# For Web app this will during server start.
 market.Start()
 
+# Create instance based on Government implementation (AI, Data collection etc.)
+# For Web app this will during server start - based on configuration
 government = Government()
 
+# Start playing/ Start training
+# For Web app  - this will be a call from front end
 government.execute_action()
 
-# save model here
+# save trained AI model here
 
 # save data here
 save_data(root_folder+ "\\" + training_file)

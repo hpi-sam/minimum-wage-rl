@@ -131,17 +131,18 @@ class Market:
         self.ResetMarket()        
     
     def step(self, action):
-        # Step 1 - Change minimum wage
+        
+        # Step 1 - Change minimum wage - Perform action
         self.testingCountry.minimumWage = action
 
-        # Step 2 - Change inflation rate : fixed
+        # Step 2 - Change inflation rate : fixed as of now
         
         # Step 3 - run market step
         self.run_market()
         
-        return self.get_state()
+        return self.get_state_and_reward()
 
-    def get_state(self):
+    def get_state_and_reward(self):
         return self.testingCountry.get_current_state_reward()
 
     def FixedUpdate(self):
