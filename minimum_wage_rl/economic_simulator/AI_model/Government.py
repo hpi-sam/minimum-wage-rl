@@ -1,8 +1,8 @@
 import configparser
 
 from numpy import choose
-from Country import Country
-from Market import Market
+from minimum_wage_rl.economic_simulator.models.country import Country
+from minimum_wage_rl.economic_simulator.models.market import Market
 
 class Government:
 

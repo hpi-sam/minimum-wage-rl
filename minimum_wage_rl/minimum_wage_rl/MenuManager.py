@@ -1,6 +1,6 @@
 import torch
-from Government import Government
-from Market import Market
+from AI_model.Government import Government
+from minimum_wage_rl.economic_simulator.models.market import Market
 import pandas  as pd
 import configparser
 

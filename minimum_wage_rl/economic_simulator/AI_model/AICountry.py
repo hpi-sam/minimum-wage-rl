@@ -1,5 +1,5 @@
 ﻿import numpy as np
-from Country import Country
+from minimum_wage_rl.economic_simulator.models.country import Country
 import torch
 
 class AICountry:
@@ -51,15 +51,15 @@ class AICountry:
     def collect_observations(self):
         
         state_values = []
-        self.inflationRate = self.country.market.inflationRate # Inflation remains static in our simulations
-        self.productPrice = 30 * self.country.market.productPrice
-        self.unemploymentRate = self.country.unemploymentRate
-        self.povertyRate = self.country.povertyRate
-        self.minimumWage = self.country.minimumWage
-        self.averageSkill = self.country.averageSkillLevel
-        self.averageSalary = self.country.averageIncome
-        self.numberOfBusinesses = self.country.numOfLargeBusinesses + self.country.numOfMediumBusinesses + self.country.numOfSmallBusinesses
-        self.numOfJobPositions = self.country.totalExecutivePos + self.country.totalSeniorPos + self.country.totalJuniorPos
+        self.inflationRate = self.country.market.inflation_rate # Inflation remains static in our simulations
+        self.productPrice = 30 * self.country.market.product_price
+        self.unemploymentRate = self.country.unemployment_rate
+        self.povertyRate = self.country.poverty_rate
+        self.minimumWage = self.country.minimum_wage
+        self.averageSkill = self.country.average_skill_level
+        self.averageSalary = self.country.average_income
+        self.numberOfBusinesses = self.country.num_large_company + self.country.num_medium_company + self.country.num_small_companies
+        self.numOfJobPositions = self.country.total_executive_jobs + self.country.total_senior_jobs + self.country.total_jun_jobs
 
         state_values.append(self.unemploymentRate)
         state_values.append(self.povertyRate)
@@ -75,17 +75,17 @@ class AICountry:
             pass
 
         elif vectorAction[0] == 1: # Increase MW based on inflation
-            self.country.minimumWage += self.country.minimumWage * self.inflationRate
+            self.country.minimum_wage += self.country.minimum_wage * self.inflationRate
 
         elif vectorAction[0] == 2: # Dramatic Increase in MW 5%        
-            self.country.minimumWage += self.country.minimumWage * 0.05
+            self.country.minimum_wage += self.country.minimum_wage * 0.05
 
-        if self.country.minimumWage < self.min_wage:
-            self.country.minimumWage = self.min_wage
+        if self.country.minimum_wage < self.min_wage:
+            self.country.minimum_wage = self.min_wage
 
         # This is case it reaches the maximum possible MW for this simulations settings
-        if self.country.minimumWage > self.max_wage:
-            self.country.minimumWage = self.max_wage
+        if self.country.minimum_wage > self.max_wage:
+            self.country.minimum_wage = self.max_wage
 
     def give_rewards(self):
         # 3. Companies
@@ -94,8 +94,8 @@ class AICountry:
         # r3 = self.weight_sb * np.log10(self.country.numOfSmallBusinesses / self.minimumWage + 1)
         # r4 = 0.0
 
-        r1 = 1/self.country.povertyRate
-        r2 = 1/self.country.unemploymentRate
+        r1 = 1/self.country.poverty_rate
+        r2 = 1/self.country.unemployment_rate
 
         # if self.minimumWage > self.wage_threshold:
         #     r4 = self.negative_reward
