@@ -1,187 +1,110 @@
-from statistics import mode
 import uuid
 import numpy as np
 from numpy import random
-# from .worker import Worker
-# from .company import Company
 from .market import Market
 from .bank import Bank
 
 from django.db import models
 
+from ..utility.config import ConfigurationParser
+config_parser = ConfigurationParser.get_instance().parser
+
 class Country(models.Model):
 
-    __country_instance = None
-    
-    @staticmethod
-    def get_instance():
-        if Country.__country_instance == None:
-            Country()
-        return Country.__country_instance
+    class Meta:
+        db_table = "country"
 
     # Constants
-    INITIAL_NUM_SMALL_COMPANIES = 3
-    INITIAL_NUM_MEDIUM_COMPANIES = 2
-    INITIAL_NUM_LARGE_COMPANIES = 1
-    INITIAL_NUM_OF_CITIZENS = 10
-    
+    INITIAL_NUM_SMALL_COMPANIES = int(config_parser.get("market","small_business"))
+    INITIAL_NUM_MEDIUM_COMPANIES = int(config_parser.get("market","medium_business"))
+    INITIAL_NUM_LARGE_COMPANIES = int(config_parser.get("market","large_business"))
+    INITIAL_NUM_OF_CITIZENS = int(config_parser.get("country","citizens"))
+    INITIAL_MIN_WAGE = float(config_parser.get("market","initial_minimum_wage"))
+
     # Magic Numbers (Bank) weight_mb
     WEIGTH_LARGE_COMPANY = 2
     WEIGTH_MEDIUM_COMPANY = 1.5
     WEIGTH_SMALL_COMPANY = 1
-    wAGE_THRESHOLD = 50
+    WAGE_THRESHOLD = 50
     NEGATIVE_REWARD = -1 
 
-    def __init__(self) -> None:
+    country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-        if Country.__country_instance !=None:
-            raise Exception("Market instance already exists, USE get_instance method")
-        else:
-            Country.__country_instance = self
+    policyCode = 0 # The minimum wage policy/strategy followed 
+    companies =  dict() # new Dictionary<int, MWCompany>() = None
+    workers = dict() # new Dictionary<int, MWEmployee>() = None
 
+    # The current minimum wage of this country
+    minimum_wage = models.FloatField(default=float(config_parser.get("market","initial_minimum_wage")))
 
-        self.country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Statistics
+    yearly_produced_value = models.FloatField(default=0.0) # Something like GDP
+    num_small_companies = models.IntegerField(default=INITIAL_NUM_SMALL_COMPANIES)
+    num_medium_company = models.IntegerField(default=INITIAL_NUM_MEDIUM_COMPANIES)
+    num_large_company = models.IntegerField(default=INITIAL_NUM_LARGE_COMPANIES)
 
-        self.policyCode = 0 # The minimum wage policy/strategy followed 
-        self.companies =  dict() # new Dictionary<int, MWCompany>() = None
-        self.workers = dict() # new Dictionary<int, MWEmployee>() = None
+    # Initialize all this
+    unemployment_rate = models.FloatField(default=100.0)
+    total_unemployed = models.IntegerField(default=0)
+    average_income = models.FloatField(default=0.0) 
+    average_skill_level = models.FloatField(default=1.0) 
+    average_balance = models.FloatField(default=0.0)
 
-        # SET LATER
-        self.minimum_wage = models.FloatField(default=2.0)  # The current minimum wage of this country
-        self.companyIndex = None # A unique identifer/counter for new countries
-        self.citizenID = None # A unique identifier/counter for new citizens
+    # Percentage of people living bellow poverty levels
+    poverty_rate = models.FloatField(default=0.0) 
+    total_jun_jobs = models.FloatField(default=0.0)
+    total_senior_jobs = models.FloatField(default=0.0)
+    total_executive_jobs = models.FloatField(default=0.0)
+    fixed_cash_printing = models.FloatField(default=float(config_parser.get("country","initial_printed_cash")))
+    total_money_printed = models.FloatField(default=0.0)
+    # number_of_banks = models.IntegerField(default=1)
 
-        # Statistics
-        self.yearly_produced_value = models.FloatField(default=0.0) # Something like GDP
-        self.num_small_companies = models.IntegerField(default=Country.INITIAL_NUM_SMALL_COMPANIES)
-        self.num_medium_company = models.IntegerField(default=Country.INITIAL_NUM_MEDIUM_COMPANIES)
-        self.num_large_company = models.IntegerField(default=Country.INITIAL_NUM_LARGE_COMPANIES)
-
-        # Initialize all this
-        self.unemployment_rate = models.FloatField(default=100.0)
-        self.total_unemployed = models.IntegerField(default=0)
-        self.average_income = models.FloatField(default=0.0) # The average income of all citizens
-        self.average_skill_level = models.FloatField(default=1.0) # The average skill level of all citizens
-        self.average_balance = models.FloatField(default=1.0)
-        self.poverty_rate = models.FloatField(default=0.0) # Percentage of people living bellow poverty levels
-        self.total_jun_jobs = models.FloatField(default=0.0)
-        self.total_senior_jobs = models.FloatField(default=0.0)
-        self.total_executive_jobs = models.FloatField(default=0.0)
-        self.fixed_cash_printing = models.FloatField(default=500.0)
-        self.total_money_printed = models.FloatField(default=0.0)
-        self.number_of_banks = models.IntegerField(default=1)
-
-        self.market = models.ForeignKey(to=Market, unique=True, on_delete=models.CASCADE)
-        
-        # dictionary<int, Bank>
-        self.bank = models.ForeignKey(to=Bank, unique=True, on_delete=models.CASCADE)
-
+    market = models.ForeignKey(to=Market, unique=True, on_delete=models.CASCADE)
     
-    # def EstablishCountry(self):
+    # dictionary<int, Bank>
+    bank = models.ForeignKey(to=Bank, unique=True, on_delete=models.CASCADE)
 
-    #     self.yearly_produced_value = 0
-    #     self.unemployment_rate = 100
-    #     self.average_skill_level = self.average_income = 1
-    #     self.poverty_rate = 0
-    #     self.average_balance = 0
-    #     # self.companyIndex = 0
-    #     # self.citizenID = 0
-    #     self.total_unemployed = 0
-    #     self.bank_index = 0
-    #     self.total_jun_jobs = self.total_senior_jobs = self.total_executive_jobs = 0
-    #     # self.num_small_companies = Country.INITIAL_NUM_SMALL_COMPANIES
-    #     # self.num_medium_company = Country.INITIAL_NUM_MEDIUM_COMPANIES
-    #     # self.num_large_company = Country.INITIAL_NUM_LARGE_COMPANIES
-
-    #     # Magic Numbers
-    #     # self.fixed_cash_printing = 500
-    #     # self.total_money_printed = 0
-    #     # self.number_of_banks = 1
-
-    #     # Connecting to global market
-    #     # marketObject = GameObject.Find("Market");
-    #     from .market import Market
-    #     self.market = Market.get_instance() #marketObject.GetComponent<Market>();
-
-    #     # startup
-    #     # Creating Initial companies
-    #     for _ in range(self.num_small_companies): # small
-    #         company = Company()
-    #         company.InitializeCompany(1000, 0, self.companyIndex,self)
-    #         self.companies[self.companyIndex] =  company
-    #         self.companyIndex = self.companyIndex + 1
-        
-    #     for _ in range(self.num_medium_company): # medium
-    #         company = Company()
-    #         company.InitializeCompany(5000, 1, self.companyIndex,self)
-    #         self.companies[self.companyIndex] =  company
-    #         self.companyIndex = self.companyIndex + 1 
-
-    #     for _ in range(self.num_large_company): # large
-    #         company = Company()
-    #         company.InitializeCompany(25000, 2, self.companyIndex,self)
-    #         self.companies[self.companyIndex] =  company
-    #         self.companyIndex = self.companyIndex + 1
-
-    #     # Adding first citizens
-    #     self.add_new_citizens(Country.INITIAL_NUM_OF_CITIZENS)
-
-    #     # startup Create banks        
-    #     for index in range(self.number_of_banks):
-    #         self.bank_index += 1
-    #         bank = Bank(self.bank_index)            
-    #         self.bank[self.bank_index] = bank
-
-    #     # Initialize banks
-    #     self.print_money(self.bank)
+    temp_worker_list = []
+    temp_company_list = []
 
     def ResetCountry(self):
         self.companies = dict()
         self.workers = dict()
-        self.minimum_wage = 2
+        self.minimum_wage = Country.INITIAL_MIN_WAGE
         self.num_small_companies = Country.INITIAL_NUM_SMALL_COMPANIES
         self.num_medium_company = Country.INITIAL_NUM_MEDIUM_COMPANIES
         self.num_large_company = Country.INITIAL_NUM_LARGE_COMPANIES
-
-    # startup
-    # def add_new_citizens(self, amount):
-    #     for _ in range(amount):
-    #         citizen = Worker()
-    #         citizen.InitializeEmployee(0, self.citizenID, self)
-    #         self.workers[self.citizenID] =  citizen
-    #         self.citizenID = self.citizenID + 1
         
     # utility
     def calculate_statistics(self):
-    # Calculate the yearly statistics for all active Companies and Citizens in this country
 
-        # print("================Am here===============")
         # Calculate statistics here     
         self.num_small_companies = self.num_medium_company = self.num_large_company = 0
         self.total_jun_jobs = self.total_senior_jobs = self.total_executive_jobs = 0
 
         # Iterating through all active companies
         # self.companies = self.company_set
-        for _,val in self.companies.items():
+        
+        for each_company in self.temp_company_list:
         
             # do something with entry.Value or entry.Key
-            company = val
+            # each_company = val
 
             # of small,med,large companies
-            if company.companyType == 0:
+            if each_company.company_size_type == 0:
                 self.num_small_companies = self.num_small_companies + 1
 
-            elif company.companyType == 1:            
+            elif each_company.company_size_type == 1:            
                 self.num_medium_company = self.num_medium_company + 1
             
             else:
                 self.num_large_company = self.num_large_company + 1
             
-            self.total_jun_jobs += company.junior_positions
-            self.total_senior_jobs += company.senior_positions
-            self.total_executive_jobs += company.executive_positions
+            self.total_jun_jobs += each_company.num_junior_openings
+            self.total_senior_jobs += each_company.num_senior_openings
+            self.total_executive_jobs += each_company.num_executive_openings
 
-            self.yearly_produced_value += company.year_income # Adding company's yearly income to the GDP
+            self.yearly_produced_value += each_company.year_income # Adding company's yearly income to the GDP
         
 
         # Iterating through all alive citizens
@@ -192,25 +115,25 @@ class Country(models.Model):
         totalEmployed = 0
         totalUnemployed = 0
 
-        for _,val in self.workers.items():
-            citizen = val
+        for each_worker in self.temp_worker_list:
+            # citizen = val
             
-            if citizen.salary < self.market.product_price*30: # Can't afford to buy necessary product (e.g. food)
+            if each_worker.salary < self.market.product_price*30: # Can't afford to buy necessary product (e.g. food)
                 totalPovertyCnt = totalPovertyCnt + 1
 
-            if not(citizen.is_employed):            
+            if not(each_worker.is_employed):            
                 totalUnemployed = totalUnemployed + 1
             
             else:
                 # print("===========================AM HERE========================")
-                totalSalary += citizen.salary
-                totalSkillLevel += citizen.skill_level
+                totalSalary += each_worker.salary
+                totalSkillLevel += each_worker.skill_level
                 totalEmployed = totalEmployed + 1
             
-            totalAccountBalance += citizen.worker_account_balance
+            totalAccountBalance += each_worker.worker_account_balance
         
 
-        citizensCount = len(self.workers.keys())
+        citizensCount = len(self.temp_worker_list)
         self.unemployment_rate = round((totalUnemployed / citizensCount * 100.0), 1)
         self.poverty_rate = round((totalPovertyCnt / citizensCount * 100.0), 1)
         
@@ -286,29 +209,22 @@ class Country(models.Model):
 
         # return torch.tensor([r1 + r2 + r3 + r4])
         return r1 + r2 + r3 + r4
-        # return r1 + r2
+        # return r1 + r2        
 
-    def print_money(self, banks):
-        
-        print("=========================================================")
-        print(self.fixed_cash_printing)
-        print(self.total_money_printed)
-        print("=========================================================")
-
-        tm = getattr(self, "total_money_printed")
-        fc = getattr(self, "fixed_cash_printing")
-
-        # setattr(self, "total_money_printed", tm + fc)
-
-        print(tm)
-        print(fc)
-
-        print("=========================================================")
-
+    def print_money(self, bank):
         self.total_money_printed = self.total_money_printed + self.fixed_cash_printing
-
         # each_cash_infusion = self.fixed_cash_printing / len(banks.keys())
-        banks.deposit_money(self.total_money_printed)
+        bank.deposit_money(self.fixed_cash_printing)
         # for _, each_bank in banks.items():
         #     each_bank.deposit_money(each_cash_infusion)
 
+
+    def add_new_citizens(country, amount):
+        from .worker import Worker
+        all_citizens_list = []
+        for _ in range(amount):
+            citizen = Worker()
+            citizen.InitializeEmployee(0, country)
+            all_citizens_list.append(citizen)
+        
+        return all_citizens_list

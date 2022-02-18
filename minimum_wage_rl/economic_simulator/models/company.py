@@ -2,12 +2,18 @@ import uuid
 from django.db import models
 from .country import Country
 
+from ..utility.config import ConfigurationParser
+config_parser = ConfigurationParser.get_instance().parser
+
 
 class Company(models.Model):
 
+    class Meta:
+        db_table = "company"    
 
     # Magic Numbers
-    TAX_PERCENT = 0.20
+    # Possible action in future
+    CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
     MAX_EXECUTIVE_SALARY = 95       # 3 * self.countryInc.minimum_wage
     MAX_SENIOR_SALARY = 65          # 1.5 * self.countryInc.minimum_wage
     MAX_JUNIOR_OFFER = 20          # self.countryInc.minimum_wage
@@ -15,57 +21,50 @@ class Company(models.Model):
     CHANGE_COMPANY_LARGE_BALANCE = 20000
     CHANGE_COMPANY_MEDIUM_BALANCE = 2500
     
-    def __init__(self) -> None:
-        # Profile
+    # def __init__(self) -> None:
+    # Profile
 
-        # self.country = models.ForeignKey(to=Country, null=True, blank=True)
-        self.company_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-        self.companyIndex = None #The unique identifier of a company
-        self.company_size_type = models.IntegerField() # 0 - small , 1 - medium, 2 - large
+    # self.country = models.ForeignKey(to=Country, null=True, blank=True)
+    company_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    companyIndex = None #The unique identifier of a company
+    company_size_type = models.IntegerField() # 0 - small , 1 - medium, 2 - large
 
-        # Balance distributions
-        self.hiring_rate = models.FloatField(default=0.02) # What percentage of the balance does the company spend on hiring -- DEPRECATED
+    # Balance distributions
+    hiring_rate = models.FloatField(default=0.02) # What percentage of the balance does the company spend on hiring -- DEPRECATED
 
-        # Employees & Hiring
-        self.junior_hiring_ratio = models.IntegerField() # How many juniors to hire before moving to next round
-        self.senior_hiring_ratio = models.IntegerField() # How many seniors to hire on current round before moving to juniors
-        self.executive_hiring_ratio = models.IntegerField() # How many executives to hire on current round before moving to senior level
-        self.skill_improvement_rate = models.FloatField() # How fast does the employee skill increase each year
-        
-        self.junior_positions = models.IntegerField()
-        self.senior_positions = models.IntegerField()
-        self.executive_positions = models.IntegerField()
-
-        # Offers for new positions to employees - Maximum based on J,S,E levels and how much the company can afford to pay
-        self.junior_salary_offer = models.FloatField()
-        self.senior_salary_offer = models.FloatField()
-        self.executive_salary_offer = models.FloatField()
-
-        self.companyEmployees = list() #List<MWEmployee> 
-
-        self.company_account_balance = None # The balance sheet of the company
-        self.year_income = 0 # Money made/lost during each year
-
-        # Connection to country
-        self.country = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
-
-        # Bank
-        # self.has_loan = None
-        # self.total_loan_amount = None
-        # self.banks = dict()
-        # self.loan_to_pay_next_year = None
+    # Employees & Hiring
+    junior_hiring_ratio = models.IntegerField() # How many juniors to hire before moving to next round
+    senior_hiring_ratio = models.IntegerField() # How many seniors to hire on current round before moving to juniors
+    executive_hiring_ratio = models.IntegerField() # How many executives to hire on current round before moving to senior level
+    skill_improvement_rate = models.FloatField() # How fast does the employee skill increase each year
     
-    def InitializeCompany(self, initialBalance, companyType, companyIndex, country): #MWCountry
+    num_junior_openings = models.IntegerField()
+    num_senior_openings = models.IntegerField()
+    num_executive_openings = models.IntegerField()
+
+    # Offers for new positions to employees - Maximum based on J,S,E levels and how much the company can afford to pay
+    junior_salary_offer = models.FloatField()
+    senior_salary_offer = models.FloatField()
+    executive_salary_offer = models.FloatField()
+
+    companyEmployees = list() #List<MWEmployee> 
+
+    company_account_balance = models.FloatField(default=0.0) # The balance sheet of the company
+    year_income = 0 # Money made/lost during each year
+
+    # Connection to country
+    country = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
+    
+    def InitializeCompany(self, initialBalance, companyType, country): #MWCountry
     
         self.company_account_balance = initialBalance
         self.company_size_type = companyType
-        # self.companyIndex = companyIndex
         self.country = country
 
-        self.hiring_rate = 0.02 # 2% of balance per year
+        self.hiring_rate = 0.02
 
-        self.junior_positions = self.senior_positions = self.executive_positions = 0
-        self.junior_salary_offer = self.senior_salary_offer = self.executive_salary_offer = self.country.minimum_wage # Initializing to the bear minimum because companies are jackasses
+        self.num_junior_openings = self.num_senior_openings = self.num_executive_openings = 0
+        self.junior_salary_offer = self.senior_salary_offer = self.executive_salary_offer = country.minimum_wage # Initializing to the bear minimum because companies are jackasses
 
         if companyType == 0: # Small
             self.executive_hiring_ratio = 2
@@ -85,22 +84,19 @@ class Company(models.Model):
             self.junior_hiring_ratio = 6
             self.skill_improvement_rate = 2
 
-        self.companyEmployees = list() #List<MWEmployee>()
-
-        # Set all banks here
-        # self.banks = self.country.banks
+    # company.companyEmployees = list()
 
 
-    def OpenJobPositions(self):
+    def open_job_positions(self):
     
-        self.junior_positions = self.senior_positions = self.executive_positions = 0
+        self.num_junior_openings = self.num_senior_openings = self.num_executive_openings = 0
         hrInvestment = self.hiring_rate * self.company_account_balance
 
         #  Executive Hiring
         for _ in  range(self.executive_hiring_ratio):
         
             if hrInvestment > self.executive_salary_offer and hrInvestment >= self.country.minimum_wage:
-                self.executive_positions = self.executive_positions + 1
+                self.num_executive_openings = self.num_executive_openings + 1
                 hrInvestment -= self.executive_salary_offer
             
             else:
@@ -110,7 +106,7 @@ class Company(models.Model):
         for _ in range(self.senior_hiring_ratio):
     
             if hrInvestment > self.senior_salary_offer and hrInvestment >= self.country.minimum_wage:
-                self.senior_positions = self.senior_positions + 1
+                self.num_senior_openings = self.num_senior_openings + 1
                 hrInvestment -= self.senior_salary_offer
             
             else:            
@@ -120,25 +116,25 @@ class Company(models.Model):
         for _ in range(self.junior_hiring_ratio):
 
             if hrInvestment > self.junior_salary_offer and hrInvestment >= self.country.minimum_wage:
-                self.junior_positions = self.junior_positions + 1
+                self.num_junior_openings = self.num_junior_openings + 1
                 hrInvestment -= self.junior_salary_offer
             
             else:
                 break
 
-        return self.junior_positions + self.senior_positions + self.executive_positions
+        return self.num_junior_openings + self.num_senior_openings + self.num_executive_openings
 
-    def EvaluateAndReset(self):
+    def evaluate_company_step(self):
     
-        self.PayTaxes()
+        self.pay_taxes()
         self.year_income = 0        
 
         # =============== Adjusting hiring offers to stay competitive in the job market -- START ===============
-        if self.executive_positions != 0:
+        if self.num_executive_openings != 0:
         
-            if self.executive_salary_offer < Company.MAX_EXECUTIVE_SALARY:
-            
+            if self.executive_salary_offer < Company.MAX_EXECUTIVE_SALARY or self.executive_salary_offer < self.country.minimum_wage:            
                 self.executive_salary_offer = self.executive_salary_offer + 1
+
                 if self.executive_salary_offer < self.country.minimum_wage:                
                     self.executive_salary_offer = self.country.minimum_wage        
         
@@ -146,7 +142,7 @@ class Company(models.Model):
             if self.executive_salary_offer > self.country.minimum_wage:
                 self.executive_salary_offer = self.executive_salary_offer - 1
             
-        if self.senior_positions != 0:
+        if self.num_senior_openings != 0:
         
             if self.senior_salary_offer < Company.MAX_SENIOR_SALARY or self.senior_salary_offer < self.country.minimum_wage:
                 self.senior_salary_offer = self.senior_salary_offer + 1
@@ -159,10 +155,11 @@ class Company(models.Model):
                 self.senior_salary_offer = self.senior_salary_offer - 1
         
 
-        if self.junior_positions != 0:
+        if self.num_junior_openings != 0:
         
             if self.junior_salary_offer < Company.MAX_JUNIOR_OFFER or self.junior_salary_offer < self.country.minimum_wage:
                 self.junior_salary_offer = self.junior_salary_offer + 1
+
                 if self.junior_salary_offer < self.country.minimum_wage:
                     self.junior_salary_offer = self.country.minimum_wage
                 
@@ -186,7 +183,7 @@ class Company(models.Model):
 
        
         # =========== Decreasing  hiring rate as company progresses and grows - START ===========
-        if self.hiring_rate > Country.MAX_HIRING_RATE:
+        if self.hiring_rate > Company.MAX_HIRING_RATE:
             self.hiring_rate -= self.hiring_rate * 0.1
         else:
             self.hiring_rate = Company.MAX_HIRING_RATE
@@ -212,5 +209,5 @@ class Company(models.Model):
         # installment = 
 
 
-    def PayTaxes(self):
-        self.year_income -= Company.TAX_PERCENT * self.year_income # Taxes and other expenses at 40% to limit growth speed
+    def pay_taxes(self):
+        self.year_income -= Company.CORPORATE_TAX * self.year_income # Taxes and other expenses at 40% to limit growth speed

@@ -1,10 +1,19 @@
 [market]
-citizens=5000
 inflation=0.01
 small_business=3
 medium_business=2
 large_business=1
 product_price=0.1
+initial_minimum_wage=2.0
+initial_skill_level=1.0
+
+[country]
+initial_printed_cash=500.0
+citizens=10
+corporate_tax=0.20
+
+[bank]
+initial_interest_rates=0.01
 
 [scenario]
 unregulated=1

@@ -1,11 +1,22 @@
 # from MWCompany import MWCompany
 from statistics import mode
+from xml.dom.pulldom import default_bufsize
 import numpy as np
 from django.db import models
+
+from .bank import Bank
 from .country import Country
 from .company import Company
+import uuid
+
+from ..utility.config import ConfigurationParser
+config_parser = ConfigurationParser.get_instance().parser
+
 
 class Worker(models.Model):
+
+    class Meta:
+        db_table = "worker"    
 
     BUY_EXTRA_ACCT_BALANCE = 5
     BUY_LUXURY_ACCT_BALANCE = 10
@@ -25,87 +36,95 @@ class Worker(models.Model):
     JOB_SATISFACTION_FACTOR = 100
 
 
-    def __init__(self) -> None:
+# def __init__(self) -> None:
 
-        self.country_obj = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Country
-        self.company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Company
+    worker_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # country_obj = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Country
+    company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Company
+    country_of_residence = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Country
 
-        self.skill_level = models.FloatField() # Money in employees account
-        self.worker_account_balance = models.FloatField() # Current salary of the employee - based of entry level
-        self.salary = models.FloatField() # Current skill level of the employee. Junior: (1-25) Senior: (25.1 - 70) Executive (70.1 - 100)
-        self.initial_skill_level = models.FloatField()
-        self.age = models.IntegerField()
+    skill_level = models.FloatField(default=float(config_parser.get("market","initial_skill_level"))) # Money in employees account
+    worker_account_balance = models.FloatField(default=0) # Current salary of the employee - based of entry level
+    salary = models.FloatField(default=0) # Current skill level of the employee. Junior: (1-25) Senior: (25.1 - 70) Executive (70.1 - 100)
+    # initial_skill_level = models.FloatField()
+    age = models.IntegerField()    
+    
+    # remove        
+    # companyCode = None
+    # remove        
+    # citizenID = None
+
+    is_employed = models.BooleanField(default=False)
+    has_company = models.BooleanField(default=False)
+    bought_essential_product = models.BooleanField(default=False)
+    buy_first_extra_product = models.BooleanField(default=False)
+    buy_second_extra_product = models.BooleanField(default=False)
+    retired = models.BooleanField(default=False)
+
+    market = None # Market
+
+    # def InitializeEmployee(self, initialBalance, citizenID, country): #MWCountry
         
-        # remove        
-        self.companyCode = None
-        # remove        
-        self.citizenID = None
+    #     from .market import Market
+    #     self.worker_account_balance = initialBalance
 
-        self.is_employed = models.BooleanField(default=False)
-        self.has_company = models.BooleanField(default=False)
-        self.bought_essential_product = models.BooleanField(default=False)
-        self.buy_first_extra_product = models.BooleanField(default=False)
-        self.buy_second_extra_product = models.BooleanField(default=False)
+    #     self.salary = self.age = 0
+    #     self.skill_level = 1
+    #     # self.initial_skill_level = 1
+    #     self.bought_essential_product = self.buy_first_extra_product = self.buy_second_extra_product = False
+    #     # self.companyCode = -1
+    #     self.citizenID = citizenID
+    #     self.is_employed = self.has_company = False
+    #     self.market = Market.get_instance()
 
-        self.market = None # Market
+    #     # Moving to a country
+    #     self.country_of_residence = country
 
-        self.country_of_residence = models.ForeignKey(to=Country, null=True, blank=True) # list(Workers) -> Country
-
-        # dictionary
-        self.bank = dict()
-
-        # Magic
-
-
-    def InitializeEmployee(self, initialBalance, citizenID, country): #MWCountry
-        
-        from .market import Market
+    #     # Set all banks here
+    #     self.bank = self.country_of_residence.bank
+    def InitializeEmployee(self, initialBalance, country): #MWCountry
         self.worker_account_balance = initialBalance
 
         self.salary = self.age = 0
-        self.skill_level = self.initial_skill_level = 1
+        self.skill_level = 1
         self.bought_essential_product = self.buy_first_extra_product = self.buy_second_extra_product = False
-        self.companyCode = -1
-        self.citizenID = citizenID
         self.is_employed = self.has_company = False
-        self.market = Market.get_instance()
 
         # Moving to a country
         self.country_of_residence = country
 
-        # Set all banks here
-        self.bank = self.country_of_residence.bank
+
     
-    
-    def BuyProducts(self, speedup):
+    def buy_products(self, speedup, market):
     # 'Buying essential, extra and luxury products based on current account balance'
 
         # Buying essentials (food etc)
-        if self.worker_account_balance < self.market.product_price * speedup:
+        print("Am here 2")
+        if self.worker_account_balance < market.product_price * speedup:
             self.worker_account_balance = 0
             return
         else:
-            self.worker_account_balance -= self.market.product_price * speedup
-            self.market.market_value_year += self.market.product_price * speedup
+            self.worker_account_balance -= market.product_price * speedup
+            market.market_value_year += market.product_price * speedup
 
         buyPossibility = 0
         # Buying extra
-        if self.worker_account_balance > Worker.BUY_EXTRA_ACCT_BALANCE * self.market.product_price * speedup:
+        if self.worker_account_balance > Worker.BUY_EXTRA_ACCT_BALANCE * market.product_price * speedup:
             buyPossibility = round(np.random.random(),2)
             
             if buyPossibility > 0.5:
-                self.worker_account_balance -= self.market.product_price * speedup
-                self.market.market_value_year += self.market.product_price * speedup
+                self.worker_account_balance -= market.product_price * speedup
+                market.market_value_year += market.product_price * speedup
 
         # Buying luxury
-        if self.worker_account_balance > Worker.BUY_LUXURY_ACCT_BALANCE * self.market.product_price * speedup:
+        if self.worker_account_balance > Worker.BUY_LUXURY_ACCT_BALANCE * market.product_price * speedup:
             
             buyPossibility = round(np.random.random(),2)
             if buyPossibility > 0.75:
-                self.worker_account_balance -= self.market.product_price * speedup
-                self.market.market_value_year += self.market.product_price * speedup
+                self.worker_account_balance -= market.product_price * speedup
+                market.market_value_year += market.product_price * speedup
     
-    def LookForJob(self):
+    def search_job(self, all_companies_list):
 
         companyWithBestOffer = None #MWCompany
         maxOffer = 0
@@ -115,77 +134,78 @@ class Worker(models.Model):
         # Skill levels - Junior: (1-25) Senior: (25.1 - 70) Executive (70.1 - 100)
         # Hiring levels J(1,7,15) S(25.1,40,55) E(70.1,80,90) C is the highest
         # Hiring Salary J(2,5,10) S(15,20,25) E(40,50,60) - Newbies at a loss
-        
-        for _, v in self.country_of_residence.companies.items():
+        # all_companies_list = list(self.country_of_residence.company_set.all())
+        for each_company in all_companies_list:
             
-            company = v # MWCompany
+            # company = v # MWCompany
 
             # Looking for Junior Position
             if self.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
-                if company.junior_positions > 0:
-                    
-                    if company.junior_salary_offer > (self.salary+ Worker.DELTA_JOB_CHANGE_SALARY) or not(self.is_employed):  # +10 for efficiency and to simulate real life (nobody goes through all the companies)
+                if each_company.num_junior_openings > 0:
+
+                    if each_company.junior_salary_offer > (self.salary + Worker.DELTA_JOB_CHANGE_SALARY) or not(self.is_employed):  
                         
-                        self.SwitchCompany(company, company.junior_salary_offer, self.skill_level)
-                        company.junior_positions = company.junior_positions-1 
+                        self.change_company(each_company, each_company.junior_salary_offer)
+                        each_company.num_junior_openings = each_company.num_junior_openings - 1 
                         return
 
                     else:
-                        if company.junior_salary_offer > maxOffer:
-                            companyWithBestOffer = company
+                        if each_company.junior_salary_offer > maxOffer:
+                            companyWithBestOffer = each_company
                                                     
             elif self.skill_level <= Worker.SENIOR_SKILL_LEVEL:
             
                 # Looking for Senior Position
-                if company.senior_positions > 0:
+                if each_company.num_senior_openings > 0:
                 
-                    if company.senior_salary_offer > (self.salary + Worker.DELTA_JOB_CHANGE_SALARY) or not(self.is_employed):
+                    if each_company.senior_salary_offer > (self.salary + Worker.DELTA_JOB_CHANGE_SALARY) or not(self.is_employed):
             
-                        self.SwitchCompany(company, company.senior_salary_offer, self.skill_level)
-                        company.senior_positions = company.senior_positions-1
+                        self.change_company(each_company, each_company.senior_salary_offer)
+                        each_company.num_senior_openings = each_company.num_senior_openings-1
                         return
                     
                     else:
                     
-                        if company.senior_salary_offer > maxOffer:
-                            companyWithBestOffer = company                                                         
+                        if each_company.senior_salary_offer > maxOffer:
+                            companyWithBestOffer = each_company                                                         
             
             else:
             
                 # Looking for Executive position
-                if company.executive_positions > 0:
+                if each_company.num_executive_openings > 0:
                 
-                    if company.executive_salary_offer > (self.salary + Worker.DELTA_JOB_CHANGE_SALARY) or not(self.is_employed):
+                    if each_company.executive_salary_offer > (self.salary + Worker.DELTA_JOB_CHANGE_SALARY) or not(self.is_employed):
                     
-                        self.SwitchCompany(company, company.executive_salary_offer, self.skill_level)
-                        company.executive_positions = company.executive_positions-1
+                        self.change_company(each_company, each_company.executive_salary_offer)
+                        each_company.num_executive_openings = each_company.num_executive_openings-1
                         return
                     
                     else:  
-                        if company.executive_salary_offer > maxOffer:
-                            companyWithBestOffer = company                                                
+                        if each_company.executive_salary_offer > maxOffer:
+                            companyWithBestOffer = each_company       
     
     # MWCompany
-    def SwitchCompany(self, newCompany, newSalary, newEntryLevelSkill):
+    def change_company(self, newCompany, newSalary):
     
-        if self.companyCode != -1: # Unemployed
-            self.country_of_residence.companies[self.companyCode].companyEmployees.remove(self)  # Leaving the previous company
+        # if self.companyCode != -1: # Unemployed
+            # self.country_of_residence.companies[self.companyCode].companyEmployees.remove(self)  # Leaving the previous company
+        # if self.is_employed:
+        self.company_obj = newCompany
 
-        newCompany.companyEmployees.append(self) # Joining the new company
-        self.companyCode = newCompany.companyIndex
+        # newCompany.companyEmployees.append(self) # Joining the new company
+        # self.companyCode = newCompany.companyIndex
 
         if newSalary < self.country_of_residence.minimum_wage:
             self.salary = self.country_of_residence.minimum_wage
-        
         else:
             self.salary = newSalary
         
-        self.initial_skill_level = newEntryLevelSkill
+        # self.initial_skill_level = newEntryLevelSkill
         self.is_employed = True
     
-    def StartACompany(self):
+    def start_a_company(self):
         
-        from minimum_wage_rl.economic_simulator.models.company import Company
+        from .company import Company
         startup = Company()
 
         #Default = Small business
@@ -203,41 +223,44 @@ class Worker(models.Model):
             # initialBalance = self.worker_account_balance
             companyType = Worker.MEDIUM_COMPANY_TYPE
         
-        self.element_citizens()
+        self.remove_worker()
         self.has_company = True
-        startup.InitializeCompany(self.worker_account_balance, companyType, self.country_of_residence.companyIndex,self.country_of_residence)
-        self.country_of_residence.companies[self.country_of_residence.companyIndex] =  startup
-        self.country_of_residence.companyIndex = self.country_of_residence.companyIndex+1
-    
-    def explore_options(self):
-        amount = 500
-
-        changed_option = False
-
-        if self.worker_account_balance > 500 and self.worker_account_balance < 1000:
-            
-            # Logic to choose banks
-            bank = self.bank
-
-            # get loan
-            loan_amount = bank.lend_loan(amount)
-            if loan_amount >= amount: 
-                self.worker_account_balance = self.worker_account_balance + bank.lend_loan(amount)
-
-                # start company
-                self.StartACompany()
-                changed_option = True
-
-        return changed_option
-
-    def EvaluateAndGrow(self):
+        startup.InitializeCompany(self.worker_account_balance, companyType, self.country_of_residence)
+        self.company_obj = startup
         
-        self.age = self.age + 1
-        if self.companyCode != -1 and not(self.has_company):
+        return startup
+    
+    # def explore_options(self):
+    #     amount = 500
+
+    #     changed_option = False
+
+    #     if self.worker_account_balance > 500 and self.worker_account_balance < 1000:
+            
+    #         # Logic to choose banks
+    #         bank = self.country_of_residence.bank
+
+    #         # get loan
+    #         loan_amount = bank.lend_loan(amount)
+    #         if loan_amount >= amount: 
+    #             self.worker_account_balance = self.worker_account_balance + bank.lend_loan(amount)
+
+    #             # start company
+    #             self.StartACompany()
+    #             changed_option = True
+
+    #     return changed_option
+
+    def evaluate_worker_step(self, all_companies_list):
+        
+        new_company_obj = None
+
+        # Employed but does not own Company
+        if self.is_employed and not(self.has_company):
         
             # Increase skill
             if self.skill_level < Worker.MAX_SKILL_LEVEL:
-                self.skill_level += self.country_of_residence.companies[self.companyCode].skill_improvement_rate
+                self.skill_level += self.company_obj.skill_improvement_rate
 
             # Explore Options here
             # Either Change Job or Start a Company
@@ -249,8 +272,8 @@ class Worker(models.Model):
                 startupProbability = round(np.random.uniform(0.0,100.0),2)
 
                 if startupProbability <= entrepreneurshipDrive:
-                    self.StartACompany()
-                    return            
+                    new_company_obj = self.start_a_company()
+                    return new_company_obj 
 
             #Look for new job ? 
             if self.salary < Worker.JOB_CHANGE_THRESHOLD:
@@ -258,15 +281,15 @@ class Worker(models.Model):
                 satisfactionLevel = Worker.JOB_SATISFACTION_FACTOR - (self.skill_level - self.salary)
                 jobsearchProba = round(np.random.uniform(0.0,100.0),2)
                 if jobsearchProba >= satisfactionLevel:
-                    self.LookForJob()
-            
-        else:
-            # Unemployeed
-            self.LookForJob()
+                    self.search_job(all_companies_list)
+        
+        # Unemployeed            
+        else:            
+            self.search_job(all_companies_list)
     
-    def element_citizens(self):
-        if self.companyCode != -1:
-            self.is_employed = False
-            self.country_of_residence.companies[self.companyCode].companyEmployees.remove(self) #Leaving the previous company
+    def remove_worker(self):
+        self.is_employed = False
+        # self.country_of_residence.companies[self.companyCode].companyEmployees.remove(self) #Leaving the previous company
+        self.retired = True
         
     

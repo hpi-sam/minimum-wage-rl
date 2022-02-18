@@ -1,148 +1,63 @@
-from numpy.core.arrayprint import _void_scalar_repr
-# from country import Country
-# from AI_model.AICountry import AICountry
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 # from AI_model.AI_DQN import DQN, EpsilonGreedyStrategy, Agent, ReplayMemory, Experience, extract_tensors, QValues
-import configparser
 
 from django.db import models
+# from .country import Country
+from ..utility.config import ConfigurationParser
+config_parser = ConfigurationParser.get_instance().parser
 
 class Market(models.Model):
-
-    __market_instance = None
     
-        # Magic
+    class Meta:
+        db_table = "market"
+
+    # Magic
     NUM_CITIZENS_LIMIT = 100
     CITIZEN_MAX_AGE = 100
+    INITIAL_PRODUCT_PRICE = config_parser.get("market","product_price")
 
-    @staticmethod
-    def get_instance():
-        if Market.__market_instance == None:
-            Market()
-        return Market.__market_instance
+    all_data = list()
+    out_file_name = None
+    month = models.IntegerField(default=0)
+    year = models.IntegerField(default=0)
 
-    def __init__(self) -> None:
+    unregulatedScenario = None
+    adjustedScenario = None
+    dramaticScenario = None
+    aiScenario = None
+    
+    # SET LATER
+    market_value_year = models.FloatField()
+    amount_of_new_citizens = models.IntegerField(default=0)    
+    inflation_rate = models.FloatField(default=config_parser.get("market","inflation"))
+
+    # SET LATER
+    product_price = models.FloatField(default=INITIAL_PRODUCT_PRICE)
         
-        if Market.__market_instance !=None:
-            raise Exception("Market instance already exists, USE get_instance method")
-        else:
-            Market.__market_instance = self
+    training = False # bool - Flag for AI training - CHANGED PROGRAMATICALLY
 
-        self.all_data = list()
-        self.out_file_name = None
-        self.month = models.IntegerField(default=0)
-        self.year = models.IntegerField(default=0)
+    # =========== AI Network ==============
+    batch_size = 0
+    gamma = 0.0
+    eps_start = 0
+    eps_end = 0.0
+    eps_decay = 0.0
+    target_update = 0
+    memory_size = 0
+    lr = 0.0
+    num_episodes = 0 # run for more episodes for better results
 
-        self.parser = configparser.ConfigParser()
-        self.parser.read("config_file.txt")
-
-        self.unregulatedScenario = None
-        self.adjustedScenario = None
-        self.dramaticScenario = None
-        self.aiScenario = None
-        
-        # SET LATER
-        self.market_value_year = models.FloatField()
-        self.amount_of_new_citizens = models.IntegerField()
-        
-        self.inflation_rate = models.FloatField()
-
-        # SET LATER
-        
-        self.product_price = models.FloatField(default=0.1)
-        # float(self.parser.get("market","product_price")) # Current price of product adjusted to inflation
-        self.initial_product_price = models.FloatField(default=0.1)
-        # float(self.parser.get("market","product_price"))
-        
-        # self.testingCountry = None # MWCountry
-
-        # self.citizensToRemove = list() # List<MWEmployee>
-
-        # self.run = None # int
-        # self.slowDown = None # int - Slows down simulation for demo purposes (remove when training)
-        self.training = False # bool - Flag for AI training - CHANGED PROGRAMATICALLY
-
-        # private float[] inflations = { 0.0025f, 0.005f, 0.0075f, 0.01f };
-        # self.inflationIdx = 0;
-
-        # =========== AI Network ==============
-        self.batch_size = 0
-        self.gamma = 0.0
-        self.eps_start = 0
-        self.eps_end = 0.0
-        self.eps_decay = 0.0
-        self.target_update = 0
-        self.memory_size = 0
-        self.lr = 0.0
-        self.num_episodes = 0 # run for more episodes for better results
-
-        self.device = None
-        self.saved_model = None
+    device = None
+    saved_model = None
 
     def load_model(self):
         self.saved_model = torch.load("model//trained_model.pt")
         
-    # def Start(self):
-    
-    #     self.month = self.year = 0
-    #     self.initial_product_price = self.product_price
-    #     # self.slowDown = 0
-        
-    #     self.testingCountry = Country.get_instance()
-    #     self.em = AICountry.get_instance()        
-        
-    #     # Apply user settings from menu preferences
-    #     self.ApplyUserSettings(0.01, 
-    #     int(self.parser.get("market","citizens")), int(self.parser.get("market","small_business")),  
-    #     int(self.parser.get("market","medium_business")), int(self.parser.get("market","large_business")))
-        
-    #     self.testingCountry.EstablishCountry()
-    #     self.market_value_year = 0
-    #     self.run = 0
-    #     self.initialize_network()
-
-    #     if bool(int(self.parser.get("scenario","unregulated"))):
-    #         self.testingCountry.policyCode = 0
-    #         self.out_file_name = self.parser.get("file","unregulated_file")
-
-    #     if bool(int(self.parser.get("scenario","adjusted"))):
-    #         self.testingCountry.policyCode = 1
-    #         self.out_file_name = self.parser.get("file","adjusted_file")
-
-    #     if bool(int(self.parser.get("scenario","dramatic"))):
-    #         self.testingCountry.policyCode = 2
-    #         self.out_file_name = self.parser.get("file","dramatic_file")
-
-    #     if bool(int(self.parser.get("scenario","ai_scenario"))):
-    #         self.testingCountry.policyCode = 3
-    #         self.out_file_name = self.parser.get("file","ai_scenario_file")
-    #         self.aiScenario = True
-    
-    # def ApplyUserSettings(self, inflation, num_of_citizens, small_business, medium_business, large_business):
-    
-    #     self.inflation_rate = inflation
-    #     # self.testingCountry.initial_num_of_citizens = num_of_citizens
-    #     # self.testingCountry.initial_num_small_companies =  small_business
-    #     # self.testingCountry.initial_num_medium_companies = medium_business
-    #     # self.testingCountry.initial_num_large_companies = large_business
-
     def ExitToMenu(self):
-        self.ResetMarket()        
-    
-    def step(self, action):
-        
-        # Step 1 - Change minimum wage - Perform action
-        self.testingCountry.minimum_wage = action
-
-        # Step 2 - Change inflation rate : fixed as of now
-        
-        # Step 3 - run market step
-        self.run_market()
-        
-        return self.get_state_and_reward()
+        self.ResetMarket()
 
     def get_state_and_reward(self):
         return self.testingCountry.get_current_state_reward()
@@ -168,7 +83,7 @@ class Market(models.Model):
     def ResetMarket(self):
     
         self.month = self.year = 0
-        self.product_price = self.initial_product_price 
+        self.product_price = Market.INITIAL_PRODUCT_PRICE
         self.amount_of_new_citizens = 0
         self.testingCountry.ResetCountry()
         self.testingCountry.EstablishCountry()
@@ -199,7 +114,7 @@ class Market(models.Model):
         # Employee Iteration  
         for _,V in country_workers.items():        
             citizen = V # MWEmployee
-            citizen.BuyProducts(speedup)
+            citizen.buy_products(speedup)
         
         # 3. Check if year to be increased. Yearly 
         if self.month % 12 == 0:
@@ -216,36 +131,26 @@ class Market(models.Model):
             # 5. Every year - Company Iteration
             for _,V in country_companies.items():            
                 company = V # MWCompany 
-                company.EvaluateAndReset() # Step 1. Evaluate year and reset
-                totalOpenPositions += company.OpenJobPositions() # Step 2. Open new job positions based on balance and company size
+                company.evaluate_company_step() # Step 1. Evaluate year and reset
+                totalOpenPositions += company.open_job_positions() # Step 2. Open new job positions based on balance and company size
             
             citizensToRemove = list()
             # 6. Every year - Employee Iteration
             for _,V in country_workers.items():
                 citizen = V # MWEmployee 
-                citizen.EvaluateAndGrow()
+                citizen.evaluate_worker_step()
                 if citizen.has_company or citizen.age > Market.CITIZEN_MAX_AGE:
                     citizensToRemove.append(citizen)
 
             # 7. Every year - Removing citizens that have created their own companies or HAVE DIED
-            # MWEmployee
             for citizen in citizensToRemove:
                 if not(citizen.has_company):
-                    citizen.element_citizens()
+                    citizen.remove_worker()
 
-                country_workers.pop(citizen.citizenID)
-            
-            # citizensToRemove = list()
-
-            # 8. Every year - Upadating Minimum Wage CHANGE THIS TO FIT ALL SCENARIOS
-            # if self.aiScenario and not(self.training):
-            #     self.__request_decision()
-            
-            # else:
-            #     self.testingCountry.UpdateMinimumWage()
+                country_workers.pop(citizen.citizenID)        
 
             # 9. Every year - Updating product prices
-            self.__update_product_prices()
+            self.update_product_prices()
 
             # 10. Every year - Calculate Stats
             countryStatsOutput = self.testingCountry.calculate_statistics() # string 
@@ -271,7 +176,7 @@ class Market(models.Model):
             print("============ YEAR - " + str(self.year) + "=============")
 
 
-    def __update_product_prices(self):
+    def update_product_prices(self):
         self.product_price = round((self.product_price + self.product_price * self.inflation_rate), 3)
         
     def __request_decision(self):
