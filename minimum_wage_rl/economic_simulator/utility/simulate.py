@@ -16,8 +16,10 @@ def step(action):
     country_companies_list = list(country.company_set.all())
     country_workers_list = list(country.worker_set.filter(retired=False))
 
-    # Step 1 - Change minimum wage - Perform action
+    # Step 1 - Change minimum wage - Perform action function
     country.minimum_wage = action
+
+    
 
     country.temp_worker_list.extend(country_workers_list)
     country.temp_company_list.extend(country_companies_list)
@@ -88,13 +90,7 @@ def run_market(country, country_companies_list,country_workers_list):
                 if new_company != None:
                     new_companies_created_list.append(new_company)
             
-        country.temp_company_list.extend(new_companies_created_list)
-        # 7. Every year - Removing citizens that have created their own companies or HAVE DIED
-        # for citizen in citizensToRemove:
-        #     if not(citizen.has_company):
-        #         citizen.remove_worker()
-
-        #     country_workers.pop(citizen.citizenID)        
+        country.temp_company_list.extend(new_companies_created_list)  
 
         # 9. Every year - Updating product prices
         country.market.update_product_prices()

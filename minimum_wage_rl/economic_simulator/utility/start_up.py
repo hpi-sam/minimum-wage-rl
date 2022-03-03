@@ -104,8 +104,6 @@ def InitializeCompany(company, initialBalance, companyType, country):
         company.junior_hiring_ratio = 6
         company.skill_improvement_rate = 2
 
-    # company.companyEmployees = list()
-
 # startup
 def add_new_citizens(country, amount):
     for _ in range(amount):
@@ -121,7 +119,6 @@ def InitializeEmployee(initialBalance, country, citizen): #MWCountry
     citizen.skill_level = 1
     # citizen.initial_skill_level = 1
     citizen.bought_essential_product = citizen.buy_first_extra_product = citizen.buy_second_extra_product = False
-    # citizen.companyCode = -1
     citizen.is_employed = citizen.has_company = False
 
     # Moving to a country

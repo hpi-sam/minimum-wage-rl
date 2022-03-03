@@ -1,8 +1,10 @@
 import configparser
 
 from numpy import choose
-from minimum_wage_rl.economic_simulator.models.country import Country
+# from minimum_wage_rl.economic_simulator.models.country import Country
 from minimum_wage_rl.economic_simulator.models.market import Market
+
+from ..utility import simulate
 
 class Government:
 
@@ -15,7 +17,7 @@ class Government:
         self.parser.read("config_file.txt")
 
         self.inflation = float(self.parser.get("market","inflation"))
-        self.action_list = [self.__no_change, self.__inflation_based, self.__random_five_percent]
+        # self.action_list = [self.__no_change, self.__inflation_based, self.__random_five_percent]
         self.action_number = 0
 
         self.num_of_steps = 10 # Configure this
@@ -27,11 +29,11 @@ class Government:
         
         self.action_number = (self.action_number + 1) % len(self.action_list)
 
-        action_function = self.action_list[self.action_number]
+        # action_function = self.action_list[self.action_number]
         
-        new_min_wage = action_function(min_wage)
+        # new_min_wage = action_function(min_wage)
 
-        state_reward = self.market.step(new_min_wage) 
+        state_reward = simulate(self.action_number) 
         # -> unemploymentRate, povertyRate, minimumWage, averageSalary-productPrice
         return state_reward
 
@@ -47,13 +49,13 @@ class Government:
     def get_state(self):
         return self.market.get_state()
 
-    def __no_change(self, min_wage):
-        return min_wage
+    # def __no_change(self, min_wage):
+    #     return min_wage
     
-    def __inflation_based(self, min_wage):
-        min_wage =  min_wage + (self.inflation * min_wage)
-        return min_wage
+    # def __inflation_based(self, min_wage):
+    #     min_wage =  min_wage + (self.inflation * min_wage)
+    #     return min_wage
     
-    def __random_five_percent(self, min_wage):
-        min_wage =  min_wage + (0.05 * min_wage)
-        return min_wage
+    # def __random_five_percent(self, min_wage):
+    #     min_wage =  min_wage + (0.05 * min_wage)
+    #     return min_wage

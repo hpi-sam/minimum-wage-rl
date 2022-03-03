@@ -14,19 +14,14 @@ class Company(models.Model):
     # Magic Numbers
     # Possible action in future
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
-    MAX_EXECUTIVE_SALARY = 95       # 3 * self.countryInc.minimum_wage
-    MAX_SENIOR_SALARY = 65          # 1.5 * self.countryInc.minimum_wage
-    MAX_JUNIOR_OFFER = 20          # self.countryInc.minimum_wage
+    MAX_EXECUTIVE_SALARY = 95       
+    MAX_SENIOR_SALARY = 65          
+    MAX_JUNIOR_OFFER = 20          
     MAX_HIRING_RATE = 0.001
     CHANGE_COMPANY_LARGE_BALANCE = 20000
     CHANGE_COMPANY_MEDIUM_BALANCE = 2500
     
-    # def __init__(self) -> None:
-    # Profile
-
-    # self.country = models.ForeignKey(to=Country, null=True, blank=True)
     company_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    companyIndex = None #The unique identifier of a company
     company_size_type = models.IntegerField() # 0 - small , 1 - medium, 2 - large
 
     # Balance distributions
@@ -46,8 +41,6 @@ class Company(models.Model):
     junior_salary_offer = models.FloatField()
     senior_salary_offer = models.FloatField()
     executive_salary_offer = models.FloatField()
-
-    companyEmployees = list() #List<MWEmployee> 
 
     company_account_balance = models.FloatField(default=0.0) # The balance sheet of the company
     year_income = 0 # Money made/lost during each year
@@ -83,9 +76,6 @@ class Company(models.Model):
             self.senior_hiring_ratio = 6
             self.junior_hiring_ratio = 6
             self.skill_improvement_rate = 2
-
-    # company.companyEmployees = list()
-
 
     def open_job_positions(self):
     

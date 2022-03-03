@@ -15,6 +15,7 @@ import json
 def create_user(request):
     print(request)
     print("========================== Ready Function ===================================")
+    # creaste user
     mm_model = Start()
     return Response({'status':200, 'message':'Hello from here'})
 

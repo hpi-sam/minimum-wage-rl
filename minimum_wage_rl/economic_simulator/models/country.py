@@ -156,10 +156,6 @@ class Country(models.Model):
             self.minimum_wage = 2
         
         elif self.policyCode == 1:        
-            # Adjusted yearly based on inflation (France model)
-            # print("In MWCountry - line 196")
-            # print(self.minimum_wage)
-            # print(self.market.inflation_rate)
             self.minimum_wage += self.minimum_wage * self.market.inflation_rate # CHANGE FOR YEAR??? DAYS TO MATCH PRODUCT SHIT
         
         elif self.policyCode == 2:
@@ -213,10 +209,7 @@ class Country(models.Model):
 
     def print_money(self, bank):
         self.total_money_printed = self.total_money_printed + self.fixed_cash_printing
-        # each_cash_infusion = self.fixed_cash_printing / len(banks.keys())
         bank.deposit_money(self.fixed_cash_printing)
-        # for _, each_bank in banks.items():
-        #     each_bank.deposit_money(each_cash_infusion)
 
 
     def add_new_citizens(country, amount):

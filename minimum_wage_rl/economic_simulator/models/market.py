@@ -56,124 +56,124 @@ class Market(models.Model):
     def load_model(self):
         self.saved_model = torch.load("model//trained_model.pt")
         
-    def ExitToMenu(self):
-        self.ResetMarket()
+    # def ExitToMenu(self):
+    #     self.ResetMarket()
 
     def get_state_and_reward(self):
         return self.testingCountry.get_current_state_reward()
 
-    def FixedUpdate(self):
+    # def FixedUpdate(self):
         
-        if self.year <= 3000:
+    #     if self.year <= 3000:
             
-            print("year - ", self.year , ", month - ", self.month%12)
-            # Executed only when training
-            if self.aiScenario and self.training:                    
-                self.Train_network()                
-            else:                    
-                self.run_market()
-        else:            
-            # Give rewards and reset the market
-            if self.aiScenario and self.training:            
-                self.run = self.run + 1 
-                self.ResetMarket()
-            print("<========== Ending Simulation =========>")        
+    #         print("year - ", self.year , ", month - ", self.month%12)
+    #         # Executed only when training
+    #         if self.aiScenario and self.training:                    
+    #             self.Train_network()                
+    #         else:                    
+    #             self.run_market()
+    #     else:            
+    #         # Give rewards and reset the market
+    #         if self.aiScenario and self.training:            
+    #             self.run = self.run + 1 
+    #             self.ResetMarket()
+    #         print("<========== Ending Simulation =========>")        
     
 
-    def ResetMarket(self):
+    # def ResetMarket(self):
     
-        self.month = self.year = 0
-        self.product_price = Market.INITIAL_PRODUCT_PRICE
-        self.amount_of_new_citizens = 0
-        self.testingCountry.ResetCountry()
-        self.testingCountry.EstablishCountry()
+    #     self.month = self.year = 0
+    #     self.product_price = Market.INITIAL_PRODUCT_PRICE
+    #     self.amount_of_new_citizens = 0
+    #     self.testingCountry.ResetCountry()
+    #     self.testingCountry.EstablishCountry()
     
-    def run_market(self):
+    # def run_market(self):
     
-        self.month = self.month + 1 # Instead of day to speed up simulation 12x
+    #     self.month = self.month + 1 # Instead of day to speed up simulation 12x
 
-        country_companies = self.testingCountry.companies # Dictionary<int, MWCompany> 
-        country_workers = self.testingCountry.workers # Dictionary<int, MWEmployee> 
-        speedup = 30.415  # 365/12 is the speedup
+    #     country_companies = self.testingCountry.companies # Dictionary<int, MWCompany> 
+    #     country_workers = self.testingCountry.workers # Dictionary<int, MWEmployee> 
+    #     speedup = 30.415  # 365/12 is the speedup
 
-        # 1. Companies must pay employees and employees must give value back to the companies        
-        for _,V in country_companies.items():
+    #     # 1. Companies must pay employees and employees must give value back to the companies        
+    #     for _,V in country_companies.items():
         
-            company = V
-            # MWEmployee
-            for employee in company.companyEmployees:            
-                # Paying employees
-                employee.worker_account_balance += employee.salary
-                company.company_account_balance -= employee.salary
+    #         company = V
+    #         # MWEmployee
+    #         for employee in company.companyEmployees:            
+    #             # Paying employees
+    #             employee.worker_account_balance += employee.salary
+    #             company.company_account_balance -= employee.salary
 
-                # Giving value back to company
-                company.company_account_balance += employee.skill_level
-                company.year_income += (employee.skill_level - employee.salary)        
+    #             # Giving value back to company
+    #             company.company_account_balance += employee.skill_level
+    #             company.year_income += (employee.skill_level - employee.salary)        
 
-        # 2. People must buy products YO
-        # Employee Iteration  
-        for _,V in country_workers.items():        
-            citizen = V # MWEmployee
-            citizen.buy_products(speedup)
+    #     # 2. People must buy products YO
+    #     # Employee Iteration  
+    #     for _,V in country_workers.items():        
+    #         citizen = V # MWEmployee
+    #         citizen.buy_products(speedup)
         
-        # 3. Check if year to be increased. Yearly 
-        if self.month % 12 == 0:
-            self.year = self.year + 1 
+    #     # 3. Check if year to be increased. Yearly 
+    #     if self.month % 12 == 0:
+    #         self.year = self.year + 1 
 
-            # 4. Every year - Add new citizens
-            self.testingCountry.add_new_citizens(self.amount_of_new_citizens)
-            if self.amount_of_new_citizens < Market.NUM_CITIZENS_LIMIT:
-                self.amount_of_new_citizens += 1
+    #         # 4. Every year - Add new citizens
+    #         self.testingCountry.add_new_citizens(self.amount_of_new_citizens)
+    #         if self.amount_of_new_citizens < Market.NUM_CITIZENS_LIMIT:
+    #             self.amount_of_new_citizens += 1
 
-            totalOpenPositions = 0
-            totalUnemployed = self.testingCountry.total_unemployed
+    #         totalOpenPositions = 0
+    #         totalUnemployed = self.testingCountry.total_unemployed
 
-            # 5. Every year - Company Iteration
-            for _,V in country_companies.items():            
-                company = V # MWCompany 
-                company.evaluate_company_step() # Step 1. Evaluate year and reset
-                totalOpenPositions += company.open_job_positions() # Step 2. Open new job positions based on balance and company size
+    #         # 5. Every year - Company Iteration
+    #         for _,V in country_companies.items():            
+    #             company = V # MWCompany 
+    #             company.evaluate_company_step() # Step 1. Evaluate year and reset
+    #             totalOpenPositions += company.open_job_positions() # Step 2. Open new job positions based on balance and company size
             
-            citizensToRemove = list()
-            # 6. Every year - Employee Iteration
-            for _,V in country_workers.items():
-                citizen = V # MWEmployee 
-                citizen.evaluate_worker_step()
-                if citizen.has_company or citizen.age > Market.CITIZEN_MAX_AGE:
-                    citizensToRemove.append(citizen)
+    #         citizensToRemove = list()
+    #         # 6. Every year - Employee Iteration
+    #         for _,V in country_workers.items():
+    #             citizen = V # MWEmployee 
+    #             citizen.evaluate_worker_step()
+    #             if citizen.has_company or citizen.age > Market.CITIZEN_MAX_AGE:
+    #                 citizensToRemove.append(citizen)
 
-            # 7. Every year - Removing citizens that have created their own companies or HAVE DIED
-            for citizen in citizensToRemove:
-                if not(citizen.has_company):
-                    citizen.remove_worker()
+    #         # 7. Every year - Removing citizens that have created their own companies or HAVE DIED
+    #         for citizen in citizensToRemove:
+    #             if not(citizen.has_company):
+    #                 citizen.remove_worker()
 
-                country_workers.pop(citizen.citizenID)        
+    #             country_workers.pop(citizen.citizenID)        
 
-            # 9. Every year - Updating product prices
-            self.update_product_prices()
+    #         # 9. Every year - Updating product prices
+    #         self.update_product_prices()
 
-            # 10. Every year - Calculate Stats
-            countryStatsOutput = self.testingCountry.calculate_statistics() # string 
-            self.market_value_year = 0            
+    #         # 10. Every year - Calculate Stats
+    #         countryStatsOutput = self.testingCountry.calculate_statistics() # string 
+    #         self.market_value_year = 0            
                         
-            # SETTING EXCEL VALUES
-            values_dict = dict()
-            values_dict["year"] = self.year
-            values_dict["Average Salary"] = self.testingCountry.average_income
-            values_dict["productPrice"] = self.product_price
-            values_dict["Poverty"] = self.testingCountry.poverty_rate
-            values_dict["Unemployment"] = self.testingCountry.unemployment_rate
-            values_dict["Small Company"] = self.testingCountry.num_small_companies
-            values_dict["Medium Company"] = self.testingCountry.num_medium_company
-            values_dict["Large Company"] = self.testingCountry.num_large_company
-            values_dict["Junior"] = self.testingCountry.total_jun_jobs
-            values_dict["Senior"] = self.testingCountry.total_senior_jobs
-            values_dict["Executive"] = self.testingCountry.total_executive_jobs
-            values_dict["Minimum Wage"] = self.testingCountry.minimum_wage
+    #         # SETTING EXCEL VALUES
+    #         values_dict = dict()
+    #         values_dict["year"] = self.year
+    #         values_dict["Average Salary"] = self.testingCountry.average_income
+    #         values_dict["productPrice"] = self.product_price
+    #         values_dict["Poverty"] = self.testingCountry.poverty_rate
+    #         values_dict["Unemployment"] = self.testingCountry.unemployment_rate
+    #         values_dict["Small Company"] = self.testingCountry.num_small_companies
+    #         values_dict["Medium Company"] = self.testingCountry.num_medium_company
+    #         values_dict["Large Company"] = self.testingCountry.num_large_company
+    #         values_dict["Junior"] = self.testingCountry.total_jun_jobs
+    #         values_dict["Senior"] = self.testingCountry.total_senior_jobs
+    #         values_dict["Executive"] = self.testingCountry.total_executive_jobs
+    #         values_dict["Minimum Wage"] = self.testingCountry.minimum_wage
 
-            self.all_data.append(values_dict)
+    #         self.all_data.append(values_dict)
 
-            print("============ YEAR - " + str(self.year) + "=============")
+    #         print("============ YEAR - " + str(self.year) + "=============")
 
 
     def update_product_prices(self):

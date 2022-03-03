@@ -35,24 +35,15 @@ class Worker(models.Model):
     JOB_CHANGE_THRESHOLD = 95
     JOB_SATISFACTION_FACTOR = 100
 
-
-# def __init__(self) -> None:
-
     worker_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # country_obj = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Country
-    company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Company
-    country_of_residence = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE) # list(Workers) -> Country
+    company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE)
+    country_of_residence = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
 
-    skill_level = models.FloatField(default=float(config_parser.get("market","initial_skill_level"))) # Money in employees account
-    worker_account_balance = models.FloatField(default=0) # Current salary of the employee - based of entry level
-    salary = models.FloatField(default=0) # Current skill level of the employee. Junior: (1-25) Senior: (25.1 - 70) Executive (70.1 - 100)
-    # initial_skill_level = models.FloatField()
-    age = models.IntegerField()    
-    
-    # remove        
-    # companyCode = None
-    # remove        
-    # citizenID = None
+     # Current skill level of the employee. Junior: (1-25) Senior: (25.1 - 70) Executive (70.1 - 100)
+    skill_level = models.FloatField(default=float(config_parser.get("market","initial_skill_level")))
+    worker_account_balance = models.FloatField(default=0)
+    salary = models.FloatField(default=0)
+    age = models.IntegerField()
 
     is_employed = models.BooleanField(default=False)
     has_company = models.BooleanField(default=False)
@@ -61,27 +52,6 @@ class Worker(models.Model):
     buy_second_extra_product = models.BooleanField(default=False)
     retired = models.BooleanField(default=False)
 
-    market = None # Market
-
-    # def InitializeEmployee(self, initialBalance, citizenID, country): #MWCountry
-        
-    #     from .market import Market
-    #     self.worker_account_balance = initialBalance
-
-    #     self.salary = self.age = 0
-    #     self.skill_level = 1
-    #     # self.initial_skill_level = 1
-    #     self.bought_essential_product = self.buy_first_extra_product = self.buy_second_extra_product = False
-    #     # self.companyCode = -1
-    #     self.citizenID = citizenID
-    #     self.is_employed = self.has_company = False
-    #     self.market = Market.get_instance()
-
-    #     # Moving to a country
-    #     self.country_of_residence = country
-
-    #     # Set all banks here
-    #     self.bank = self.country_of_residence.bank
     def InitializeEmployee(self, initialBalance, country): #MWCountry
         self.worker_account_balance = initialBalance
 
@@ -92,8 +62,6 @@ class Worker(models.Model):
 
         # Moving to a country
         self.country_of_residence = country
-
-
     
     def buy_products(self, speedup, market):
     # 'Buying essential, extra and luxury products based on current account balance'
@@ -187,20 +155,12 @@ class Worker(models.Model):
     # MWCompany
     def change_company(self, newCompany, newSalary):
     
-        # if self.companyCode != -1: # Unemployed
-            # self.country_of_residence.companies[self.companyCode].companyEmployees.remove(self)  # Leaving the previous company
-        # if self.is_employed:
         self.company_obj = newCompany
-
-        # newCompany.companyEmployees.append(self) # Joining the new company
-        # self.companyCode = newCompany.companyIndex
 
         if newSalary < self.country_of_residence.minimum_wage:
             self.salary = self.country_of_residence.minimum_wage
         else:
             self.salary = newSalary
-        
-        # self.initial_skill_level = newEntryLevelSkill
         self.is_employed = True
     
     def start_a_company(self):
@@ -289,7 +249,6 @@ class Worker(models.Model):
     
     def remove_worker(self):
         self.is_employed = False
-        # self.country_of_residence.companies[self.companyCode].companyEmployees.remove(self) #Leaving the previous company
         self.retired = True
         
     

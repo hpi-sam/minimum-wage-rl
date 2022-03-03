@@ -33,3 +33,7 @@ root_folder=data
 [meta]
 training_steps=7200
 market_steps=3600
+
+[training]
+# 0 for discrete and 1 for continuous
+min_wage_policy=0
