@@ -1,9 +1,11 @@
 import uuid
 import numpy as np
 from numpy import random
+
+from economic_simulator.models.game import Game
 from .market import Market
 from .bank import Bank
-
+from django.contrib.auth.models import User
 from django.db import models
 
 from ..utility.config import ConfigurationParser
@@ -63,6 +65,8 @@ class Country(models.Model):
     
     # dictionary<int, Bank>
     bank = models.ForeignKey(to=Bank, unique=True, on_delete=models.CASCADE)
+    player = models.ForeignKey(User, on_delete=models.CASCADE)
+    game = models.OneToOneField(Game, on_delete=models.CASCADE)
 
     temp_worker_list = []
     temp_company_list = []

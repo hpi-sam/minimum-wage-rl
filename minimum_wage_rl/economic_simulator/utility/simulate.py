@@ -4,15 +4,19 @@ from ..models.bank import Bank
 from ..models.country import Country
 from ..models.market import Market
 from ..models.company import Company
+from ..models.game import Game
 from .config import ConfigurationParser
 from django.db import models
 import numpy as np
 
 
-def step(action):
+def step(action, user):
     
     # Get all data from DB
-    country = Country.objects.first()
+
+    game = __get_latest_game(user)
+
+    country = Country.objects.get(player=user, game=game)
     country_companies_list = list(country.company_set.all())
     country_workers_list = list(country.worker_set.filter(retired=False))
 
@@ -29,6 +33,21 @@ def step(action):
     return run_market(country, country_companies_list,country_workers_list)
     
     # return self.get_state_and_reward()
+
+def __get_latest_game(user):
+    
+    game_obj = None
+    max_game_number = None
+    max_game_query = Game.objects.filter(player=user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))
+    
+    if not max_game_query:
+        pass
+    else:
+        max_game_number = max_game_query["max_game_number"]
+        game_obj = Game.objects.filter(player=user, game_ended = False, game_number = max_game_number).first()
+
+    return game_obj
+
 
 def run_market(country, country_companies_list,country_workers_list):
 

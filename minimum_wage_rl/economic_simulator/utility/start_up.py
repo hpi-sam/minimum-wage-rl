@@ -1,8 +1,10 @@
+from itertools import count
 from ..models.worker import Worker
 from ..models.bank import Bank
 from ..models.country import Country
 from ..models.market import Market
 from ..models.company import Company
+from ..models.game import Game
 from .config import ConfigurationParser
 from django.db import models
 
@@ -11,7 +13,7 @@ all_companies_list = []
 
 config_parser = ConfigurationParser.get_instance().parser
 
-def Start():
+def Start(user):
 
     market_obj = Market()
     market_obj.month = market_obj.year = 0
@@ -22,6 +24,21 @@ def Start():
     country = EstablishCountry()
     
     country.market = market_obj
+
+    
+    country.player = user
+
+    game_number = get_latest_game_number(user)
+    # game_query_set = Game.objects.annotate(game_count=models.Max("game_number")).values("game_number").filter(player=user)
+    
+    game = Game()
+    game.player = user
+    game.game_number = game_number
+    game.save()
+    country.game = game
+
+
+
     market_obj.save()
     country.save()
 
@@ -32,6 +49,14 @@ def Start():
     # SAVE ALL COUNTRIES
     for each_citizen in all_citizens_list:
         each_citizen.save()
+
+def get_latest_game_number(user):
+    max_game_query = Game.objects.filter(player=user).aggregate(max_game_number=models.Max("game_number"))
+    if not max_game_query:
+        game_number = 1
+    else:
+        game_number = max_game_query["max_game_number"]  +1
+    return game_number
 
 def EstablishCountry():
     
