@@ -52,10 +52,10 @@ def Start(user):
 
 def get_latest_game_number(user):
     max_game_query = Game.objects.filter(player=user).aggregate(max_game_number=models.Max("game_number"))
-    if not max_game_query:
+    if not max_game_query or max_game_query["max_game_number"]  == None:
         game_number = 1
     else:
-        game_number = max_game_query["max_game_number"]  +1
+        game_number = max_game_query["max_game_number"]  + 1
     return game_number
 
 def EstablishCountry():

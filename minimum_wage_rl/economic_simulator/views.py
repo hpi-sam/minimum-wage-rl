@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 import json
 from .serializer import UserSerializer
 from django.db import models
-
+from .AI_model.actor_critic import actor_critic_main
 
 # Create your views here.
 
@@ -102,3 +102,9 @@ def perform_action(request, action):
 
     json_reponse = json.dumps(state_reward)
     return Response({'status':200, 'message':json_reponse})
+
+@api_view(http_method_names=['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def train(request):
+    actor_critic_main.train(request.user)

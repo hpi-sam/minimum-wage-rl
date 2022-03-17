@@ -9,6 +9,21 @@ from .config import ConfigurationParser
 from django.db import models
 import numpy as np
 
+discrete_action = True
+
+def minimumwage_action(minimum_wage,action_option):
+    
+    if action_option == 0:
+        pass
+
+    elif action_option == 1:
+        minimum_wage += minimum_wage * 0.01
+
+    else:
+        minimum_wage += minimum_wage * 0.05
+
+    return minimum_wage
+
 
 def step(action, user):
     
@@ -21,7 +36,10 @@ def step(action, user):
     country_workers_list = list(country.worker_set.filter(retired=False))
 
     # Step 1 - Change minimum wage - Perform action function
-    country.minimum_wage = action
+    if discrete_action:
+        country.minimum_wage = minimumwage_action(country.minimum_wage, action)
+    else:    
+        country.minimum_wage = action
 
     
 
@@ -194,6 +212,7 @@ def get_current_state_reward(country):
     state_reward = dict()
     state_reward["state"] = state_values
     state_reward["reward"] = reward
+    state_reward["done"] = False
 
     return state_reward
 
@@ -213,4 +232,13 @@ def calculate_reward(country):
 
     # return torch.tensor([r1 + r2 + r3 + r4])
     return r1 + r2 + r3 + r4
-    # return r1 + r2   
+    # return r1 + r2
+
+def get_state(user):
+    game = __get_latest_game(user)
+
+    country = Country.objects.get(player=user, game=game)
+    country_companies_list = list(country.company_set.all())
+    country_workers_list = list(country.worker_set.filter(retired=False))
+
+    return get_current_state_reward(country)

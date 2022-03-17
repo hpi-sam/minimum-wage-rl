@@ -9,5 +9,6 @@ urlpatterns = [
     path('reg-user', views.create_user ,name="reg-user-endpoint"),
     path("token-auth", auth_view.obtain_auth_token),
     path("del-user",views.delete_user,name="del-user"),
-    path("end-game", views.end_game, name="end_game-endpoint")
+    path("end-game", views.end_game, name="end_game-endpoint"),
+    path("train", views.train, name="train-endpoint")
 ]

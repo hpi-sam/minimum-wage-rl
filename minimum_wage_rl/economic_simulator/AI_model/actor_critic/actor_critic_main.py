@@ -1,23 +1,90 @@
-# # =============== Continous Actor Critic =====================
+from .utility import Storage
+from .models import CategoricalActor, Critic
+import torch.optim as optim
+from economic_simulator.utility import simulate
+from torch import tensor
 
-# def a2c_continuous(**kwargs):
-#     generate_tag(kwargs)
-#     kwargs.setdefault('log_level', 0)
-#     config = Config()
-#     config.merge(kwargs)
+roll_out_length = 2
+discount = 0.9
+num_steps = 10
+actor_lr = 0.01
+critic_lr = 0.05
 
-#     config.num_workers = 16
-#     config.task_fn = lambda: Task(config.game, num_envs=config.num_workers)
-#     config.eval_env = Task(config.game)
-#     config.optimizer_fn = lambda params: torch.optim.RMSprop(params, lr=0.0007)
-#     config.network_fn = lambda: GaussianActorCriticNet(
-#         config.state_dim, config.action_dim,
-#         actor_body=FCBody(config.state_dim), critic_body=FCBody(config.state_dim))
-#     config.discount = 0.99
-#     config.use_gae = True
-#     config.gae_tau = 1.0
-#     config.entropy_weight = 0.01
-#     config.rollout_length = 5
-#     config.gradient_clip = 5
-#     config.max_steps = int(2e7)
-#     run_steps(A2CAgent(config))
+
+class ActorCritic:
+
+    def __init__(self,user) -> None:    
+        self.actor_model = CategoricalActor()
+        self.critic_model = Critic()
+        self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=actor_lr)
+        self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=critic_lr)
+        self.user = user
+    
+    def step(self):
+        current_state = self.get_state()
+
+        storage = Storage()
+        for _ in range(roll_out_length):
+            action_prediction = self.actor_model(current_state)
+            state_value_prediction = self.critic_model(current_state)
+
+            storage.actions.append(action_prediction["action"])
+            storage.state_values.append(state_value_prediction["value"])
+            storage.log_actions.append(action_prediction["log_pi_a"])
+
+            state_reward = simulate.step(action_prediction["action"].item(), self.user) 
+            next_state = tensor(state_reward["state"])
+            reward = tensor(state_reward["reward"])
+            terminate = tensor(1 - state_reward["done"])
+
+            storage.rewards.append(reward)
+            storage.episode_end_flag.append(terminate)
+
+            current_state = next_state
+        
+        action_prediction = self.actor_model(current_state)
+        state_value_prediction = self.critic_model(current_state)
+
+        storage.actions.append(action_prediction["action"])
+        storage.state_values.append(state_value_prediction["value"])
+        storage.log_actions.append(action_prediction["log_pi_a"])
+
+        returns = state_value_prediction["value"]
+
+        advantages = [0] * roll_out_length
+        ret = [0] * roll_out_length
+        for i in reversed(range(roll_out_length)):
+            returns = storage.rewards[i] + discount * storage.episode_end_flag[i] * returns            
+            advantages[i] = returns - storage.state_values[i]
+            ret[i] = returns
+            
+        storage.advantages = advantages
+        storage.expected_returns = ret
+        keys = ["actions","log_actions","state_values",
+                "advantages","expected_returns","rewards",
+                "episode_end_flag"]
+        entries = storage.extract(keys)
+
+        policy_loss = -(entries.log_actions * entries.advantages).mean()
+        value_loss = 0.5 * (entries.expected_returns - entries.state_values).pow(2).mean()
+
+        self.actor_optimizer.zero_grad()
+        self.critic_optimizer.zero_grad()
+
+        policy_loss.backward()
+        value_loss.backward()
+
+        self.actor_optimizer.step()
+        self.critic_optimizer.step()
+
+
+    def get_state(self):
+        state_reward = simulate.get_state(self.user)
+        return tensor(state_reward["state"])
+
+
+def train(user):
+    actor_critic = ActorCritic(user)
+
+    for _ in range(num_steps):
+        actor_critic.step()
