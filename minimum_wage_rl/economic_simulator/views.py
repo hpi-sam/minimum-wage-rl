@@ -108,3 +108,4 @@ def perform_action(request, action):
 @permission_classes([IsAuthenticated])
 def train(request):
     actor_critic_main.train(request.user)
+    return Response({'status':200, 'message':"Traning completed"})

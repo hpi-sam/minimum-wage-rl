@@ -6,7 +6,7 @@ from torch import tensor
 
 roll_out_length = 2
 discount = 0.9
-num_steps = 10
+num_steps = 5
 actor_lr = 0.01
 critic_lr = 0.05
 
@@ -22,20 +22,21 @@ class ActorCritic:
     
     def step(self):
         current_state = self.get_state()
+        storage = Storage(roll_out_length)
 
-        storage = Storage()
         for _ in range(roll_out_length):
             action_prediction = self.actor_model(current_state)
             state_value_prediction = self.critic_model(current_state)
-
+            
+            
             storage.actions.append(action_prediction["action"])
             storage.state_values.append(state_value_prediction["value"])
             storage.log_actions.append(action_prediction["log_pi_a"])
 
             state_reward = simulate.step(action_prediction["action"].item(), self.user) 
             next_state = tensor(state_reward["state"])
-            reward = tensor(state_reward["reward"])
-            terminate = tensor(1 - state_reward["done"])
+            reward = tensor(state_reward["reward"]).unsqueeze(-1)
+            terminate = tensor(1 - state_reward["done"]).unsqueeze(-1)
 
             storage.rewards.append(reward)
             storage.episode_end_flag.append(terminate)
@@ -49,18 +50,19 @@ class ActorCritic:
         storage.state_values.append(state_value_prediction["value"])
         storage.log_actions.append(action_prediction["log_pi_a"])
 
-        returns = state_value_prediction["value"]
+        returns = state_value_prediction["value"].detach()
 
         advantages = [0] * roll_out_length
         ret = [0] * roll_out_length
         for i in reversed(range(roll_out_length)):
             returns = storage.rewards[i] + discount * storage.episode_end_flag[i] * returns            
-            advantages[i] = returns - storage.state_values[i]
-            ret[i] = returns
+            advantages[i] = returns - storage.state_values[i].detach()
+            advantages[i] = advantages[i].detach()
+            ret[i] = returns.detach()
             
         storage.advantages = advantages
         storage.expected_returns = ret
-        keys = ["actions","log_actions","state_values",
+        keys = ["log_actions","state_values",
                 "advantages","expected_returns","rewards",
                 "episode_end_flag"]
         entries = storage.extract(keys)

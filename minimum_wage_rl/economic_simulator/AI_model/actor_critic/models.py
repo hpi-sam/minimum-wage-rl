@@ -92,6 +92,7 @@ class Critic(nn.Module):
 
         # logits = self.fc_action(h3)
         v = self.out(h3_act)
+        v1 = v.unsqueeze(-1)
         # dist = torch.distributions.Categorical(logits=logits)
         # if action is None:
         #     action = dist.sample()
