@@ -8,25 +8,30 @@
 
 # Endpoints - Web based simulator
 
+**base_url = http://ccloud@minwage-app.sp.only.sap:8000**
+
 1. Create User
     * Method: POST
-    * Endpoint: /reg-user
-    * Input: ```{ "username":" ", "password":" ", "email":" " }```
+    * Endpoint: base_url/reg-user
+    * Input: ```{ "username":"My-User-Name", "password":"My-Password", "email":"myemail@email.com" }```
     
-2. Get API Token
-    * Method : GET
-    * Endpoint : /token-auth
+2. Getting API Token
+    * Method : POST
+    * Endpoint : base_url/api-token-auth
+    * Input: ```{ "username":"My-User-Name", "password":"My-Password" }```
 
-2. Start Game
+3. Start Game (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
     * Method : GET
-    * Endpoint: /start-game
+    * Endpoint: base_url/start-game
     * Authorization: API Key  Token <>
 
-3. Perform Action
+4. Perform Action (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
+    (Add value of minimum wage in place of <action-value> )
     * Method : GET
-    * Endpoint: /perform-action/<action-value>
+    * Endpoint: base_url/perform-action/<action-value>
     * Authorization: API Key  Token <>
   
-4. End Game
+5. End Game (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
     * Method : GET
-    * Endpoint: /end-game
+    * Endpoint: base_url/end-game
+    * Authorization: API Key  Token <>
