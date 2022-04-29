@@ -17,11 +17,13 @@ class Country(models.Model):
         db_table = "country"
 
     # Constants
-    INITIAL_NUM_SMALL_COMPANIES = int(config_parser.get("market","small_business"))
-    INITIAL_NUM_MEDIUM_COMPANIES = int(config_parser.get("market","medium_business"))
-    INITIAL_NUM_LARGE_COMPANIES = int(config_parser.get("market","large_business"))
+    INITIAL_NUM_SMALL_COMPANIES = int(config_parser.get("market","num_small_business"))
+    INITIAL_NUM_MEDIUM_COMPANIES = int(config_parser.get("market","num_medium_business"))
+    INITIAL_NUM_LARGE_COMPANIES = int(config_parser.get("market","num_large_business"))
     INITIAL_NUM_OF_CITIZENS = int(config_parser.get("country","citizens"))
     INITIAL_MIN_WAGE = float(config_parser.get("market","initial_minimum_wage"))
+    CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
+    INCOME_TAX = float(config_parser.get("country","income_tax"))
 
     # Magic Numbers (Bank) weight_mb
     WEIGTH_LARGE_COMPANY = 2
@@ -38,6 +40,9 @@ class Country(models.Model):
 
     # The current minimum wage of this country
     minimum_wage = models.FloatField(default=float(config_parser.get("market","initial_minimum_wage")))
+    product_price = models.FloatField(default=float(config_parser.get("market","initial_product_price")))
+    quantity = models.IntegerField(default=0)
+    inflation = models.IntegerField(default=0)
 
     # Statistics
     yearly_produced_value = models.FloatField(default=0.0) # Something like GDP
@@ -59,6 +64,7 @@ class Country(models.Model):
     total_executive_jobs = models.FloatField(default=0.0)
     fixed_cash_printing = models.FloatField(default=float(config_parser.get("country","initial_printed_cash")))
     total_money_printed = models.FloatField(default=0.0)
+    population = models.IntegerField(default=0)
     # number_of_banks = models.IntegerField(default=1)
 
     market = models.ForeignKey(to=Market, unique=True, on_delete=models.CASCADE)
@@ -225,3 +231,16 @@ class Country(models.Model):
             all_citizens_list.append(citizen)
         
         return all_citizens_list
+
+    def minimum_wage_action(self,action_option):
+
+        if action_option == 0:
+            pass
+
+        elif action_option == 1:
+            self.minimum_wage = self.minimum_wage + self.minimum_wage * 0.01
+        
+        else:
+            self.minimum_wage = self.minimum_wage + self.minimum_wage * 0.05
+
+        return self.minimum_wage

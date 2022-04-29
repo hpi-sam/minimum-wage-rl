@@ -43,10 +43,32 @@ class Company(models.Model):
     executive_salary_offer = models.FloatField()
 
     company_account_balance = models.FloatField(default=0.0) # The balance sheet of the company
+    company_age = models.IntegerField(default=0)
     year_income = 0 # Money made/lost during each year
+
+    company_score = models.FloatField(default=0.0)
+
+    num_junior_workers = models.IntegerField(default=0)
+    num_senior_workers = models.IntegerField(default=0)
+    num_executive_workers = models.IntegerField(default=0)
+
+    avg_junior_salary = models.FloatField(default=0.0)
+    avg_senior_salary = models.FloatField(default=0.0)
+    avg_executive_salary = models.FloatField(default=0.0)
+
+    open_junior_pos = models.IntegerField(default=0)
+    open_senior_pos = models.IntegerField(default=0)
+    open_exec_pos = models.IntegerField(default=0)
+
+    junior_workers_list = []
+    senior_workers_list = []
+    exec_workers_list = []
 
     # Connection to country
     country = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
+
+    loan_taken = models.BooleanField(default=False)
+    loan_amount = models.FloatField(default=0.0)
     
     def InitializeCompany(self, initialBalance, companyType, country): #MWCountry
     
@@ -200,4 +222,4 @@ class Company(models.Model):
 
 
     def pay_taxes(self):
-        self.year_income -= Company.CORPORATE_TAX * self.year_income # Taxes and other expenses at 40% to limit growth speed
+        self.year_income -= self.country.CORPORATE_TAX * self.year_income # Taxes and other expenses at 40% to limit growth speed

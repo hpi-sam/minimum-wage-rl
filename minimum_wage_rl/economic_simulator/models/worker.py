@@ -35,9 +35,13 @@ class Worker(models.Model):
     JOB_CHANGE_THRESHOLD = 95
     JOB_SATISFACTION_FACTOR = 100
 
+    SKILL_SET_WEIGHTAGE = float(config_parser.get("worker","skill_set_weightage"))
+    EXPERIENCE_WEIGHTAGE = float(config_parser.get("worker","experience_weightage"))
+
     worker_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE)
     country_of_residence = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
+    works_for_company = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE)
 
      # Current skill level of the employee. Junior: (1-25) Senior: (25.1 - 70) Executive (70.1 - 100)
     skill_level = models.FloatField(default=float(config_parser.get("market","initial_skill_level")))
@@ -51,6 +55,14 @@ class Worker(models.Model):
     buy_first_extra_product = models.BooleanField(default=False)
     buy_second_extra_product = models.BooleanField(default=False)
     retired = models.BooleanField(default=False)
+
+    worker_score = models.FloatField(default=0.0)
+
+    create_start_up = models.BooleanField(default=False)
+    start_up_score = models.FloatField(default=0.0)
+
+    # Based on the company size - small/medium/large
+    skill_improvement_rate = models.FloatField(default=0.0)
 
     def InitializeEmployee(self, initialBalance, country): #MWCountry
         self.worker_account_balance = initialBalance

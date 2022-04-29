@@ -10,7 +10,7 @@ class Bank(models.Model):
         db_table = "bank"
 
     liquid_capital = models.FloatField(default=0.0)
-    interest_rates = models.FloatField(default=config_parser.get("bank","initial_interest_rates"))
+    interest_rate = models.FloatField(default=config_parser.get("bank","initial_interest_rates"))
     bank_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)    
         
     def initialize_bank(self, cash):
