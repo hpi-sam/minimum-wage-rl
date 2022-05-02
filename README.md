@@ -26,10 +26,10 @@
     * Authorization: API Key  Token <>
 
 4. Perform Action (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
-    (Add value of minimum wage in place of <action-value> )
-    * Method : GET
+    * Method : POST
     * Endpoint: base_url/perform-action/<action-value>
     * Authorization: API Key  Token <>
+    * Input: ```{ "minimum_wage": <value> }```
   
 5. End Game (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
     * Method : GET
