@@ -14,6 +14,7 @@ class Company(models.Model):
     # Magic Numbers
     # Possible action in future
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
+    INSTALLMENT_PERCENT = float(config_parser.get("bank","installment_percent"))
     MAX_EXECUTIVE_SALARY = 95       
     MAX_SENIOR_SALARY = 65          
     MAX_JUNIOR_OFFER = 20          
@@ -69,6 +70,8 @@ class Company(models.Model):
 
     loan_taken = models.BooleanField(default=False)
     loan_amount = models.FloatField(default=0.0)
+
+    closed = models.BooleanField(default=False)
     
     def InitializeCompany(self, initialBalance, companyType, country): #MWCountry
     

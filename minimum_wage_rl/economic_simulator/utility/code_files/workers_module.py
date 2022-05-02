@@ -4,6 +4,7 @@ from ...models.worker import Worker
 from ...models.market import Market
 # import .company_module
 from .company_module import get_salary_paid, hiring, initialize_company
+from .common_module import retire
 
 def evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_list, unemp_sen_worker_list, unemp_exec_worker_list, 
                     emp_worker_list, min_startup_score, max_startup_score):
@@ -116,10 +117,6 @@ def start_company(amount_needed, worker, country, loan_taken):
     # Create positions
     hiring(company)
     return company
-
-def retire(worker):
-    worker.is_employed = False
-    worker.retired = True
 
 def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):
      

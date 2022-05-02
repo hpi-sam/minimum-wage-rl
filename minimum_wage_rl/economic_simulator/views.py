@@ -1,7 +1,9 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from .utility.start_up import Start
-from .utility.simulate import step
+# from django.http import HttpResponse
+# from .utility.start_up import Start
+# from .utility.simulate import step
+from .utility.start_up_2 import start
+from .utility.simulate_2 import step
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
@@ -21,11 +23,16 @@ from .AI_model.actor_critic import actor_critic_main
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def start_game(request):
-    print("========================== Ready Function ===================================")
-    # creaste user
-    mm_model = Start(request.user)
-    return Response({'status':200, 'message':'Hello from here'})
+def start_game(request):    
+    user_data = start(request.user)
+
+    ai_data = user_data.copy()
+
+    final_response = {"User Data": user_data, "AI Data": ai_data}
+
+    json_reponse = json.loads(json.dumps(final_response))
+    return Response({'status':200, 'message':json_reponse})
+
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
@@ -35,11 +42,11 @@ def end_game(request):
     game_obj = get_latest_game(request)
 
     if game_obj == None:
-        return HttpResponse({"status":200, "message":"No Game to end"})
+        return Response({"status":200, "message":"No Game to end"})
     else:
         game_obj.game_ended = True
         game_obj.save()
-        return HttpResponse({"status":200, "message":"Game to ended successfully"})
+        return Response({"status":200, "message":"Game to ended successfully"})
 
 def get_latest_game(request):
     
@@ -91,16 +98,19 @@ def create_user(request):
 
 #     return Response({'status':200, 'message':'Hello from here'})
 
-@api_view(http_method_names=['GET'])
+@api_view(http_method_names=['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def perform_action(request, action):
+def perform_action(request):
 
-    state_reward = step(action, request.user)
+    action_map = request.data
+    user_data = step(action_map, request.user)
 
-    print(state_reward)
+    ai_data = user_data.copy()
 
-    json_reponse = json.dumps(state_reward)
+    final_response = {"User Data": user_data, "AI Data": ai_data}
+
+    json_reponse = json.loads(json.dumps(final_response))
     return Response({'status':200, 'message':json_reponse})
 
 @api_view(http_method_names=['GET'])
@@ -109,3 +119,14 @@ def perform_action(request, action):
 def train(request):
     actor_critic_main.train(request.user)
     return Response({'status':200, 'message':"Traning completed"})
+
+
+# @api_view(http_method_names=['POST'])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+# def test_post(request):
+#     d = request.data
+#     print(d["minwage"])
+#     print(d["interest"])
+#     print("hello")
+#     return Response({'status':200, 'message':"test completed"})

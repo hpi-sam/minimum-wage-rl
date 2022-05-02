@@ -1,13 +1,11 @@
 [game]
-discrete_action=True
+discrete_action=False
 
 [market]
 inflation=0.01
 num_small_business=3
 num_medium_business=2
 num_large_business=1
-product_price=0.1
-initial_minimum_wage=2.0
 initial_skill_level=1.0
 senior_salary_percent=0.05
 exec_salary_percent=0.1
@@ -22,13 +20,14 @@ cmp_age_weightage=0.3
 cmp_acct_balance_weightage=0.7
 initial_product_price=1
 
+[minwage]
+initial_minimum_wage=2.0
+
 [inflation]
 threshold_inflation=2.0
 threshold_quantity_increase=0.75
 bank_min_balance_inflation=0.5
 bank_threshold_loan_inflation=0.4
-
-
 
 [company]
 hiring_budget_percent=0.3
@@ -49,10 +48,13 @@ income_tax=0.05
 
 [bank]
 initial_interest_rates=0.01
+installment_percent=0.1
+initial_bank_balance=500.0
 
 [worker]
 skill_set_weightage=0.7
 experience_weightage=0.3
+initial_acct_balance=0.0
 
 [scenario]
 unregulated=1

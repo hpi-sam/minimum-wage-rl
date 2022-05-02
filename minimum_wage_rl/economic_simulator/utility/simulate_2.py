@@ -8,6 +8,8 @@ from ..models.market import Market
 from ..models.company import Company
 from ..models.game import Game
 
+from django.db.models import F
+
 from .code_files.perform_action import perform_action
 from .code_files import country_module
 from .code_files import company_module
@@ -19,6 +21,7 @@ from .config import ConfigurationParser
 from django.db import models
 import numpy as np
 from functools import reduce
+from django.db import transaction
 
 
 config_parser = ConfigurationParser.get_instance().parser
@@ -39,7 +42,7 @@ discrete_action = bool(config_parser.get("game","discrete_action"))
 #     return minimum_wage
 
 
-def step(action, user):
+def step(action_map, user):
     
     # Get all data from DB
 
@@ -47,22 +50,22 @@ def step(action, user):
 
     country = Country.objects.get(player=user, game=game)
 
-    # Increase age of all companies by 1
     # Get all companies
     country_companies_list = list(country.company_set.all())
 
     # Increase age of all workers by 1
+    Worker.objects.filter(country_of_residence=country).update(age=F("age") + 1)
+
     # Get all workers
     country_workers_list = list(country.worker_set.filter(retired=False))
 
     # Get all unemployed workers
     unemployed_workers_list = country.worker_set.filter(retired=False, is_employed=False)
 
-    action_map = {"minimum_wage":action}
+    # action_map = {"minimum_wage":action}
     # Step 1 - Change minimum wage - Perform action function
+    discrete_action = False
     perform_action(action_map,country,discrete_action)
-
-    # *************** Increase age of all workers here ***************
 
     country.temp_worker_list.extend(country_workers_list)
     country.temp_company_list.extend(country_companies_list)
@@ -88,57 +91,67 @@ def __get_latest_game(user):
     return game_obj
 
 
+@transaction.atomic
 def run_market(country, country_companies_list, unemployed_workers_list):
 
-    metrics = {"num_small_companies":0, "num_medium_companies":0, "num_large_companies":0,
-                "total_jun_pos":0, "total_sen_pos":0, "total_exec_pos":0, 
-                "average_jun_sal":0, "average_sen_sal":0, "average_exec_sal":0,
-                "average_sal":0, "unemployment_rate":0, "poverty_rate:":0}
-    
+    country.year = country.year + 1 
     metrics = Metric()
+    metrics.year = country.year
 
     # ================ 1: COUNTRY MODULE - Increase population ================
     new_workers_list =  country_module.add_new_workers(country)
     fired_workers = []
     employed_workers_list = []
     
-    # loop through unemployed_workers_list and retire them. ********************************* 
+    # ================ 2: Retire Employees ================
+    non_retired_workers = []
+    for each_unemployed_worker in unemployed_workers_list:
+        if each_unemployed_worker.age >= 60:
+            workers_module.retire(each_unemployed_worker, country)
+        else:
+            non_retired_workers.append(each_unemployed_worker)
 
+    employed_workers_list = list(non_retired_workers)
 
-    # ================ 2: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
+    # ================ 3: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
+    open_companies_list = []
+    closed_companies_list = []
     for each_company in country_companies_list:
         
-        # 2.1: Increase age of company
+        # 3.1: Increase age of company
         each_company.company_age = each_company.company_age + 1 
 
-        # =========== PAY LOAN =================
+        # 3.2: Pay Loan
+        company_module.pay_loan(each_company,country.bank)
 
-        # 2.2: Pay taxes
+        # 3.3: Pay taxes
         company_module.pay_tax(each_company,country.bank)
 
-        # ******************* retire workers above 60 here ***********************
-        # 2.3: Pay salary to workers and Earn money from workers
+        # 3.4: Pay salary to workers and Earn money from workers
         company_module.yearly_financial_transactions(each_company,country)
 
-        # 2.4: Create Jobs/Fire people
+        # 3.5: Create Jobs/Fire people
         operation_map = {"close":False,"fired_workers":[],"employed_workers":[]}
         company_module.hiring_and_firing(each_company, operation_map)
 
-        # 2.5 Change company size
-        company_module.set_company_size(company_item)
+        # 3.6: Change company size
+        company_module.set_company_size(each_company)
 
-        # 2.6: Find Company score
+        # 3.7: Find Company score
         each_company.company_score = Market.COMPANY_AGE_WEIGHTAGE * each_company.company_age + \
                                     Market.COMPANY_ACCT_BALANCE_WEIGHTAGE * each_company.company_account_balance
         
         fired_workers.extend(operation_map["fired_workers"])
         employed_workers_list.extend(operation_map["employed_workers"])
 
-        # 2.6 Close the company if no account balance
+        # 3.8: Close the company if no account balance
         if operation_map["close"]:
-            close_company(each_company)
+            company = close_company(each_company, fired_workers)
+            closed_companies_list.append(company)    
+        else:
+            open_companies_list.append(each_company)
 
-    # ================ 3: WORKERS MODULE ================
+    # ================ 4: WORKERS MODULE ================
     all_workers_list = []
     all_workers_list.extend(unemployed_workers_list)
     all_workers_list.extend(new_workers_list)
@@ -159,29 +172,28 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     emp_worker_list = []
     unemp_worker_list = []
 
-    # 3.1 Worker Evaluation : worker score, startup score, 
+    # 4.1 Worker Evaluation : worker score, startup score, 
     workers_module.evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, 
                                   min_startup_score, max_startup_score)
 
-    # 3.2 Create Start ups
+    # 4.2 Create Start ups
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list)
 
-    # 3.3 Getting hired
+    # 4.3 Getting hired and Set metrics
     # Input unemp_jun_worker_list, unemp_sen_worker_list, unemp_exec_worker_list, 
     # all_companies = new + old --- sorted using company score
-
     unemp_jun_worker_list = sorted(unemp_jun_worker_list, key=lambda x: x.worker_score, reverse=True)
     unemp_sen_worker_list = sorted(unemp_sen_worker_list, key=lambda x: x.worker_score, reverse=True)
     unemp_exec_worker_list = sorted(unemp_exec_worker_list, key=lambda x: x.worker_score, reverse=True)
 
-    country_companies_list.extend(new_companies_list)
+    open_companies_list.extend(new_companies_list)
 
-    country_companies_list = sorted(country_companies_list, key=lambda x: x.company_score, reverse=True)
+    open_companies_list = sorted(open_companies_list, key=lambda x: x.company_score, reverse=True)
 
 
-    for company_item in country_companies_list:
+    for company_item in open_companies_list:
         
         if company_item.open_junior_pos > 0:
             needed_positions = company_item.open_junior_pos
@@ -208,147 +220,172 @@ def run_market(country, country_companies_list, unemployed_workers_list):
             company_item.open_exec_pos = company_item.open_exec_pos - available_positions
 
         company_module.set_company_size(company_item)
-        metrics_module.set_company_size_metric(company_item, metrics)
+        metrics_module.set_company_size_metrics(company_item, metrics)
         metrics_module.set_job_pos_metrics(company_item, metrics)
 
 
-    # 4: INFLATION MODULE
+    # 5: INFLATION MODULE
     unemp_worker_list.extend(unemp_jun_worker_list)
     unemp_worker_list.extend(unemp_sen_worker_list)
     unemp_worker_list.extend(unemp_exec_worker_list)
 
-    inflation_module.set_product_price_and_quantity(emp_worker_list ,unemp_worker_list, country)
+    inflation_module.set_product_price_and_quantity(emp_worker_list ,unemp_worker_list, country, metrics)
 
-    # 5 Buy products
+    # 6: Buy products and Set metrics
     fin_workers_list = []
     fin_workers_list.extend(emp_worker_list)
     fin_workers_list.extend(unemp_worker_list)
     poverty_count = 0
 
-    inflation_module.buy_products(fin_workers_list, country, poverty_count)
+    inflation_module.buy_products(fin_workers_list, country, poverty_count, metrics)
+
+    # 7: Save all data
+    # Try bulk update and bulk create 
     
-    # Set Metrics:
+    # save bank
+    country.bank.save()
     
+    # save market
+    country.market.save()
+
+    # save country
+    country.save()
+
+    # save metrics
+    metrics.save()
+    
+    # save company list
+    for each_company in open_companies_list:
+        each_company.save()
+    
+    for each_company in closed_companies_list:
+        each_company.save()
+
+    # save workers list
+    for each_worker in fin_workers_list:
+        each_worker.save()
+
+    return get_current_state_reward(country, metrics)
 
 
     # ================================================================================================ #
     # ----                                         HERE                                            ----
     # ================================================================================================ #
-    new_workers_created_list = []
-    new_companies_created_list = []
+    # new_workers_created_list = []
+    # new_companies_created_list = []
 
     # DELETE THIS
-    country_workers_list = []
+    # country_workers_list = []
 
     # country_companies = self.testingCountry.companies # Dictionary<int, MWCompany> 
     # country_workers = self.testingCountry.workers # Dictionary<int, MWEmployee> 
-    speedup = 30.415  # 365/12 is the speedup
+    # speedup = 30.415  # 365/12 is the speedup
 
     # 1. Companies must pay employees and employees must give value back to the companies        
-    for each_company in country_companies_list:
+    # for each_company in country_companies_list:
     
         # company = V
-        all_workers = list(each_company.worker_set.filter(retired=False))
-        for each_worker in all_workers:            
+        # all_workers = list(each_company.worker_set.filter(retired=False))
+        # for each_worker in all_workers:            
             # Paying employees
-            each_worker.worker_account_balance += each_worker.salary
-            each_company.company_account_balance -= each_worker.salary
+            # each_worker.worker_account_balance += each_worker.salary
+            # each_company.company_account_balance -= each_worker.salary
 
             # Giving value back to company
-            each_company.company_account_balance += each_worker.skill_level
-            each_company.year_income += (each_worker.skill_level - each_worker.salary)        
+            # each_company.company_account_balance += each_worker.skill_level
+            # each_company.year_income += (each_worker.skill_level - each_worker.salary)        
 
     # 2. People buy products every year
     # Employee Iteration  
-    for each_worker in country_workers_list:        
-        each_worker.buy_products(speedup, country.market)
+    # for each_worker in country_workers_list:        
+    #     each_worker.buy_products(speedup, country.market)
     
-    # 3. Check if year to be increased. Yearly 
-    if country.market.month % 12 != 0:
-        country.market.year = country.market.year + 1 
+    # # 3. Check if year to be increased. Yearly 
+    # if country.market.month % 12 != 0:
+    #     country.market.year = country.market.year + 1 
 
-        # 4. Every year - Add new citizens
-        new_workers_created_list = country.add_new_citizens(country.market.amount_of_new_citizens)
-        country.temp_worker_list.extend(new_workers_created_list)
-        if country.market.amount_of_new_citizens < Market.NUM_CITIZENS_LIMIT:
-            country.market.amount_of_new_citizens += 1
+    #     # 4. Every year - Add new citizens
+    #     new_workers_created_list = country.add_new_citizens(country.market.amount_of_new_citizens)
+    #     country.temp_worker_list.extend(new_workers_created_list)
+    #     if country.market.amount_of_new_citizens < Market.NUM_CITIZENS_LIMIT:
+    #         country.market.amount_of_new_citizens += 1
 
-        totalOpenPositions = 0
-        totalUnemployed = country.total_unemployed
+    #     totalOpenPositions = 0
+    #     totalUnemployed = country.total_unemployed
 
-        # 5. Every year - Company Iteration
-        for each_company in country_companies_list:            
-            each_company.evaluate_company_step() # Step 1. Evaluate year and reset
-            totalOpenPositions += each_company.open_job_positions() # Step 2. Open new job positions based on balance and company size
+    #     # 5. Every year - Company Iteration
+    #     for each_company in country_companies_list:            
+    #         each_company.evaluate_company_step() # Step 1. Evaluate year and reset
+    #         totalOpenPositions += each_company.open_job_positions() # Step 2. Open new job positions based on balance and company size
         
         # citizensToRemove = list()
         # 6. Every year - Employee Iteration
-        for each_worker in country_workers_list:
-            each_worker.age = each_worker.age + 1
+    #     for each_worker in country_workers_list:
+    #         each_worker.age = each_worker.age + 1
             
-            if not(each_worker.has_company) and each_worker.age > Market.CITIZEN_MAX_AGE:
-                each_worker.remove_worker()
-            else:
-                new_company = each_worker.evaluate_worker_step(country_companies_list)
-                if new_company != None:
-                    new_companies_created_list.append(new_company)
+    #         if not(each_worker.has_company) and each_worker.age > Market.CITIZEN_MAX_AGE:
+    #             each_worker.remove_worker()
+    #         else:
+    #             new_company = each_worker.evaluate_worker_step(country_companies_list)
+    #             if new_company != None:
+    #                 new_companies_created_list.append(new_company)
             
-        country.temp_company_list.extend(new_companies_created_list)  
+    #     country.temp_company_list.extend(new_companies_created_list)  
 
-        # 9. Every year - Updating product prices
-        country.market.update_product_prices()
+    #     # 9. Every year - Updating product prices
+    #     country.market.update_product_prices()
 
-        # 10. Every year - Calculate Stats
-        countryStatsOutput = country.calculate_statistics() # string 
-        country.market.market_value_year = 0            
+    #     # 10. Every year - Calculate Stats
+    #     countryStatsOutput = country.calculate_statistics() # string 
+    #     country.market.market_value_year = 0            
                     
-        # SETTING EXCEL VALUES
-        values_dict = dict()
-        values_dict["year"] = country.market.year
-        values_dict["Average Salary"] = country.average_income
-        values_dict["productPrice"] = country.market.product_price
-        values_dict["Poverty"] = country.poverty_rate
-        values_dict["Unemployment"] = country.unemployment_rate
-        values_dict["Small Company"] = country.num_small_companies
-        values_dict["Medium Company"] = country.num_medium_company
-        values_dict["Large Company"] = country.num_large_company
-        values_dict["Junior"] = country.total_jun_jobs
-        values_dict["Senior"] = country.total_senior_jobs
-        values_dict["Executive"] = country.total_executive_jobs
-        values_dict["Minimum Wage"] = country.minimum_wage
+    #     # SETTING EXCEL VALUES
+    #     values_dict = dict()
+    #     values_dict["year"] = country.market.year
+    #     values_dict["Average Salary"] = country.average_income
+    #     values_dict["productPrice"] = country.market.product_price
+    #     values_dict["Poverty"] = country.poverty_rate
+    #     values_dict["Unemployment"] = country.unemployment_rate
+    #     values_dict["Small Company"] = country.num_small_companies
+    #     values_dict["Medium Company"] = country.num_medium_company
+    #     values_dict["Large Company"] = country.num_large_company
+    #     values_dict["Junior"] = country.total_jun_jobs
+    #     values_dict["Senior"] = country.total_senior_jobs
+    #     values_dict["Executive"] = country.total_executive_jobs
+    #     values_dict["Minimum Wage"] = country.minimum_wage
 
-        country.market.all_data.append(values_dict)
+    #     country.market.all_data.append(values_dict)
 
-        print("============ YEAR - " + str(country.market.year) + "=============")
+    #     print("============ YEAR - " + str(country.market.year) + "=============")
 
-    # print()
-    country.bank.save()
-    # print()
-    country.market.save()
-    # print()
-    country.save()
-    if len(new_workers_created_list) != 0:
-        for each_worker in new_workers_created_list:
-            each_worker.save()
-        # print(new_workers_created_list)
+    # # print()
+    # country.bank.save()
+    # # print()
+    # country.market.save()
+    # # print()
+    # country.save()
+    # if len(new_workers_created_list) != 0:
+    #     for each_worker in new_workers_created_list:
+    #         each_worker.save()
+    #     # print(new_workers_created_list)
     
-    if len(country_workers_list) != 0:
-        for each_worker in country_workers_list:
-            each_worker.save()
-        # print(country_workers_list)
+    # if len(country_workers_list) != 0:
+    #     for each_worker in country_workers_list:
+    #         each_worker.save()
+    #     # print(country_workers_list)
     
-    if len(new_companies_created_list) != 0:
-        for each_company in new_companies_created_list:
-            each_company.save()
+    # if len(new_companies_created_list) != 0:
+    #     for each_company in new_companies_created_list:
+    #         each_company.save()
 
-        # print(new_companies_created_list)
+    #     # print(new_companies_created_list)
     
-    if len(country_companies_list) != 0:
-        for each_company in country_companies_list:
-            each_company.save()
+    # if len(country_companies_list) != 0:
+    #     for each_company in country_companies_list:
+    #         each_company.save()
 
 
-    return get_current_state_reward(country)
+    
         # print(country_companies_list)
 
 
@@ -364,26 +401,48 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
 
 
-def close_company(each_company):
-    pass
+def close_company(each_company, fired_workers):
+    fired_list = []
+    fired_list.extend(each_company.junior_workers_list)
+    fired_list.extend(each_company.senior_workers_list)
+    fired_list.extend(each_company.exec_workers_list)
 
-def get_current_state_reward(country):
+    fired_workers.extend(company_module.fire(fired_list))
     
-    state_values = []
+    each_company.junior_workers_list = []
+    each_company.senior_workers_list = []
+    each_company.exec_workers_list = []
 
-    state_values.append(country.unemployment_rate)
-    state_values.append(country.poverty_rate)
-    state_values.append(country.minimum_wage)
-    state_values.append(country.average_income - 30 * country.market.product_price)
+    each_company.closed = True
 
-    reward = calculate_reward(country)
+    return each_company
 
-    state_reward = dict()
-    state_reward["state"] = state_values
-    state_reward["reward"] = reward
-    state_reward["done"] = False
 
-    return state_reward
+def get_current_state_reward(country, metrics):
+    
+    # state_values = []
+
+    current_state = dict()
+    current_state["Unemployment Rate"] = float("{:.2f}".format(metrics.unemployment_rate))
+    current_state["Poverty Rate"] = float("{:.2f}".format(metrics.poverty_rate))
+    current_state["Minimum wage"] = metrics.minimum_wage
+    current_state["Inflation Rate"] = float("{:.2f}".format(metrics.inflation_rate))
+    current_state["population"] = metrics.population
+
+
+    # state_values.append(country.unemployment_rate)
+    # state_values.append(country.poverty_rate)
+    # state_values.append(country.minimum_wage)
+    # state_values.append(country.average_income - 30 * country.market.product_price)
+
+    # reward = calculate_reward(country)
+
+    # state_reward = dict()
+    # state_reward["state"] = state_values
+    # state_reward["reward"] = reward
+    # state_reward["done"] = False
+
+    return current_state
 
 def calculate_reward(country):
     # 3. Companies

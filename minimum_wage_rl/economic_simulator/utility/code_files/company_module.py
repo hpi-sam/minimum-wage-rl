@@ -1,8 +1,30 @@
 from math import ceil, floor
+
+from .common_module import retire
 from ...models.country import Country
 from ...models.company import Company
 from ...models.worker import Worker
 from ...models.market import Market
+
+
+def pay_loan(company, central_bank):
+
+    if company.loan_taken:
+        interest_amount = central_bank.interest_rate * company.loan_amount
+        
+
+        if company.loan_amount < 100:
+            total_amount = interest_amount + company.loan_amount
+            central_bank.deposit_money(total_amount)
+            company.loan_taken = False
+            company.loan_amount = 0.0
+        
+        else:
+            installment_amount = Company.INSTALLMENT_PERCENT * company.loan_amount
+            total_amount = interest_amount + installment_amount
+            central_bank.deposit_money(total_amount)
+            company.loan_amount = company.loan_amount - installment_amount
+
 
 def pay_tax(company, central_bank):
     tax = Country.CORPORATE_TAX * company.company_account_balance
@@ -22,46 +44,51 @@ def yearly_financial_transactions(company, country):
     company.senior_workers_list = []
     company.exec_workers_list = []
 
-    for each_worker in company.worker_list:
+    for each_worker in worker_list:
         
-        each_worker.skill_improvement_rate =  company.skill_improvement_rate
-        # Adjust salary based on minimum wage and skill_set
-        if each_worker.skillset <= Worker.JUNIOR_SKILL_LEVEL:
-            each_worker.salary = country.minimum_wage
-            company.num_junior_workers = company.num_junior_workers + 1
-            cumulative_junior_salary = cumulative_junior_salary + each_worker.salary
+        retire_flag = False
 
-            company.junior_workers_list.append(each_worker)
+        if each_worker.age >= 60:
+            retire(each_worker, country)
+            retire_flag = True
 
-        elif each_worker.skillset <= Worker.SENIOR_SKILL_LEVEL:
-            each_worker.salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
-            company.num_senior_workers = company.num_senior_workers + 1
-            cumulative_senior_salary = cumulative_senior_salary + each_worker.salary
-            company.senior_workers_list.append(each_worker)
+        if not(retire_flag):
+            each_worker.skill_improvement_rate =  company.skill_improvement_rate
+            # Adjust salary based on minimum wage and skill_set
+            if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+                each_worker.salary = country.minimum_wage
+                company.num_junior_workers = company.num_junior_workers + 1
+                cumulative_junior_salary = cumulative_junior_salary + each_worker.salary
 
-        else:
-            each_worker.salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
-            company.num_executive_workers = company.num_executive_workers + 1
-            cumulative_executive_salary = cumulative_executive_salary + each_worker.salary
-            company.exec_workers_list.append(each_worker)
+                company.junior_workers_list.append(each_worker)
 
-        # each_worker.worker_account_balance += each_worker.salary
-        # company.company_account_balance -= each_worker.salary
-        get_salary_paid(each_worker, company)
+            elif each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL:
+                each_worker.salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
+                company.num_senior_workers = company.num_senior_workers + 1
+                cumulative_senior_salary = cumulative_senior_salary + each_worker.salary
+                company.senior_workers_list.append(each_worker)
 
-        # Giving value back to company
+            else:
+                each_worker.salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
+                company.num_executive_workers = company.num_executive_workers + 1
+                cumulative_executive_salary = cumulative_executive_salary + each_worker.salary
+                company.exec_workers_list.append(each_worker)
+
+            # Giving value back to company and getting salary and Pay income tax
+            get_salary_paid(each_worker, company)
         
-        all_workers_list.append(each_worker)
+            all_workers_list.append(each_worker)
 
 # ***************************************************************************************
 # ****************** CHANGE COMPANY TYPE and IMPROVE WORKER SKILL RATE ******************
 # ***************************************************************************************
 
-# each_company.year_income += (each_worker.skill_level - each_worker.salary)
+    senior_salary_offer = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
+    executive_salary_offer = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 
-    company.avg_junior_salary = cumulative_junior_salary/company.num_junior_workers if company.num_junior_workers > 0 else 0 
-    company.avg_senior_salary = cumulative_senior_salary/company.num_senior_workers if company.num_senior_workers > 0 else 0 
-    company.avg_executive_salary = cumulative_executive_salary/company.num_executive_workers if company.num_executive_workers > 0 else 0
+    company.avg_junior_salary = cumulative_junior_salary/company.num_junior_workers if company.num_junior_workers > 0 else country.minimum_wage
+    company.avg_senior_salary = cumulative_senior_salary/company.num_senior_workers if company.num_senior_workers > 0 else senior_salary_offer
+    company.avg_executive_salary = cumulative_executive_salary/company.num_executive_workers if company.num_executive_workers > 0 else executive_salary_offer
 
     return all_workers_list
 
@@ -162,7 +189,7 @@ def firing(company, operation_map):
 def fire(workers_list):
     
     for each_worker in workers_list:
-        each_worker.company_obj = None
+        each_worker.works_for_company = None
         each_worker.is_employed = False
     
     return workers_list
@@ -228,9 +255,9 @@ def hiring(company):
 
 
 def open_new_positions(hiring_budget,company):
-    junior_hires = Market.REQUIRED_JUN_JOB_PERCENT  * 10
-    senior_hires = Market.REQUIRED_SEN_JOB_PERCENT  * 10
-    exec_hires = Market.REQUIRED_EXEC_JOB_PERCENT  * 10
+    junior_hires = int(Market.REQUIRED_JUN_JOB_PERCENT  * 10)
+    senior_hires = int(Market.REQUIRED_SEN_JOB_PERCENT  * 10)
+    exec_hires = int(Market.REQUIRED_EXEC_JOB_PERCENT  * 10)
 
     budget_empty = False
 
@@ -283,9 +310,9 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
     budget_empty = False
 
     job_position_map = {"junior_pos":junior_pos,"senior_pos":senior_pos,"exec_pos":exec_pos}
-    job_position_map = sorted(job_position_map.items(), key=lambda x: x[1], reverse=True)
+    job_position_map = dict(sorted(job_position_map.items(), key=lambda x: x[1], reverse=True))
 
-    for _ in total_pos:
+    for _ in range(total_pos):
         
         for key, value in job_position_map.items():
             if key == "junior_pos" and value > 0:
@@ -396,7 +423,7 @@ def initialize_company(company, initial_balance, country):
     company.executive_salary_offer = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 
     # Small Company
-    if initial_balance > Market.SMALL_CMP_INIT_BALANCE and initial_balance < Market.MEDIUM_CMP_INIT_BALANCE:
+    if initial_balance >= Market.SMALL_CMP_INIT_BALANCE and initial_balance < Market.MEDIUM_CMP_INIT_BALANCE:
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 2
         company.junior_hiring_ratio = 6
@@ -404,7 +431,7 @@ def initialize_company(company, initial_balance, country):
         company.company_size_type = Market.SMALL_COMPANY_TYPE    
     
     # Medium Company
-    elif initial_balance > Market.MEDIUM_CMP_INIT_BALANCE and initial_balance < Market.LARGE_CMP_INIT_BALANCE:
+    elif initial_balance >= Market.MEDIUM_CMP_INIT_BALANCE and initial_balance < Market.LARGE_CMP_INIT_BALANCE:
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 6
         company.junior_hiring_ratio = 6
@@ -436,7 +463,10 @@ def set_company_size(company):
         company.skill_improvement_rate = 2
 
 def get_salary_paid(worker, company):
-    worker.worker_account_balance += worker.salary
-    company.company_account_balance -= worker.salary
+    worker.worker_account_balance += worker.salary * 12
+    company.company_account_balance -= worker.salary * 12
+    
+    # Pay income tax
     worker.worker_account_balance = worker.worker_account_balance - worker.salary*Country.INCOME_TAX
-    company.company_account_balance += worker.skill_level
+
+    company.company_account_balance += worker.skill_level * 12

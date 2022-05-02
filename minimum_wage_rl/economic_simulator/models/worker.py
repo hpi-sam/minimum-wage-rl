@@ -34,12 +34,13 @@ class Worker(models.Model):
     ENTREPRENERSHIP_NORMALIZING_FACTOR = 300
     JOB_CHANGE_THRESHOLD = 95
     JOB_SATISFACTION_FACTOR = 100
+    INITIAL_BANK_BALANCE = float(config_parser.get("worker","initial_acct_balance")) 
 
     SKILL_SET_WEIGHTAGE = float(config_parser.get("worker","skill_set_weightage"))
     EXPERIENCE_WEIGHTAGE = float(config_parser.get("worker","experience_weightage"))
 
     worker_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE)
+    # company_obj = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE)
     country_of_residence = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
     works_for_company = models.ForeignKey(to=Company, null=True, blank=True, on_delete=models.CASCADE)
 
