@@ -86,7 +86,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     
 def calculate_inflation(current_product_price, new_product_price, old_inflation, metrics):
     inflation = (new_product_price - current_product_price)/current_product_price
-    inflation_rate = (old_inflation - inflation)/old_inflation if old_inflation> 0 else 0
+    inflation_rate = (inflation - old_inflation)/old_inflation if old_inflation> 0 else (inflation - old_inflation)
     metrics.inflation = inflation
     metrics.inflation_rate = inflation_rate
 
@@ -96,13 +96,8 @@ def calculate_inflation(current_product_price, new_product_price, old_inflation,
 
 def buy_products(fin_workers_list, country, poverty_count, metrics):
 
-    jun_workers = 0
-    sen_workers = 0
-    exec_workers = 0
-
-    jun_worker_sal = 0
-    sen_worker_sal = 0
-    exec_worker_sal = 0
+    employee_details_map = {"jun_workers": 0, "sen_workers": 0, "exec_workers": 0, 
+                            "jun_worker_sal": 0.0, "sen_worker_sal": 0.0, "exec_worker_sal": 0.0}
 
     unemployed = 0
 
@@ -118,30 +113,31 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
             country.bank.liquid_capital = country.bank.liquid_capital + country.product_price * payable_months
             poverty_count = poverty_count + 1
 
-            salary_metrics(each_worker, jun_workers, sen_workers, exec_workers, jun_worker_sal, sen_worker_sal, exec_worker_sal)
+            salary_metrics(each_worker, employee_details_map)
 
             if not(each_worker.is_employed):
                 unemployed = unemployed + 1
         
     # Add mertrics
-    metrics.average_jun_sal = jun_worker_sal/jun_workers if jun_workers > 0 else 0
-    metrics.average_sen_sal = sen_worker_sal/sen_workers if sen_workers > 0 else 0
-    metrics.average_exec_sal = exec_worker_sal/exec_workers if exec_workers > 0 else 0
-    metrics.average_sal = (jun_worker_sal + sen_worker_sal + exec_worker_sal)/len(fin_workers_list) if len(fin_workers_list) > 0 else 0
+    metrics.average_jun_sal = employee_details_map["jun_worker_sal"]/employee_details_map["jun_workers"] if employee_details_map["jun_workers"] > 0 else 0
+    metrics.average_sen_sal = employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0
+    metrics.average_exec_sal = employee_details_map["exec_worker_sal"]/employee_details_map["exec_workers"] if employee_details_map["exec_workers"] > 0 else 0
+    metrics.average_sal = (employee_details_map["jun_worker_sal"] + employee_details_map["sen_worker_sal"] + employee_details_map["exec_worker_sal"])/len(fin_workers_list) if len(fin_workers_list) > 0 else 0
     metrics.unemployment_rate = unemployed/len(fin_workers_list) * 100
     metrics.poverty_rate = poverty_count/len(fin_workers_list) * 100
     metrics.population = len(fin_workers_list)
     metrics.minimum_wage = country.minimum_wage
 
-def salary_metrics(each_worker, jun_workers, sen_workers, exec_workers, jun_worker_sal, sen_worker_sal, exec_worker_sal):
+def salary_metrics(each_worker, employee_details_map):
 
     if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
-        jun_workers = jun_workers + 1
-        jun_worker_sal = jun_worker_sal + each_worker.salary
+        employee_details_map["jun_workers"] = employee_details_map["jun_workers"] + 1
+        employee_details_map["jun_worker_sal"] = employee_details_map["jun_worker_sal"] + each_worker.salary
+
     elif each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL:
-        sen_workers = sen_workers + 1
-        sen_worker_sal = sen_worker_sal + each_worker.salary
+        employee_details_map["sen_workers"] = employee_details_map["sen_workers"] + 1
+        employee_details_map["sen_worker_sal"] = employee_details_map["sen_worker_sal"] + each_worker.salary
     else:
-        exec_workers = exec_workers + 1
-        exec_worker_sal = exec_worker_sal + each_worker.salary
+        employee_details_map["exec_workers"] = employee_details_map["exec_workers"] + 1
+        employee_details_map["exec_worker_sal"] = employee_details_map["exec_worker_sal"] + each_worker.salary
         

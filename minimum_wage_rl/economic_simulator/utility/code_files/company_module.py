@@ -100,6 +100,9 @@ def hiring_and_firing(company, operation_map):
         firing(company, operation_map)
     else:
         hiring(company)
+        operation_map["employed_workers"].extend(company.junior_workers_list)
+        operation_map["employed_workers"].extend(company.senior_workers_list)
+        operation_map["employed_workers"].extend(company.exec_workers_list)
 
 def firing(company, operation_map):
     deficit = Market.MINIMUM_COMPANY_BALANCE - company.company_account_balance
@@ -243,15 +246,28 @@ def hiring(company):
                         abs(current_exec_job_percentage - Market.REQUIRED_EXEC_JOB_PERCENT))/ ((juniors_needed * Market.REQUIRED_JUN_JOB_PERCENT) + 
                         (seniors_needed * Market.REQUIRED_SEN_JOB_PERCENT) +
                         (exec_needed * Market.REQUIRED_EXEC_JOB_PERCENT))
+        
+        factor = 10 if total_workers == 0 else total_workers
 
-        junior_pos = round(juniors_needed * Market.REQUIRED_JUN_JOB_PERCENT * common_factor * total_workers)
-        senior_pos = round(seniors_needed * Market.REQUIRED_SEN_JOB_PERCENT * common_factor * total_workers)
-        exec_pos = round(exec_needed * Market.REQUIRED_EXEC_JOB_PERCENT * common_factor * total_workers)
+        junior_pos = round(juniors_needed * Market.REQUIRED_JUN_JOB_PERCENT * common_factor * factor)
+        senior_pos = round(seniors_needed * Market.REQUIRED_SEN_JOB_PERCENT * common_factor * factor)
+        exec_pos = round(exec_needed * Market.REQUIRED_EXEC_JOB_PERCENT * common_factor * factor)
 
-        budget_empty = hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos)
+        print(company.open_junior_pos)
 
+        budget_empty, hiring_budget = hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos)
+
+        print(company.open_junior_pos)
+        print(company.open_senior_pos)
+        print(company.open_exec_pos)
+        
         if not(budget_empty):
             open_new_positions(hiring_budget, company)
+        
+        
+        print(company.open_junior_pos)
+        print(company.open_senior_pos)
+        print(company.open_exec_pos)
 
 
 def open_new_positions(hiring_budget,company):
@@ -294,7 +310,7 @@ def open_new_positions(hiring_budget,company):
                 budget_empty = True
                 break
         # Reset if budget still there to hire
-        if hiring_budget>0 and junior_hires == 0 and senior_hires == 0 and exec==0:
+        if hiring_budget>0 and junior_hires == 0 and senior_hires == 0 and exec_hires==0:
             junior_hires = Market.REQUIRED_JUN_JOB_PERCENT  * 10
             senior_hires = Market.REQUIRED_SEN_JOB_PERCENT  * 10
             exec_hires = Market.REQUIRED_EXEC_JOB_PERCENT  * 10
@@ -304,6 +320,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
 
     total_pos = junior_pos + senior_pos + exec_pos
 
+    n = max(junior_pos, senior_pos, exec_pos)
     open_junior_pos = 0
     open_senior_pos = 0
     open_exec_pos = 0
@@ -312,7 +329,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
     job_position_map = {"junior_pos":junior_pos,"senior_pos":senior_pos,"exec_pos":exec_pos}
     job_position_map = dict(sorted(job_position_map.items(), key=lambda x: x[1], reverse=True))
 
-    for _ in range(total_pos):
+    for _ in range(n):
         
         for key, value in job_position_map.items():
             if key == "junior_pos" and value > 0:
@@ -351,7 +368,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
     company.open_junior_pos = open_junior_pos
     company.open_senior_pos = open_senior_pos
     company.open_exec_pos = open_exec_pos
-    return budget_empty
+    return (budget_empty, hiring_budget)
 
 # def open_new_positions(hiring_budget, company, junior_pos, senior_pos, exec_pos):
 #     total_pos = junior_pos + senior_pos + exec_pos
@@ -423,7 +440,8 @@ def initialize_company(company, initial_balance, country):
     company.executive_salary_offer = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 
     # Small Company
-    if initial_balance >= Market.SMALL_CMP_INIT_BALANCE and initial_balance < Market.MEDIUM_CMP_INIT_BALANCE:
+    # initial_balance >= Market.SMALL_CMP_INIT_BALANCE and 
+    if initial_balance < Market.MEDIUM_CMP_INIT_BALANCE:
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 2
         company.junior_hiring_ratio = 6
@@ -446,11 +464,15 @@ def initialize_company(company, initial_balance, country):
         company.skill_improvement_rate = 2
         company.company_size_type = Market.LARGE_COMPANY_TYPE
 
+    company.avg_junior_salary = country.minimum_wage
+    company.avg_senior_salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
+    company.avg_executive_salary =  country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 # ========================================= Create Company - END ==========================================
 
 def set_company_size(company):
 
-    if company.company_account_balance > Market.SMALL_CMP_INIT_BALANCE and company.company_account_balance < Market.MEDIUM_CMP_INIT_BALANCE:
+    # company.company_account_balance > Market.SMALL_CMP_INIT_BALANCE and 
+    if company.company_account_balance < Market.MEDIUM_CMP_INIT_BALANCE:
         company.company_size_type = Market.SMALL_COMPANY_TYPE
         company.skill_improvement_rate = 1
 

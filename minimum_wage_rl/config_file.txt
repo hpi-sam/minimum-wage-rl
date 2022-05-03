@@ -30,7 +30,7 @@ bank_min_balance_inflation=0.5
 bank_threshold_loan_inflation=0.4
 
 [company]
-hiring_budget_percent=0.3
+hiring_budget_percent=0.02
 
 [startup]
 acct_balance_weightage=0.4

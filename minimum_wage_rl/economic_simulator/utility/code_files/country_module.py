@@ -4,6 +4,7 @@ from economic_simulator.models import country
 from ...models.worker import Worker
 from ...models.country import Country
 from ...models.company import Company
+from ...models.market import Market
 from . import company_module
 
 JUNIOR_SKILL_LEVEL = 25
@@ -32,20 +33,17 @@ def create_company(country):
     # Creating Initial companies
     for _ in range(Country.INITIAL_NUM_SMALL_COMPANIES): # small
         company = Company()
-        company_module.initialize_company(company, 1000, country)
-        # InitializeCompany(company, 1000, 0, country)
+        company_module.initialize_company(company, Market.SMALL_CMP_INIT_BALANCE, country)
         all_companies_list.append(company)
     
     for _ in range(Country.INITIAL_NUM_MEDIUM_COMPANIES): # medium
         company = Company()
-        company_module.initialize_company(company, 5000, country)
-        # InitializeCompany(company, 5000, 1,country)
+        company_module.initialize_company(company, Market.MEDIUM_CMP_INIT_BALANCE, country)
         all_companies_list.append(company)
 
     for _ in range(Country.INITIAL_NUM_LARGE_COMPANIES): # large
         company = Company()
-        company_module.initialize_company(company, 25000, country)
-        # InitializeCompany(company, 25000, 2, country)
+        company_module.initialize_company(company, Market.LARGE_CMP_INIT_BALANCE, country)
         all_companies_list.append(company)
     
     return all_companies_list

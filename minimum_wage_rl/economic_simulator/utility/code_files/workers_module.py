@@ -62,12 +62,14 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
 
             # Loan needed
             if amount_needed > 0:
-                company = start_company(amount_needed, each_startup_founder, country, loan_taken=True)
+                company, amount_needed = start_company(amount_needed, each_startup_founder, country, loan_taken=True)
+                bank_startup_budget = bank_startup_budget - amount_needed
                 new_companies_list.append(company)                
 
             # Loan not needed -  Can open company without loan
             else:
-                company = start_company(0, each_startup_founder, country, loan_taken=False)
+                company, amount_needed = start_company(0, each_startup_founder, country, loan_taken=False)
+                bank_startup_budget = bank_startup_budget - amount_needed
                 new_companies_list.append(company)
             
             retire(each_startup_founder)
@@ -111,12 +113,12 @@ def start_company(amount_needed, worker, country, loan_taken):
     company.company_score = Market.COMPANY_AGE_WEIGHTAGE * company.company_age + \
                             Market.COMPANY_ACCT_BALANCE_WEIGHTAGE * company.company_account_balance
                                                         
-    bank_startup_budget = bank_startup_budget - amount_needed
+    # bank_startup_budget = bank_startup_budget - amount_needed
     country.bank.liquid_capital = country.bank.liquid_capital - amount_needed
     
     # Create positions
     hiring(company)
-    return company
+    return company, amount_needed
 
 def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):
      

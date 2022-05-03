@@ -103,7 +103,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     fired_workers = []
     employed_workers_list = []
     
-    # ================ 2: Retire Employees ================
+    # ================ 2: Retire Unemployed workers ================
     non_retired_workers = []
     for each_unemployed_worker in unemployed_workers_list:
         if each_unemployed_worker.age >= 60:
@@ -111,7 +111,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         else:
             non_retired_workers.append(each_unemployed_worker)
 
-    employed_workers_list = list(non_retired_workers)
+    unemployed_workers_list = list(non_retired_workers)
 
     # ================ 3: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
     open_companies_list = []

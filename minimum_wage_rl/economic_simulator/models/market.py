@@ -50,8 +50,8 @@ class Market(models.Model):
         
     
     SMALL_COMPANY_TYPE=0
-    MEDIUM_COMPANY_TYPE=0
-    LARGE_COMPANY_TYPE=0
+    MEDIUM_COMPANY_TYPE=1
+    LARGE_COMPANY_TYPE=2
 
     all_data = list()
     out_file_name = None
