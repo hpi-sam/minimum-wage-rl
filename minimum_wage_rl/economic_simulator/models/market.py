@@ -19,8 +19,8 @@ class Market(models.Model):
     CITIZEN_MAX_AGE = 100
     INITIAL_PRODUCT_PRICE = config_parser.get("market","initial_product_price")
     
-    SENIOR_SALARY_PERCENTAGE = float(config_parser.get("market","senior_salary_percent"))
-    EXEC_SALARY_PERCENTAGE = float(config_parser.get("market","exec_salary_percent"))
+    SENIOR_SALARY_PERCENTAGE = float(config_parser.get("minwage","senior_salary_percent"))
+    EXEC_SALARY_PERCENTAGE = float(config_parser.get("minwage","exec_salary_percent"))
 
     MINIMUM_COMPANY_BALANCE = float(config_parser.get("market","min_company_balance"))
 
@@ -43,8 +43,10 @@ class Market(models.Model):
     STARTUP_LOAN_PERCENT = float(config_parser.get("startup","bank_loan_budget"))
     STARTUP_SKILL_IMPROVEMENT = float(config_parser.get("startup","startup_skill"))
 
-    THRESHOLD_INFLATION = float(config_parser.get("inflation","threshold_inflation"))
+    HIGH_THRESHOLD_INFLATION = float(config_parser.get("inflation","high_threshold_inflation"))
+    LOW_THRESHOLD_INFLATION = float(config_parser.get("inflation","low_threshold_inflation"))
     THRESHOLD_QUANTITY_INCREASE = float(config_parser.get("inflation","threshold_quantity_increase"))
+    POSSIBLE_QUANTITY_INCREASE = float(config_parser.get("inflation","possible_quantity_increase"))
     MIN_BALANCE_INFLATION = float(config_parser.get("inflation","bank_min_balance_inflation"))
     BANK_LOAN_INFLATION = float(config_parser.get("inflation","bank_threshold_loan_inflation"))
         

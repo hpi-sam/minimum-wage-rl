@@ -7,10 +7,6 @@ from ...models.company import Company
 from ...models.market import Market
 from . import company_module
 
-JUNIOR_SKILL_LEVEL = 25
-SENIOR_SKILL_LEVEL = 70
-
-
 def create_country(country, all_companies_list):
     
     country.yearly_produced_value = 0
@@ -63,7 +59,7 @@ def add_new_workers(country):
     for i in range(num_of_juniors):
         worker = Worker()
         age = np.random.randint(19,25)
-        skill_level = np.random.randint(1, JUNIOR_SKILL_LEVEL-20)
+        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-20)
         initialize_employee(Worker.INITIAL_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     
@@ -72,7 +68,7 @@ def add_new_workers(country):
     for i in range(num_of_seniors):
         worker = Worker()
         age = np.random.randint(30,35)
-        skill_level = np.random.randint(JUNIOR_SKILL_LEVEL, JUNIOR_SKILL_LEVEL+2)
+        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.JUNIOR_SKILL_LEVEL+3)
         initialize_employee(Worker.INITIAL_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     
@@ -81,7 +77,7 @@ def add_new_workers(country):
     for i in range(num_of_executives):
         worker = Worker()
         age = np.random.randint(40,45)
-        skill_level = np.random.randint(SENIOR_SKILL_LEVEL, SENIOR_SKILL_LEVEL+2)
+        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL+3)
         initialize_employee(Worker.INITIAL_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
 

@@ -115,19 +115,19 @@ def InitializeCompany(company, initialBalance, companyType, country):
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 2
         company.junior_hiring_ratio = 6
-        company.skill_improvement_rate = 1
+        company.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
     
     elif companyType == 1: # Medium
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 6
         company.junior_hiring_ratio = 6
-        company.skill_improvement_rate = 1.5
+        company.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
     
     else: # Large
         company.executive_hiring_ratio = 6
         company.senior_hiring_ratio = 6
         company.junior_hiring_ratio = 6
-        company.skill_improvement_rate = 2
+        company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
 # startup
 def add_new_citizens(country, amount):

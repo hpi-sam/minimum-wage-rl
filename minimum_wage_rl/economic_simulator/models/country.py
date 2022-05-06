@@ -45,7 +45,7 @@ class Country(models.Model):
     product_price = models.FloatField(default=float(config_parser.get("market","initial_product_price")))
     quantity = models.IntegerField(default=0)
     inflation = models.IntegerField(default=0.0)
-    year = models.IntegerField(default=0)
+    year = models.IntegerField(default=1)
 
     # Statistics
     yearly_produced_value = models.FloatField(default=0.0) # Something like GDP

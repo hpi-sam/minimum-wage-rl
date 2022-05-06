@@ -15,6 +15,11 @@ class Company(models.Model):
     # Possible action in future
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
     INSTALLMENT_PERCENT = float(config_parser.get("bank","installment_percent"))
+
+    SML_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","small_cmp_skill_improvement"))
+    MEDIUM_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","medium_cmp_skill_improvement"))
+    LARGE_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","large_cmp_skill_improvement"))
+
     MAX_EXECUTIVE_SALARY = 95       
     MAX_SENIOR_SALARY = 65          
     MAX_JUNIOR_OFFER = 20          
@@ -88,19 +93,19 @@ class Company(models.Model):
             self.executive_hiring_ratio = 2
             self.senior_hiring_ratio = 2
             self.junior_hiring_ratio = 6
-            self.skill_improvement_rate = 1
+            self.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
         
         elif companyType == 1: # Medium
             self.executive_hiring_ratio = 2
             self.senior_hiring_ratio = 6
             self.junior_hiring_ratio = 6
-            self.skill_improvement_rate = 1.5
+            self.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
         
         else: # Large
             self.executive_hiring_ratio = 6
             self.senior_hiring_ratio = 6
             self.junior_hiring_ratio = 6
-            self.skill_improvement_rate = 2
+            self.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
     def open_job_positions(self):
     

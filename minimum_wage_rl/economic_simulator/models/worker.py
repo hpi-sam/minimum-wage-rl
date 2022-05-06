@@ -20,8 +20,8 @@ class Worker(models.Model):
 
     BUY_EXTRA_ACCT_BALANCE = 5
     BUY_LUXURY_ACCT_BALANCE = 10
-    JUNIOR_SKILL_LEVEL = 25
-    SENIOR_SKILL_LEVEL = 70
+    JUNIOR_SKILL_LEVEL = int(config_parser.get("worker","junior_skill_level"))
+    SENIOR_SKILL_LEVEL = int(config_parser.get("worker","senior_skill_level"))
     DELTA_JOB_CHANGE_SALARY = 10
     INIT_LARGE_COMP_BALANCE = 25000
     INIT_MEDIUM_COMP_BALANCE = 5000

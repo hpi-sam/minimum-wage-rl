@@ -31,7 +31,7 @@ def pay_tax(company, central_bank):
     company.company_account_balance = company.company_account_balance - tax
     central_bank.deposit_money(tax)
 
-def yearly_financial_transactions(company, country):
+def yearly_financial_transactions(company, country, retired_workers_list):
     worker_list = list(company.worker_set.filter(retired=False))
 
     all_workers_list = []    
@@ -44,6 +44,8 @@ def yearly_financial_transactions(company, country):
     company.senior_workers_list = []
     company.exec_workers_list = []
 
+    total_profit = 0
+
     for each_worker in worker_list:
         
         retire_flag = False
@@ -51,6 +53,7 @@ def yearly_financial_transactions(company, country):
         if each_worker.age >= 60:
             retire(each_worker, country)
             retire_flag = True
+            retired_workers_list.append(each_worker)
 
         if not(retire_flag):
             each_worker.skill_improvement_rate =  company.skill_improvement_rate
@@ -75,13 +78,18 @@ def yearly_financial_transactions(company, country):
                 company.exec_workers_list.append(each_worker)
 
             # Giving value back to company and getting salary and Pay income tax
-            get_salary_paid(each_worker, company)
+            profit_from_each_worker = get_salary_paid(each_worker, company)
+            # total_profit = total_profit + profit_from_each_worker
         
             all_workers_list.append(each_worker)
 
 # ***************************************************************************************
 # ****************** CHANGE COMPANY TYPE and IMPROVE WORKER SKILL RATE ******************
 # ***************************************************************************************
+    # pay corporate tax
+    # corporate_tax = total_profit * Country.CORPORATE_TAX
+    # company.company_account_balance = company.company_account_balance - corporate_tax
+    # country.bank.deposit_money(corporate_tax)
 
     senior_salary_offer = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
     executive_salary_offer = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
@@ -253,21 +261,10 @@ def hiring(company):
         senior_pos = round(seniors_needed * Market.REQUIRED_SEN_JOB_PERCENT * common_factor * factor)
         exec_pos = round(exec_needed * Market.REQUIRED_EXEC_JOB_PERCENT * common_factor * factor)
 
-        print(company.open_junior_pos)
-
         budget_empty, hiring_budget = hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos)
-
-        print(company.open_junior_pos)
-        print(company.open_senior_pos)
-        print(company.open_exec_pos)
         
         if not(budget_empty):
             open_new_positions(hiring_budget, company)
-        
-        
-        print(company.open_junior_pos)
-        print(company.open_senior_pos)
-        print(company.open_exec_pos)
 
 
 def open_new_positions(hiring_budget,company):
@@ -445,7 +442,7 @@ def initialize_company(company, initial_balance, country):
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 2
         company.junior_hiring_ratio = 6
-        company.skill_improvement_rate = 1
+        company.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
         company.company_size_type = Market.SMALL_COMPANY_TYPE    
     
     # Medium Company
@@ -453,7 +450,7 @@ def initialize_company(company, initial_balance, country):
         company.executive_hiring_ratio = 2
         company.senior_hiring_ratio = 6
         company.junior_hiring_ratio = 6
-        company.skill_improvement_rate = 1.5
+        company.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
         company.company_size_type = Market.MEDIUM_COMPANY_TYPE    
     
     # Large Company
@@ -461,7 +458,7 @@ def initialize_company(company, initial_balance, country):
         company.executive_hiring_ratio = 6
         company.senior_hiring_ratio = 6
         company.junior_hiring_ratio = 6
-        company.skill_improvement_rate = 2
+        company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
         company.company_size_type = Market.LARGE_COMPANY_TYPE
 
     company.avg_junior_salary = country.minimum_wage
@@ -474,21 +471,23 @@ def set_company_size(company):
     # company.company_account_balance > Market.SMALL_CMP_INIT_BALANCE and 
     if company.company_account_balance < Market.MEDIUM_CMP_INIT_BALANCE:
         company.company_size_type = Market.SMALL_COMPANY_TYPE
-        company.skill_improvement_rate = 1
+        company.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
 
     elif company.company_account_balance > Market.MEDIUM_CMP_INIT_BALANCE and company.company_account_balance < Market.LARGE_CMP_INIT_BALANCE:
         company.company_size_type = Market.MEDIUM_COMPANY_TYPE
-        company.skill_improvement_rate = 1.5
+        company.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
           
     else:
         company.company_size_type = Market.LARGE_COMPANY_TYPE
-        company.skill_improvement_rate = 2
+        company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
 def get_salary_paid(worker, company):
     worker.worker_account_balance += worker.salary * 12
     company.company_account_balance -= worker.salary * 12
     
     # Pay income tax
-    worker.worker_account_balance = worker.worker_account_balance - worker.salary*Country.INCOME_TAX
+    worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
 
-    company.company_account_balance += worker.skill_level * 12
+    earnings = worker.skill_level * 12
+    company.company_account_balance += earnings
+    return earnings

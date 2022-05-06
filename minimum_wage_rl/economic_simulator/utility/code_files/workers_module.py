@@ -13,7 +13,7 @@ def evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_lis
 
         # 3.1 Increase skill set for employed people
         if worker.is_employed:
-            worker.skill_level = worker.skill_level  + worker.skill_level * worker.skill_improvement_rate
+            worker.skill_level = worker.skill_level  + worker.skill_improvement_rate
         
         # 3.2 Calculate worker score
         # (w1 * skillset) + (w2 * experience) 
@@ -47,7 +47,7 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
 
     
     successful_founders_list = []
-    successful_startup_index = []
+    # successful_startup_index = []
     
 
     index = 0
@@ -58,7 +58,7 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
 
         if bank_startup_budget > amount_needed:
             
-            successful_startup_index.append(index)                     
+            # successful_startup_index.append(index)                     
 
             # Loan needed
             if amount_needed > 0:
@@ -72,7 +72,7 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
                 bank_startup_budget = bank_startup_budget - amount_needed
                 new_companies_list.append(company)
             
-            retire(each_startup_founder)
+            retire(each_startup_founder, country)
             successful_founders_list.append(each_startup_founder)
         
         # Company could not be created
@@ -120,27 +120,39 @@ def start_company(amount_needed, worker, country, loan_taken):
     hiring(company)
     return company, amount_needed
 
-def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):
-     
-    available_positions = 0
-    if needed_positions > len(unemployed_worker_list):
-        available_positions = len(unemployed_worker_list)
-    else:
-        available_positions = needed_positions
-
-    workers = unemployed_worker_list[:available_positions]
-
-    for each_worker in workers:
-        each_worker.is_employed=True
-        each_worker.salary=salary
-        
-        get_salary_paid(each_worker, company)
-        each_worker.skill_improvement_rate = company.skill_improvement_rate
-
-        each_worker.works_for_company = company
-        emp_worker_list.append(each_worker)
+def get_hired(worker,salary, company,emp_worker_list):
+    worker.is_employed=True
+    worker.salary=salary
     
-    # unemp_jun_worker_list = unemp_jun_worker_list[available_positions:]
-    # company_item.open_junior_pos = company_item.open_junior_pos - available_positions  
+    get_salary_paid(worker, company)
+    worker.skill_improvement_rate = company.skill_improvement_rate
 
-    return available_positions
+    worker.works_for_company = company
+    emp_worker_list.append(worker)
+
+# ==================================== old code ========================================
+# def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):
+     
+#     available_positions = 0
+#     if needed_positions > len(unemployed_worker_list):
+#         available_positions = len(unemployed_worker_list)
+#     else:
+#         available_positions = needed_positions
+
+#     workers = unemployed_worker_list[:available_positions]
+
+#     for each_worker in workers:
+#         each_worker.is_employed=True
+#         each_worker.salary=salary
+        
+#         get_salary_paid(each_worker, company)
+#         each_worker.skill_improvement_rate = company.skill_improvement_rate
+
+#         each_worker.works_for_company = company
+#         emp_worker_list.append(each_worker)
+    
+#     # unemp_jun_worker_list = unemp_jun_worker_list[available_positions:]
+#     # company_item.open_junior_pos = company_item.open_junior_pos - available_positions  
+
+#     return available_positions
+

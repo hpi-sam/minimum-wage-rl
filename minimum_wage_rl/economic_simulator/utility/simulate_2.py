@@ -1,6 +1,7 @@
 from math import ceil, floor
 
 from economic_simulator.models.metrics import Metric
+from economic_simulator.utility.code_files.common_module import retire
 from ..models.worker import Worker
 from ..models.bank import Bank
 from ..models.country import Country
@@ -51,7 +52,7 @@ def step(action_map, user):
     country = Country.objects.get(player=user, game=game)
 
     # Get all companies
-    country_companies_list = list(country.company_set.all())
+    country_companies_list = list(country.company_set.filter(closed=False))
 
     # Increase age of all workers by 1
     Worker.objects.filter(country_of_residence=country).update(age=F("age") + 1)
@@ -93,21 +94,27 @@ def __get_latest_game(user):
 
 @transaction.atomic
 def run_market(country, country_companies_list, unemployed_workers_list):
-
+    
+    retired_people = 0
     country.year = country.year + 1 
     metrics = Metric()
     metrics.year = country.year
+
+    total_open_positions = 0
 
     # ================ 1: COUNTRY MODULE - Increase population ================
     new_workers_list =  country_module.add_new_workers(country)
     fired_workers = []
     employed_workers_list = []
+    retired_workers_list = []
     
     # ================ 2: Retire Unemployed workers ================
     non_retired_workers = []
     for each_unemployed_worker in unemployed_workers_list:
         if each_unemployed_worker.age >= 60:
             workers_module.retire(each_unemployed_worker, country)
+            retired_workers_list.append(each_unemployed_worker)
+            # retired_people = retired_people + 1
         else:
             non_retired_workers.append(each_unemployed_worker)
 
@@ -128,11 +135,15 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         company_module.pay_tax(each_company,country.bank)
 
         # 3.4: Pay salary to workers and Earn money from workers
-        company_module.yearly_financial_transactions(each_company,country)
+        company_module.yearly_financial_transactions(each_company,country, retired_workers_list)
 
         # 3.5: Create Jobs/Fire people
         operation_map = {"close":False,"fired_workers":[],"employed_workers":[]}
         company_module.hiring_and_firing(each_company, operation_map)
+
+        total_open_positions = total_open_positions + each_company.open_junior_pos
+        total_open_positions = total_open_positions + each_company.open_senior_pos
+        total_open_positions = total_open_positions + each_company.open_exec_pos
 
         # 3.6: Change company size
         company_module.set_company_size(each_company)
@@ -181,6 +192,8 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list)
 
+    retired_workers_list.extend(successful_founders_list)                                                                  
+
     # 4.3 Getting hired and Set metrics
     # Input unemp_jun_worker_list, unemp_sen_worker_list, unemp_exec_worker_list, 
     # all_companies = new + old --- sorted using company score
@@ -192,42 +205,104 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
     open_companies_list = sorted(open_companies_list, key=lambda x: x.company_score, reverse=True)
 
+    # Hire Workers
+    total_unemployed_workers = len(unemp_jun_worker_list) + len(unemp_sen_worker_list) + len(unemp_exec_worker_list)
+    hire_loop_counter = min(total_open_positions, total_unemployed_workers)
+    num_of_companies = len(open_companies_list)
+
+    counter = 0
+    company_counter = 0
+
+
+    while counter < hire_loop_counter:
+
+        company_index = company_counter % num_of_companies
+        current_company = open_companies_list[company_index]
+
+        if current_company.open_junior_pos > 0:
+            jun_salary = country.minimum_wage
+
+            if len(unemp_jun_worker_list)>0:
+                current_worker = unemp_jun_worker_list[0]
+                workers_module.get_hired(current_worker, jun_salary, current_company, emp_worker_list)
+                unemp_jun_worker_list = unemp_jun_worker_list[1:]
+                current_company.open_junior_pos = current_company.open_junior_pos - 1
+                metrics.total_filled_jun_pos = metrics.total_filled_jun_pos + 1
+                counter = counter + 1
+        
+        if current_company.open_senior_pos > 0:
+            senior_salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
+
+            if len(unemp_sen_worker_list)>0:
+                current_worker = unemp_sen_worker_list[0]
+                workers_module.get_hired(current_worker, senior_salary, current_company, emp_worker_list)
+                unemp_sen_worker_list = unemp_sen_worker_list[1:]
+                current_company.open_senior_pos = current_company.open_senior_pos - 1
+                metrics.total_filled_sen_pos = metrics.total_filled_sen_pos + 1
+                counter = counter + 1
+
+        if current_company.open_exec_pos > 0:
+            exec_salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
+
+            if len(unemp_exec_worker_list)>0:
+                current_worker = unemp_exec_worker_list[0]
+                workers_module.get_hired(current_worker, exec_salary, current_company, emp_worker_list)
+                unemp_exec_worker_list = unemp_exec_worker_list[1:]
+                current_company.open_exec_pos = current_company.open_exec_pos - 1
+                metrics.total_filled_exec_pos = metrics.total_filled_exec_pos + 1
+                counter = counter + 1
+        
+        company_counter = company_counter + 1
+        company_module.set_company_size(current_company)
+        # metrics_module.set_company_size_metrics(current_company, metrics)
 
     for company_item in open_companies_list:
-        
-        if company_item.open_junior_pos > 0:
-            needed_positions = company_item.open_junior_pos
-            jun_salary = country.minimum_wage
-            available_positions  = workers_module.get_hired(needed_positions,unemp_jun_worker_list,jun_salary,
-                                                            company_item,emp_worker_list)
-            unemp_jun_worker_list = unemp_jun_worker_list[available_positions:]
-            company_item.open_junior_pos = company_item.open_junior_pos - available_positions
-        
-        if company_item.open_senior_pos > 0:
-            needed_positions = company_item.open_senior_pos
-            senior_salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
-            available_positions  = workers_module.get_hired(needed_positions,unemp_sen_worker_list,senior_salary,
-                                                            company_item,emp_worker_list)
-            unemp_sen_worker_list = unemp_sen_worker_list[available_positions:]
-            company_item.open_senior_pos = company_item.open_senior_pos - available_positions
-        
-        if company_item.open_exec_pos > 0:
-            needed_positions = company_item.open_exec_pos
-            exec_salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
-            available_positions  = workers_module.get_hired(needed_positions,unemp_exec_worker_list,exec_salary,
-                                                            company_item,emp_worker_list)
-            unemp_exec_worker_list = unemp_exec_worker_list[available_positions:]
-            company_item.open_exec_pos = company_item.open_exec_pos - available_positions
-
-        company_module.set_company_size(company_item)
         metrics_module.set_company_size_metrics(company_item, metrics)
-        metrics_module.set_job_pos_metrics(company_item, metrics)
+
+
+    # for company_item in open_companies_list:
+    #     if company_item.open_junior_pos > 0:
+    #         needed_positions = company_item.open_junior_pos
+    #         jun_salary = country.minimum_wage
+    #         available_positions  = workers_module.get_hired(needed_positions,unemp_jun_worker_list,jun_salary,
+    #                                                         company_item,emp_worker_list)
+    #         unemp_jun_worker_list = unemp_jun_worker_list[available_positions:]
+    #         company_item.open_junior_pos = company_item.open_junior_pos - available_positions
+    #         metrics.total_filled_jun_pos = metrics.total_filled_jun_pos + available_positions            
+        
+    #     if company_item.open_senior_pos > 0:
+    #         needed_positions = company_item.open_senior_pos
+    #         senior_salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
+    #         available_positions  = workers_module.get_hired(needed_positions,unemp_sen_worker_list,senior_salary,
+    #                                                         company_item,emp_worker_list)
+    #         unemp_sen_worker_list = unemp_sen_worker_list[available_positions:]
+    #         company_item.open_senior_pos = company_item.open_senior_pos - available_positions
+    #         metrics.total_filled_sen_pos = metrics.total_filled_sen_pos + available_positions
+        
+    #     if company_item.open_exec_pos > 0:
+    #         needed_positions = company_item.open_exec_pos
+    #         exec_salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
+    #         available_positions  = workers_module.get_hired(needed_positions,unemp_exec_worker_list,exec_salary,
+    #                                                         company_item,emp_worker_list)
+    #         unemp_exec_worker_list = unemp_exec_worker_list[available_positions:]
+    #         company_item.open_exec_pos = company_item.open_exec_pos - available_positions
+    #         metrics.total_filled_exec_pos = metrics.total_filled_exec_pos + available_positions
+
+        # company_module.set_company_size(company_item)
+        # metrics_module.set_company_size_metrics(company_item, metrics)
+        # metrics_module.set_job_pos_metrics(company_item, metrics)
 
 
     # 5: INFLATION MODULE
+    metrics.unemployed_jun_pos = len(unemp_jun_worker_list)
+    metrics.unemployed_sen_pos = len(unemp_sen_worker_list)
+    metrics.unemployed_exec_pos = len(unemp_exec_worker_list)
+    
     unemp_worker_list.extend(unemp_jun_worker_list)
     unemp_worker_list.extend(unemp_sen_worker_list)
     unemp_worker_list.extend(unemp_exec_worker_list)
+
+
 
     inflation_module.set_product_price_and_quantity(emp_worker_list ,unemp_worker_list, country, metrics)
 
@@ -239,6 +314,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
     inflation_module.buy_products(fin_workers_list, country, poverty_count, metrics)
 
+    metrics.bank_account_balance = float(country.bank.liquid_capital)
     # 7: Save all data
     # Try bulk update and bulk create 
     
@@ -264,9 +340,47 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     # save workers list
     for each_worker in fin_workers_list:
         each_worker.save()
+    
+    for each_worker in retired_workers_list:
+        retired_people = retired_people + 1
+        each_worker.save()
+
+    print_needed_data(metrics, country, retired_people)
 
     return get_current_state_reward(country, metrics)
 
+
+def print_needed_data(metrics, country,retired_people):
+    # metrics = Metric()
+    # country = Country()
+    print("====================== YEAR ", metrics.year , "======================")
+    print("Year - " ,metrics.year)
+    print("Minwage - ", metrics.minimum_wage)
+    print("Population - ", metrics.population)
+    print("retired people - ", retired_people)
+    print("Bank balance - ", metrics.bank_account_balance)
+    print("Product price - ", country.product_price)
+    print("Inflation - ", metrics.inflation)
+    print("Quantity - ", country.quantity)
+    print("Unemployment - ", metrics.unemployment_rate)
+    print("Poverty Rate - ", metrics.poverty_rate)
+    print("Num small cmp - ", metrics.num_small_companies)
+    print("Num medium cmp - ", metrics.num_medium_companies)
+    print("Num large cmp - ", metrics.num_large_companies)
+    print("Junior Jobs - ", metrics.total_filled_jun_pos)
+    print("Senior Jobs - ", metrics.total_filled_sen_pos)
+    print("Executive Jobs - ", metrics.total_filled_exec_pos)
+    print("Unemployed Junior Jobs - ", metrics.unemployed_jun_pos)
+    print("Unemployed Senior Jobs - ", metrics.unemployed_sen_pos)
+    print("Unemployed Executive Jobs - ", metrics.unemployed_exec_pos)
+    print("Average Junior Salary - ", metrics.average_jun_sal)
+    print("Average Senior Salary - ", metrics.average_sen_sal)
+    print("Average Executive Salary - ", metrics.average_exec_sal)
+    
+    print("==============================================================")
+    print("")
+
+    pass
 
     # ================================================================================================ #
     # ----                                         HERE                                            ----

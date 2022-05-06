@@ -10,6 +10,8 @@ from django.db import models
 from .code_files import country_module
 from django.db import transaction
 
+from economic_simulator.models import country
+
 config_parser = ConfigurationParser.get_instance().parser
 
 @transaction.atomic
@@ -61,7 +63,10 @@ def start(user):
     country.minimum_wage
 
     # 7.1: Initial quantity
-    country.quantity = (len(all_workers_list) * country.minimum_wage)/country.product_price
+    
+    jun_sal, sen_sal, exec_sal = get_money_circulatio(all_workers_list, country)
+
+    country.quantity = (jun_sal + sen_sal + exec_sal)/country.product_price
 
     # market_obj.save()
     # country.save()
@@ -76,7 +81,6 @@ def start(user):
     # save country
     country.save()
 
-
     # SAVE ALL COMPANIES
     for each_company in all_companies_list:
         each_company.save()
@@ -85,7 +89,36 @@ def start(user):
     for each_citizen in all_workers_list:
         each_citizen.save()
 
+    print_metrics(country)
+
     return collect_metrics(country)
+
+def print_metrics(country):
+    print("=========================== Year ", country.year, "==========================")
+    print("Minimum wage - ", country.minimum_wage)
+    print("Quantity - ", country.quantity)
+    print("Product price - ", country.product_price)
+    print("Population - ", country.population)
+    print(" Bank balance - ", country.bank.liquid_capital)
+
+def get_money_circulatio(all_workers_list, country):
+    jun_pos = 0
+    sen_pos = 0
+    exec_pos = 0
+
+    for each_worker in all_workers_list:
+        if each_worker.skill_level < Worker.JUNIOR_SKILL_LEVEL:
+            jun_pos = jun_pos + 1
+        elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level < Worker.SENIOR_SKILL_LEVEL):
+            sen_pos = sen_pos + 1
+        else:
+            exec_pos = exec_pos + 1
+
+    jun_sal = jun_pos * country.minimum_wage * 12
+    sen_sal = sen_pos * (country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE) * 12
+    exec_sal = exec_pos * (country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE) * 12
+
+    return jun_sal, sen_sal, exec_sal
 
 def collect_metrics(country):
     current_state = dict()

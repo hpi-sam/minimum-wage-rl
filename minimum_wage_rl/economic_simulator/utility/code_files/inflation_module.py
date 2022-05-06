@@ -1,3 +1,4 @@
+from economic_simulator.models.metrics import Metric
 from ...models.market import Market
 from ...models.worker import Worker
 from functools import reduce
@@ -25,12 +26,20 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         # inflation = (new_product_price - current_product_price)/current_product_price
         # inflation_rate = (old_inflation - inflation)/old_inflation if old_inflation> 0 else 0
         inflation = calculate_inflation(current_product_price,new_product_price, old_inflation, metrics)
+        if inflation <= Market.LOW_THRESHOLD_INFLATION:
+            # increase quantity
+            new_quantity = ceil((money_circulation * velocity_of_money)/current_product_price)
+            delta_quantity = new_quantity - current_quantity
+            increase_quantity(money_circulation,velocity_of_money,delta_quantity, new_quantity, current_quantity, country, metrics)
 
-        if inflation > Market.THRESHOLD_INFLATION:
+        elif inflation > Market.HIGH_THRESHOLD_INFLATION:
             steady_product_price = True
         else:
+            inflation = calculate_inflation(current_product_price,new_product_price, old_inflation, metrics)
             country.product_price = new_product_price
+            
     else:
+        country.product_price = new_product_price
         inflation = calculate_inflation(current_product_price,new_product_price, old_inflation, metrics)
 
     # 4.2 Check quantity change : if inflation is more than threshold
@@ -42,7 +51,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         if delta_quantity > 0:
             # 4.3 Check if increase in quantity is more than threshold
             if delta_quantity > Market.THRESHOLD_QUANTITY_INCREASE * current_quantity:
-                delta_possible_quantity = ceil(Market.THRESHOLD_QUANTITY_INCREASE * current_quantity)
+                delta_possible_quantity = ceil(Market.POSSIBLE_QUANTITY_INCREASE * current_quantity)
                 money_needed = delta_possible_quantity * current_product_price
 
                 # 4.4 Check if money in bank enough to make more products
@@ -63,27 +72,55 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             # 4.5 quantity is less than threshold
             else:
                 new_quantity = delta_quantity + current_quantity
-                money_needed = delta_quantity * current_product_price
+                increase_quantity(money_circulation,velocity_of_money,delta_quantity, new_quantity, current_quantity, country, metrics)
 
-                # 4.6 Check if bank has enough money to produce more products
-                if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > money_needed:
-                    country.bank.liquid_capital = country.bank.liquid_capital - money_needed
-                    new_quantity = delta_quantity + current_quantity
-                    country.quantity = new_quantity
-                else:
-                    money_available =  country.bank.liquid_capital * Market.BANK_LOAN_INFLATION
-                    delta_possible_quantity = ceil(money_available/current_product_price)
-                    country.bank.liquid_capital = country.bank.liquid_capital - money_available
-                    new_quantity = delta_possible_quantity + current_quantity
-                    new_product_price = (money_circulation * velocity_of_money)/new_quantity
+                # money_needed = delta_quantity * current_product_price
 
-                    country.product_price = new_product_price
-                    country.quantity = new_quantity
+                # # 4.6 Check if bank has enough money to produce more products
+                # if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > money_needed:
+                #     country.bank.liquid_capital = country.bank.liquid_capital - money_needed
+                #     new_quantity = delta_quantity + current_quantity
+                #     country.quantity = new_quantity
+                # else:
+                #     money_available =  country.bank.liquid_capital * Market.BANK_LOAN_INFLATION
+                #     delta_possible_quantity = ceil(money_available/current_product_price)
+                #     country.bank.liquid_capital = country.bank.liquid_capital - money_available
+                #     new_quantity = delta_possible_quantity + current_quantity
+                #     new_product_price = (money_circulation * velocity_of_money)/new_quantity
 
-                    inflation = calculate_inflation(current_product_price,new_product_price, old_inflation, metrics)
+                #     country.product_price = new_product_price
+                #     country.quantity = new_quantity
 
-                country.quantity = new_quantity
-    
+                #     inflation = calculate_inflation(current_product_price,new_product_price, old_inflation, metrics)
+
+                # country.quantity = new_quantity
+
+
+def increase_quantity(money_circulation,velocity_of_money,delta_quantity, new_quantity, current_quantity, country, metrics):
+
+    money_needed = delta_quantity * country.product_price
+
+    # 4.6 Check if bank has enough money to produce more products
+    if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > money_needed:
+        country.bank.liquid_capital = country.bank.liquid_capital - money_needed
+        new_quantity = delta_quantity + current_quantity
+        country.quantity = new_quantity
+        inflation = calculate_inflation(country.product_price,country.product_price, country.inflation, metrics)
+    else:
+        money_available =  country.bank.liquid_capital * Market.BANK_LOAN_INFLATION
+        delta_possible_quantity = ceil(money_available/country.product_price)
+        country.bank.liquid_capital = country.bank.liquid_capital - money_available
+        new_quantity = delta_possible_quantity + current_quantity
+        new_product_price = (money_circulation * velocity_of_money)/new_quantity
+
+        country.product_price = new_product_price
+        country.quantity = new_quantity
+
+        inflation = calculate_inflation(country.product_price,new_product_price, country.inflation, metrics)
+
+    country.quantity = new_quantity
+
+
 def calculate_inflation(current_product_price, new_product_price, old_inflation, metrics):
     inflation = (new_product_price - current_product_price)/current_product_price
     inflation_rate = (inflation - old_inflation)/old_inflation if old_inflation> 0 else (inflation - old_inflation)
@@ -91,8 +128,6 @@ def calculate_inflation(current_product_price, new_product_price, old_inflation,
     metrics.inflation_rate = inflation_rate
 
     return inflation
-
-
 
 def buy_products(fin_workers_list, country, poverty_count, metrics):
 
@@ -106,6 +141,7 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
         if each_worker.worker_account_balance > country.product_price * 12:
             each_worker.worker_account_balance = each_worker.worker_account_balance - country.product_price * 12
             country.bank.liquid_capital = country.bank.liquid_capital + country.product_price * 12
+            salary_metrics(each_worker, employee_details_map)            
 
         else:
             payable_months = floor(each_worker.worker_account_balance/country.product_price)
@@ -119,6 +155,10 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
                 unemployed = unemployed + 1
         
     # Add mertrics
+    metrics.total_filled_jun_pos = employee_details_map["jun_workers"]
+    metrics.total_filled_sen_pos = employee_details_map["sen_workers"]
+    metrics.total_filled_exec_pos = employee_details_map["exec_workers"]
+
     metrics.average_jun_sal = employee_details_map["jun_worker_sal"]/employee_details_map["jun_workers"] if employee_details_map["jun_workers"] > 0 else 0
     metrics.average_sen_sal = employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0
     metrics.average_exec_sal = employee_details_map["exec_worker_sal"]/employee_details_map["exec_workers"] if employee_details_map["exec_workers"] > 0 else 0

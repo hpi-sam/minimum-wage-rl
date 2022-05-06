@@ -16,10 +16,14 @@ class Metric(models.Model):
     num_medium_companies = models.IntegerField(default=0)
     num_large_companies = models.IntegerField(default=0)
 
-    total_jun_pos = models.IntegerField(default=0)
-    total_sen_pos = models.IntegerField(default=0)
-    total_exec_pos = models.IntegerField(default=0)
+    total_filled_jun_pos = models.IntegerField(default=0)
+    total_filled_sen_pos = models.IntegerField(default=0)
+    total_filled_exec_pos = models.IntegerField(default=0)
 
+    unemployed_jun_pos = models.IntegerField(default=0)
+    unemployed_sen_pos = models.IntegerField(default=0)
+    unemployed_exec_pos = models.IntegerField(default=0)
+    
     average_jun_sal = models.FloatField(default=0.0)
     average_sen_sal = models.FloatField(default=0.0)
     average_exec_sal = models.FloatField(default=0.0)
@@ -35,3 +39,5 @@ class Metric(models.Model):
 
     inflation = models.FloatField()
     inflation_rate = models.FloatField()
+
+    bank_account_balance =  models.FloatField(default=0.0)
