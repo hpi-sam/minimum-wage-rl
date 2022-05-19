@@ -24,12 +24,13 @@ def perform_action(action_map, country, discrete):
         for each_enum in enum_obj_map.keys():
             try:
                 each_enum(attribute_name)
+                attri_value = float(attribute_value)
             except ValueError:
                 pass
             else:
                 if discrete:
                     func = getattr(enum_obj_map[each_enum],attribute_name+"_action",None) 
-                    func(attribute_value) # <-- this should work!
+                    func(attri_value) # <-- this should work!
                 else:
-                    setattr(enum_obj_map[each_enum],attribute_name,attribute_value)
+                    setattr(enum_obj_map[each_enum],attribute_name,attri_value)
 

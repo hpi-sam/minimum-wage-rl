@@ -64,7 +64,7 @@ def start(user):
 
     # 7.1: Initial quantity
     
-    jun_sal, sen_sal, exec_sal = get_money_circulatio(all_workers_list, country)
+    jun_sal, sen_sal, exec_sal = get_money_circulation(all_workers_list, country)
 
     country.quantity = (jun_sal + sen_sal + exec_sal)/country.product_price
 
@@ -101,7 +101,7 @@ def print_metrics(country):
     print("Population - ", country.population)
     print(" Bank balance - ", country.bank.liquid_capital)
 
-def get_money_circulatio(all_workers_list, country):
+def get_money_circulation(all_workers_list, country):
     jun_pos = 0
     sen_pos = 0
     exec_pos = 0

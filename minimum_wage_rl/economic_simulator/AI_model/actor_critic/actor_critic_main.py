@@ -1,7 +1,7 @@
 from .utility import Storage
-from .models import CategoricalActor, Critic
+from .models import CategoricalActor, Critic, GaussianActor
 import torch.optim as optim
-from economic_simulator.utility import simulate
+from economic_simulator.utility import simulate_2
 from torch import tensor
 
 roll_out_length = 2
@@ -13,8 +13,9 @@ critic_lr = 0.05
 
 class ActorCritic:
 
-    def __init__(self,user) -> None:    
-        self.actor_model = CategoricalActor()
+    def __init__(self,user, action_dim) -> None:    
+        self.actor_model = GaussianActor(action_dim=action_dim) 
+        # CategoricalActor()
         self.critic_model = Critic()
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=actor_lr)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=critic_lr)
@@ -27,16 +28,19 @@ class ActorCritic:
         for _ in range(roll_out_length):
             action_prediction = self.actor_model(current_state)
             state_value_prediction = self.critic_model(current_state)
-            
-            
+                        
             storage.actions.append(action_prediction["action"])
             storage.state_values.append(state_value_prediction["value"])
             storage.log_actions.append(action_prediction["log_pi_a"])
+            
+            action_value = action_prediction["action"].item()
 
-            state_reward = simulate.step(action_prediction["action"].item(), self.user) 
-            next_state = tensor(state_reward["state"])
-            reward = tensor(state_reward["reward"]).unsqueeze(-1)
-            terminate = tensor(1 - state_reward["done"]).unsqueeze(-1)
+            action_map = {"minimum_wage" : action_value}
+
+            user_data, state_values, reward, done = simulate_2.step(action_map, self.user) 
+            next_state = tensor(state_values)
+            reward = tensor(reward).unsqueeze(-1)
+            terminate = tensor(1 - done).unsqueeze(-1)
 
             storage.rewards.append(reward)
             storage.episode_end_flag.append(terminate)
@@ -81,12 +85,17 @@ class ActorCritic:
 
 
     def get_state(self):
-        state_reward = simulate.get_state(self.user)
-        return tensor(state_reward["state"])
+        user_data, state_values, reward, done = simulate_2.get_state(self.user)
+        return tensor(state_values)
 
 
 def train(user):
-    actor_critic = ActorCritic(user)
+    actor_critic = ActorCritic(user, action_dim=1)
 
     for _ in range(num_steps):
         actor_critic.step()
+    
+    # save model
+
+# def get_policy():
+#     pass

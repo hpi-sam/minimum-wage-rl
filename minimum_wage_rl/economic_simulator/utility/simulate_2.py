@@ -1,4 +1,5 @@
 from math import ceil, floor
+from tkinter.tix import Meter
 
 from economic_simulator.models.metrics import Metric
 from economic_simulator.utility.code_files.common_module import retire
@@ -206,6 +207,10 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     open_companies_list = sorted(open_companies_list, key=lambda x: x.company_score, reverse=True)
 
     # Hire Workers
+
+    # LIST ONLY THE COMPANIES WHICH HAS OPENINGS
+    # CHECK FOR JUNIOR, SENIOR, EXECUTIVE
+
     total_unemployed_workers = len(unemp_jun_worker_list) + len(unemp_sen_worker_list) + len(unemp_exec_worker_list)
     hire_loop_counter = min(total_open_positions, total_unemployed_workers)
     num_of_companies = len(open_companies_list)
@@ -219,6 +224,13 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         company_index = company_counter % num_of_companies
         current_company = open_companies_list[company_index]
 
+        # if second round - check if 
+            #  companies have junior openings and is junior worker list non empty
+            #  companies have senior openings and is senior worker list non empty
+            #  companies have exec openings and is exec worker list non empty
+
+        print("Positions - ", current_company.open_junior_pos, " , ", current_company.open_senior_pos, " , " , current_company.open_exec_pos)
+        print("Account balance - ", current_company.company_account_balance)
         if current_company.open_junior_pos > 0:
             jun_salary = country.minimum_wage
 
@@ -328,6 +340,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     country.save()
 
     # save metrics
+    metrics.country_of_residence = country
     metrics.save()
     
     # save company list
@@ -549,38 +562,66 @@ def get_current_state_reward(country, metrics):
     # state_values.append(country.minimum_wage)
     # state_values.append(country.average_income - 30 * country.market.product_price)
 
-    # reward = calculate_reward(country)
-
+    state_values, reward = get_game_state(metrics)
+    done =  False
     # state_reward = dict()
     # state_reward["state"] = state_values
     # state_reward["reward"] = reward
     # state_reward["done"] = False
 
-    return current_state
+    return current_state, state_values, reward, done
 
-def calculate_reward(country):
+def calculate_reward(metrics):
+
+    r1 = - metrics.unemployment_rate
+    r2 = - metrics.poverty_rate
+
+    return r1 + r2
+
     # 3. Companies
 
-    r1 = Country.WEIGTH_LARGE_COMPANY * np.log10(country.num_large_company/country.minimum_wage + 1)
-    r2 = Country.WEIGTH_MEDIUM_COMPANY * np.log10(country.num_medium_company / country.minimum_wage + 1)
-    r3 = Country.WEIGTH_SMALL_COMPANY * np.log10(country.num_small_companies / country.minimum_wage + 1)
-    r4 = 0.0
+    # r1 = Country.WEIGTH_LARGE_COMPANY * np.log10(country.num_large_company/country.minimum_wage + 1)
+    # r2 = Country.WEIGTH_MEDIUM_COMPANY * np.log10(country.num_medium_company / country.minimum_wage + 1)
+    # r3 = Country.WEIGTH_SMALL_COMPANY * np.log10(country.num_small_companies / country.minimum_wage + 1)
+    # r4 = 0.0
 
     # r1 = 1/self.povertyRate
     # r2 = 1/self.unemploymentRate
 
-    if country.minimum_wage > Country.WAGE_THRESHOLD:
-        r4 = Country.NEGATIVE_REWARD
+    # if country.minimum_wage > Country.WAGE_THRESHOLD:
+    #     r4 = Country.NEGATIVE_REWARD
 
     # return torch.tensor([r1 + r2 + r3 + r4])
-    return r1 + r2 + r3 + r4
+    # return r1 + r2 + r3 + r4
     # return r1 + r2
 
 def get_state(user):
     game = __get_latest_game(user)
 
     country = Country.objects.get(player=user, game=game)
-    country_companies_list = list(country.company_set.all())
-    country_workers_list = list(country.worker_set.filter(retired=False))
+    metric = Metric.objects.filter(country_of_residence=country).last()
 
-    return get_current_state_reward(country)
+    # country_companies_list = list(country.company_set.all())
+    # country_workers_list = list(country.worker_set.filter(retired=False))
+
+    return get_current_state_reward(country, metric)
+
+def get_game_state(metric):
+    # game = __get_latest_game(user)
+    # metric = Metric.objects.filter(player=user, game=game).last()
+    state_values = []
+    state_values.append(metric.minimum_wage)
+    state_values.append(metric.product_price)
+    state_values.append(metric.quantity)
+    state_values.append(metric.poverty_rate)
+    state_values.append(metric.unemployment_rate)
+
+    state_values.append(metric.inflation)
+    state_values.append(metric.bank_account_balance)
+
+    reward = calculate_reward(metric)
+
+    return state_values, reward
+
+
+

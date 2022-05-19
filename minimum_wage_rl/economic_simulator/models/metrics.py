@@ -1,5 +1,7 @@
 from django.db import models
 import uuid
+
+from numpy import product, quantile
 from .country import Country
 
 
@@ -41,3 +43,5 @@ class Metric(models.Model):
     inflation_rate = models.FloatField()
 
     bank_account_balance =  models.FloatField(default=0.0)
+    product_price =  models.FloatField(default=0.0)
+    quantity = models.IntegerField(default=0)

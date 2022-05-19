@@ -41,8 +41,6 @@ def step(action, user):
     else:    
         country.minimum_wage = action
 
-    
-
     country.temp_worker_list.extend(country_workers_list)
     country.temp_company_list.extend(country_companies_list)
     # Step 2 - Change inflation rate : fixed as of now

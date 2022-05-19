@@ -237,9 +237,9 @@ def hiring(company):
         current_senior_job_percentage = float(company.num_senior_workers)/total_workers if total_workers > 0 else 0.0
         current_exec_job_percentage = float(company.num_executive_workers)/total_workers if total_workers > 0 else 0.0
 
-        juniors_needed = 1 if current_junior_job_percentage - Market.REQUIRED_JUN_JOB_PERCENT < 0 else 0
-        seniors_needed = 1 if current_senior_job_percentage - Market.REQUIRED_SEN_JOB_PERCENT < 0 else 0
-        exec_needed = 1 if current_exec_job_percentage - Market.REQUIRED_EXEC_JOB_PERCENT < 0 else 0
+        juniors_needed = 1 if current_junior_job_percentage - Market.REQUIRED_JUN_JOB_PERCENT <= 0 else 0
+        seniors_needed = 1 if current_senior_job_percentage - Market.REQUIRED_SEN_JOB_PERCENT <= 0 else 0
+        exec_needed = 1 if current_exec_job_percentage - Market.REQUIRED_EXEC_JOB_PERCENT <= 0 else 0
 
         # 3: Common factor to determine how many to hire
         # Formula: 

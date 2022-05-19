@@ -104,7 +104,7 @@ def create_user(request):
 def perform_action(request):
 
     action_map = request.data
-    user_data = step(action_map, request.user)
+    user_data, state_values, reward, done = step(action_map, request.user)
 
     ai_data = user_data.copy()
 
