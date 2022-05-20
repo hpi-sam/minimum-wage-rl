@@ -17,6 +17,7 @@ import json
 from .serializer import UserSerializer
 from django.db import models
 from .AI_model.actor_critic import actor_critic_main
+from rest_framework.authtoken.views import ObtainAuthToken
 
 # Create your views here.
 
