@@ -11,5 +11,6 @@ urlpatterns = [
     path("del-user",views.delete_user,name="del-user"),
     path("end-game", views.end_game, name="end_game-endpoint"),
     path("train", views.train, name="train-endpoint"),
-    # path("test", views.test_post, name="test-endpoint") /<int:action>
+    path("test-url", views.test_url, name="test-endpoint"),
+    path("api-token-auth", views.CustomAuthToken.as_view())
 ]

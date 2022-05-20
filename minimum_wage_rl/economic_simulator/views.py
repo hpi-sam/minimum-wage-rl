@@ -121,6 +121,30 @@ def train(request):
     return Response({'status':200, 'message':"Traning completed"})
 
 
+@api_view(http_method_names=['GET'])
+@authentication_classes([])
+@permission_classes([])
+#@api_view(http_method_names=['GET'])
+def test_url(request):
+    return Response({'status':200, 'message':"test code"})
+
+
+@authentication_classes([])
+@permission_classes([])
+class CustomAuthToken(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'email': user.email
+        })
+
 # @api_view(http_method_names=['POST'])
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated])
