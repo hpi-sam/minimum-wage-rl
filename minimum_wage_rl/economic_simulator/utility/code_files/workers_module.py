@@ -120,15 +120,16 @@ def start_company(amount_needed, worker, country, loan_taken):
     hiring(company)
     return company, amount_needed
 
-def get_hired(worker,salary, company,emp_worker_list):
-    worker.is_employed=True
-    worker.salary=salary
-    
-    get_salary_paid(worker, company)
-    worker.skill_improvement_rate = company.skill_improvement_rate
+def get_hired(worker_list,salary, company,emp_worker_list):
+    for worker in worker_list:
+        worker.is_employed=True
+        worker.salary=salary
+        
+        get_salary_paid(worker, company)
+        worker.skill_improvement_rate = company.skill_improvement_rate
 
-    worker.works_for_company = company
-    emp_worker_list.append(worker)
+        worker.works_for_company = company
+        emp_worker_list.append(worker)
 
 # ==================================== old code ========================================
 # def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):
