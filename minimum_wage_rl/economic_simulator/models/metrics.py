@@ -45,3 +45,5 @@ class Metric(models.Model):
     bank_account_balance =  models.FloatField(default=0.0)
     product_price =  models.FloatField(default=0.0)
     quantity = models.IntegerField(default=0)
+
+    money_circulation = models.FloatField(default=0.0)

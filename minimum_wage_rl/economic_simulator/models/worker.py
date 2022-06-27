@@ -224,41 +224,41 @@ class Worker(models.Model):
 
     #     return changed_option
 
-    def evaluate_worker_step(self, all_companies_list):
+    # def evaluate_worker_step(self, all_companies_list):
         
-        new_company_obj = None
+        # new_company_obj = None
 
-        # Employed but does not own Company
-        if self.is_employed and not(self.has_company):
+        # # Employed but does not own Company
+        # if self.is_employed and not(self.has_company):
         
-            # Increase skill
-            if self.skill_level < Worker.MAX_SKILL_LEVEL:
-                self.skill_level += self.company_obj.skill_improvement_rate
+        #     # Increase skill
+        #     if self.skill_level < Worker.MAX_SKILL_LEVEL:
+        #         self.skill_level += self.company_obj.skill_improvement_rate
 
-            # Explore Options here
-            # Either Change Job or Start a Company
+        #     # Explore Options here
+        #     # Either Change Job or Start a Company
 
-            # Start a company ? 
-            if self.worker_account_balance > Worker.START_COMP_ACCT_BALANCE:
-                # Magic Number refactor this logic
-                entrepreneurshipDrive = (self.salary + self.skill_level) / Worker.ENTREPRENERSHIP_NORMALIZING_FACTOR
-                startupProbability = round(np.random.uniform(0.0,100.0),2)
+        #     # Start a company ? 
+        #     if self.worker_account_balance > Worker.START_COMP_ACCT_BALANCE:
+        #         # Magic Number refactor this logic
+        #         entrepreneurshipDrive = (self.salary + self.skill_level) / Worker.ENTREPRENERSHIP_NORMALIZING_FACTOR
+        #         startupProbability = round(np.random.uniform(0.0,100.0),2)
 
-                if startupProbability <= entrepreneurshipDrive:
-                    new_company_obj = self.start_a_company()
-                    return new_company_obj 
+        #         if startupProbability <= entrepreneurshipDrive:
+        #             new_company_obj = self.start_a_company()
+        #             return new_company_obj 
 
-            #Look for new job ? 
-            if self.salary < Worker.JOB_CHANGE_THRESHOLD:
+        #     #Look for new job ? 
+        #     if self.salary < Worker.JOB_CHANGE_THRESHOLD:
             
-                satisfactionLevel = Worker.JOB_SATISFACTION_FACTOR - (self.skill_level - self.salary)
-                jobsearchProba = round(np.random.uniform(0.0,100.0),2)
-                if jobsearchProba >= satisfactionLevel:
-                    self.search_job(all_companies_list)
+        #         satisfactionLevel = Worker.JOB_SATISFACTION_FACTOR - (self.skill_level - self.salary)
+        #         jobsearchProba = round(np.random.uniform(0.0,100.0),2)
+        #         if jobsearchProba >= satisfactionLevel:
+        #             self.search_job(all_companies_list)
         
-        # Unemployeed            
-        else:            
-            self.search_job(all_companies_list)
+        # # Unemployeed            
+        # else:            
+        #     self.search_job(all_companies_list)
     
     def remove_worker(self):
         self.is_employed = False

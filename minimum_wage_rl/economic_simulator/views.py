@@ -4,6 +4,7 @@ from django.shortcuts import render
 # from .utility.simulate import step
 from .utility.start_up_2 import start
 from .utility.simulate_2 import step
+from .utility.publish import export_to_excel
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
@@ -40,7 +41,11 @@ def start_game(request):
 @permission_classes([IsAuthenticated])
 def end_game(request):
 
-    game_obj = get_latest_game(request)
+    user = request.user
+    return close_game(user)
+
+def close_game(user):
+    game_obj = get_latest_game(user)
 
     if game_obj == None:
         return Response({"status":200, "message":"No Game to end"})
@@ -49,17 +54,17 @@ def end_game(request):
         game_obj.save()
         return Response({"status":200, "message":"Game to ended successfully"})
 
-def get_latest_game(request):
+def get_latest_game(user):
     
     game_obj = None
     max_game_number = None
-    max_game_query = Game.objects.filter(player=request.user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))
+    max_game_query = Game.objects.filter(player=user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))
     
     if not max_game_query:
         pass
     else:
         max_game_number = max_game_query["max_game_number"]
-        game_obj = Game.objects.filter(player=request.user, game_ended = False, game_number = max_game_number).first()
+        game_obj = Game.objects.filter(player=user, game_ended = False, game_number = max_game_number).first()
 
     return game_obj
 
@@ -105,7 +110,7 @@ def create_user(request):
 def perform_action(request):
 
     action_map = request.data
-    user_data, state_values, reward, done = step(action_map, request.user)
+    user_data, state_values, reward, message, done = step(action_map, request.user)
 
     ai_data = user_data.copy()
 
@@ -123,10 +128,13 @@ def train(request):
 
 
 @api_view(http_method_names=['GET'])
-@authentication_classes([])
-@permission_classes([])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+# @authentication_classes([])
+# @permission_classes([])
 #@api_view(http_method_names=['GET'])
 def test_url(request):
+    export_to_excel(request.user)
     return Response({'status':200, 'message':"test code"})
 
 
@@ -145,6 +153,28 @@ class CustomAuthToken(ObtainAuthToken):
             'user_id': user.pk,
             'email': user.email
         })
+
+
+@api_view(http_method_names=['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def perform_get_action(request):
+    
+    min_wage_action = request.GET.get('minimum_wage',None)
+    action_map = dict()
+    action_map["minimum_wage"] = min_wage_action
+
+    if min_wage_action:
+        user_data, state_values, reward, message, done = step(action_map, request.user)
+
+        ai_data = user_data.copy()
+
+        final_response = {"User Data": user_data, "AI Data": ai_data}
+
+        json_reponse = json.loads(json.dumps(final_response))
+        return Response({'status':200, 'message':json_reponse})
+    else:
+        return Response({'status':400, 'message':"Invalid Minimum wage"})
 
 # @api_view(http_method_names=['POST'])
 # @authentication_classes([TokenAuthentication])

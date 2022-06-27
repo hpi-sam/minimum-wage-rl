@@ -95,8 +95,8 @@ class Market(models.Model):
     # def ExitToMenu(self):
     #     self.ResetMarket()
 
-    def get_state_and_reward(self):
-        return self.testingCountry.get_current_state_reward()
+    # def get_state_and_reward(self):
+    #     return self.testingCountry.get_current_state_reward()
 
     # def FixedUpdate(self):
         
