@@ -1,9 +1,9 @@
-from economic_simulator.models.country import Country
-from economic_simulator.models.metrics import Metric
-from ...models.market import Market
-from ...models.worker import Worker
+from models.country import Country
+from models.metrics import Metric
+from models.market import Market
+from models.worker import Worker
 from functools import reduce
-from math import ceil, floor, prod
+from math import ceil, floor
 
 def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, metrics):
 

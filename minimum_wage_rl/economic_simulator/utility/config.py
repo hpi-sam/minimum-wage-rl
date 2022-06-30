@@ -21,4 +21,4 @@ class ConfigurationParser:
             ConfigurationParser.__parser_instance = self
 
         self.parser = configparser.ConfigParser()
-        self.parser.read("config_file.txt")    
+        self.parser.read("config_file.txt")

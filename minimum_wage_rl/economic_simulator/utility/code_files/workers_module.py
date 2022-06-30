@@ -1,7 +1,7 @@
-from ...models.country import Country
-from ...models.company import Company
-from ...models.worker import Worker
-from ...models.market import Market
+# from models.country import Country
+from models.company import Company
+from models.worker import Worker
+from models.market import Market
 # import .company_module
 from .company_module import get_salary_paid, hiring, initialize_company
 from .common_module import retire

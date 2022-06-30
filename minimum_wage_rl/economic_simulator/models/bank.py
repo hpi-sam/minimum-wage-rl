@@ -1,17 +1,14 @@
-from django.db import models
-import uuid
+# from django.db import models
+# import uuid
 
-from ..utility.config import ConfigurationParser
+from utility.config import ConfigurationParser
 config_parser = ConfigurationParser.get_instance().parser
 
-class Bank(models.Model):
+class Bank():
 
-    class Meta:
-        db_table = "bank"
-
-    liquid_capital = models.FloatField(default=0.0)
-    interest_rate = models.FloatField(default=config_parser.get("bank","initial_interest_rates"))
-    bank_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)    
+    liquid_capital = 0.0
+    interest_rate = config_parser.get("bank","initial_interest_rates")
+    # bank_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
         
     def initialize_bank(self, cash):
         self.liquid_capital = cash

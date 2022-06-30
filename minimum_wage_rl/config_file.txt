@@ -62,6 +62,7 @@ experience_weightage=0.3
 initial_acct_balance=0.0
 junior_skill_level=25
 senior_skill_level=70
+initial_balance_weightage=0.5
 
 [scenario]
 unregulated=1

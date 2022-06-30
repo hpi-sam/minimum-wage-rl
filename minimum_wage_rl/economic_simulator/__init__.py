@@ -1,1 +1,1 @@
-default_app_config = 'economic_simulator.apps.EconomicSimulatorConfig'
+# default_app_config = 'economic_simulator.apps.EconomicSimulatorConfig'

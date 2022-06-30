@@ -1,4 +1,4 @@
-from ...models.market import Market
+from models.market import Market
 
 def set_company_size_metrics(company, metrics_obj):
 

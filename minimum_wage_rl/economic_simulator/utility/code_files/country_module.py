@@ -1,13 +1,14 @@
 import numpy as np
 
-from economic_simulator.models import country
-from ...models.worker import Worker
-from ...models.country import Country
-from ...models.company import Company
-from ...models.market import Market
+# from ...models import country
+from models.worker import Worker
+from models.country import Country
+from models.company import Company
+from models.market import Market
+from models.bank import Bank
 from . import company_module
 
-def create_country(country, all_companies_list):
+def create_country(country):
     
     country.yearly_produced_value = 0
 
@@ -44,9 +45,10 @@ def create_company(country):
     
     return all_companies_list
 
-def create_bank(bank, country, initial_bank_balance):
+def create_bank(initial_bank_balance):
+    bank = Bank()
     bank.initialize_bank(initial_bank_balance)
-    country.bank = bank
+    return bank
     
 
 
@@ -55,7 +57,7 @@ def add_new_workers(country):
     worker_list = []
 
     # 1: Add 5 - 10 juniors in population
-    num_of_juniors = np.random.randint(5,11)
+    num_of_juniors = 20
     for i in range(num_of_juniors):
         worker = Worker()
         age = np.random.randint(19,25)
@@ -64,7 +66,7 @@ def add_new_workers(country):
         worker_list.append(worker)
     
     # 2: Add 5 - 10 seniors in population
-    num_of_seniors = np.random.randint(5,11)
+    num_of_seniors = 20
     for i in range(num_of_seniors):
         worker = Worker()
         age = np.random.randint(30,35)
@@ -73,7 +75,7 @@ def add_new_workers(country):
         worker_list.append(worker)
     
     # 3: Add 5 - 10 executives in population
-    num_of_executives = np.random.randint(5,11)
+    num_of_executives = 20
     for i in range(num_of_executives):
         worker = Worker()
         age = np.random.randint(40,45)
@@ -83,7 +85,7 @@ def add_new_workers(country):
 
     country.population = country.population + (num_of_juniors + num_of_seniors + num_of_executives)
 
-    return worker_list
+    return worker_list, num_of_juniors, num_of_seniors, num_of_executives
 
 
 def initialize_employee(initial_balance, country, worker, age, skill_level):
@@ -94,9 +96,9 @@ def initialize_employee(initial_balance, country, worker, age, skill_level):
     worker.salary = 0
     worker.skill_level = skill_level
     # citizen.initial_skill_level = 1
-    worker.bought_essential_product = worker.buy_first_extra_product = worker.buy_second_extra_product = False
+    # worker.bought_essential_product = worker.buy_first_extra_product = worker.buy_second_extra_product = False
     worker.is_employed = worker.has_company = False
 
     # Moving to a country
-    worker.country_of_residence = country
+    # worker.country_of_residence = country
     worker.worker_score = (Worker.SKILL_SET_WEIGHTAGE * worker.skill_level) + (Worker.EXPERIENCE_WEIGHTAGE * (worker.age-18))

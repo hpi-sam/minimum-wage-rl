@@ -1,19 +1,18 @@
-from django.db import models
-import uuid
-from django.contrib.auth.models import User
+# from ..utility.config import ConfigurationParser
+# config_parser = ConfigurationParser.get_instance().parser
+from utility.start_up_2 import start
+from utility.simulate_2 import step
 
-from ..utility.config import ConfigurationParser
-config_parser = ConfigurationParser.get_instance().parser
+class Game():
 
-class Game(models.Model):
+    def __init__(self, game_number) -> None:        
+        self.game_number = game_number
+        self.game_ended = False
+        self.country = None
+        
+    def reset(self):
+        start(self)
 
-    class Meta:
-        db_table = "game_info"
-
-    # def __init__(self, player):
-    #     self.player = player
-    #     super().__init__(self)
-
-    player = models.ForeignKey(User, on_delete=models.CASCADE)
-    game_number = models.IntegerField(default=1)
-    game_ended = models.BooleanField(default=False)
+    def step(self,action):
+        step(self,action)
+    
