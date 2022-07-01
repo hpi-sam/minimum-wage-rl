@@ -54,7 +54,7 @@ def yearly_financial_transactions(company, country, retired_workers_list):
     for each_worker in worker_list:
         
         # Increase age of worker here
-
+        each_worker.age = each_worker.age + 1
         retire_flag = False
 
         if each_worker.age >= 60:

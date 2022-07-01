@@ -1,5 +1,5 @@
 # from itertools import count
-from economic_simulator.models.metrics import Metric
+from models.metrics import Metric
 from models.worker import Worker
 # from ..models.bank import Bank
 from models.country import Country

@@ -36,10 +36,10 @@ def step(game, action_map):
     # Get all companies with -> closed = False
     country_companies_list = country.company_list
 
-    # Increase age of all workers by 1
+    # Increase age of unemployed workers by 1
     
-    for each_worker in country.employed_workers:
-        each_worker.age = each_worker.age + 1
+    # for each_worker in country.employed_workers:
+    #     each_worker.age = each_worker.age + 1
 
     for each_worker in country.unemployed_workers:
         each_worker.age = each_worker.age + 1
@@ -54,21 +54,6 @@ def step(game, action_map):
     
     # Step 2 - run market step
     return run_market(country, country_companies_list, unemployed_workers_list)
-
-# def __get_latest_game(user):
-    
-#     game_obj = None
-#     max_game_number = None
-#     max_game_query = Game.objects.filter(player=user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))
-    
-#     if not max_game_query:
-#         pass
-#     else:
-#         max_game_number = max_game_query["max_game_number"]
-#         game_obj = Game.objects.filter(player=user, game_ended = False, game_number = max_game_number).first()
-
-#     return game_obj
-
 
 # @transaction.atomic
 def run_market(country, country_companies_list, unemployed_workers_list):
@@ -116,7 +101,9 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         # 3.4: Pay salary to workers and Earn money from workers
         company_module.yearly_financial_transactions(each_company,country, retired_workers_list)
 
-        # 3.5: Create Jobs/Fire people
+        # 3.5: 
+        # Step 1: Fire people
+        # Step 2: Create Open Positions - Junior, Senior and Executive
         operation_map = {"close":False,"fired_workers":[],"employed_workers":[]}
         company_module.hiring_and_firing(each_company, operation_map)
 
@@ -254,13 +241,13 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     country.unemployed_workers = unemp_worker_list
 
     # save bank
-    country.bank.save()
+    # country.bank.save()
     
     # save market
-    country.market.save()
+    # country.market.save()
 
     # save country
-    country.save()
+    # country.save()
 
     # save metrics
     # metrics.country_of_residence = country

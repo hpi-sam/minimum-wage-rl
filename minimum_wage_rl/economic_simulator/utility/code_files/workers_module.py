@@ -128,7 +128,8 @@ def get_hired(worker_list,salary, company,emp_worker_list):
         get_salary_paid(worker, company)
         worker.skill_improvement_rate = company.skill_improvement_rate
 
-        worker.works_for_company = company
+        # worker.works_for_company = company
+        company.employed_workers_list.append(worker)
         emp_worker_list.append(worker)
 
 # ==================================== old code ========================================

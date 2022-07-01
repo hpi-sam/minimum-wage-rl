@@ -11,8 +11,8 @@ class Game():
         self.country = None
         
     def reset(self):
-        start(self)
+        return start(self)
 
     def step(self,action):
-        step(self,action)
+        return step(self,action)
     
