@@ -1,15 +1,27 @@
 from models.game import Game
 from utility.config import ConfigurationParser
+from AI_model.actor_critic import actor_critic_main
+from env import Task
+from utility.publish import export_from_game_metric
+
+num_workers = 5
 
 
-g1 =  Game(1)
+def make_env(num_workers):
+    envs = []
+    for i in range(1, num_workers+1):
+        envs.append(Game(i))
 
-g1.reset()
+    return envs
 
-action = {"minimum_wage":3.2}
-current_state, state_values, reward, done = g1.step(action)
+task = Task(num_workers, make_env(num_workers=num_workers))
 
-print(current_state)
-print(state_values)
-print(reward)
-print(done)
+actor_critic_main.train(num_workers, task)
+
+games = task.env.envs
+
+for each_game in games:
+    export_from_game_metric(each_game.game_number, each_game.game_metric_list)
+
+
+print("done")

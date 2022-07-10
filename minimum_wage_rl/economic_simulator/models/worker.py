@@ -34,25 +34,26 @@ class Worker():
     SKILL_SET_WEIGHTAGE = float(config_parser.get("worker","skill_set_weightage"))
     EXPERIENCE_WEIGHTAGE = float(config_parser.get("worker","experience_weightage"))
 
-    # country_of_residence = None
-    works_for_company = None
+    def __init__(self) -> None:
+        # country_of_residence = None
+        self.works_for_company = None
 
-    skill_level = 0
-    worker_account_balance = 0
-    salary = 0
-    age = 0
+        self.skill_level = 0
+        self.worker_account_balance = 0
+        self.salary = 0
+        self.age = 0
 
-    is_employed = False
-    has_company = False
-    retired = False
+        self.is_employed = False
+        self.has_company = False
+        self.retired = False
 
-    worker_score = 0.0
+        self.worker_score = 0.0
 
-    create_start_up = False
-    start_up_score = 0.0
+        self.create_start_up = False
+        self.start_up_score = 0.0
 
-    # Based on the company size - small/medium/large
-    skill_improvement_rate = 0.0
+        # Based on the company size - small/medium/large
+        self.skill_improvement_rate = 0.0
 
     # def InitializeEmployee(self, initialBalance, country): #MWCountry
     #     self.worker_account_balance = initialBalance

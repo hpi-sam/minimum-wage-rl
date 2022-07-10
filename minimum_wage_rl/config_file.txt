@@ -86,3 +86,10 @@ market_steps=3600
 [training]
 # 0 for discrete and 1 for continuous
 min_wage_policy=0
+num_steps=50
+episodes=5
+penalize_lower_bound=5
+
+[reward]
+poverty_weightage = 1
+unemp_weightage = 1

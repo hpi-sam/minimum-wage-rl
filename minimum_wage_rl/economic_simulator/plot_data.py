@@ -42,8 +42,8 @@ class DynamicUpdate():
         self.lines_3 = [[] for _ in range(self.y_values_3)]
         self.lines_4 = [[] for _ in range(self.y_values_4)]
 
-        self.lines_1[0], = self.ax[0,0].plot([],[], label="Expense")
-        self.lines_1[1], = self.ax[0,0].plot([],[], label="Avg Salary")
+        self.lines_1[0], = self.ax[0,0].plot([],[], label="Product price")
+        self.lines_1[1], = self.ax[0,0].plot([],[], label="Inflation")
 
         self.lines_2[0], = self.ax[0,1].plot([],[],label="Poverty")
         self.lines_2[1], = self.ax[0,1].plot([],[], label="Unemployment")
@@ -65,7 +65,7 @@ class DynamicUpdate():
                 self.ax[i,j].set_autoscalex_on(True)
                 self.ax[i,j].grid(linewidth=0.2)
 
-        self.ax[0,0].set_title("Expense vs Average Salary", fontweight="bold", fontsize=12)
+        self.ax[0,0].set_title("Product price vs Inflation", fontweight="bold", fontsize=12)
         self.ax[0,1].set_title("Poverty vs Unemployment", fontweight="bold", fontsize=12)
         self.ax[1,0].set_title("Jobs", fontweight="bold", fontsize=12)
         self.ax[1,1].set_title("Minimum wage", fontweight="bold", fontsize=12)
@@ -163,15 +163,19 @@ d = DynamicUpdate()
 d()
 
 
-df_1 = pd.read_excel("data\\ai_scenario_data.xlsx")
+df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+# df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+# df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+
+print(df_1.columns)
 
 mini_wage = df_1["Minimum Wage"].tolist()
 
-monthly_expense = (df_1["productPrice"]*30).tolist()
-average_salary = df_1["Average Salary"].tolist()
+monthly_expense = df_1["Product Price"].tolist()
+average_salary = df_1["Inflation"].tolist()
 
-poverty_rate = df_1["Poverty"].tolist()
-unemployment_rate = df_1["Unemployment"].tolist()
+poverty_rate = df_1["Poverty Rate"].tolist()
+unemployment_rate = df_1["Unemp Rate"].tolist()
 
 junior_pos = df_1["Junior"].tolist() 
 senior_pos = df_1["Senior"].tolist()

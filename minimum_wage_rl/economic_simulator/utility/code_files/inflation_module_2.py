@@ -10,7 +10,9 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     emp_workers_acct = reduce(lambda result, worker: result + worker.worker_account_balance, emp_worker_list, 0 )
     unemp_workers_acct = reduce(lambda result, worker: result + worker.worker_account_balance, unemp_worker_list, 0 )
 
+    old_money_circulation = country.money_circulation
     current_money_circulation = emp_workers_acct + unemp_workers_acct
+    country.money_circulation = current_money_circulation
     velocity_of_money = 1
     current_product_price = country.product_price
     old_quantity = country.quantity
@@ -25,7 +27,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     produce_quantity = needed_quantity - old_quantity if needed_quantity - old_quantity > 0 else 0
 
     # 1. Check if latest money circulation is less than previous money circulation
-    if current_money_circulation <= country.money_circulation:
+    if current_money_circulation <= old_money_circulation:
 
         if produce_quantity > 0:
             produce_quantity = produce_extra_quantity(produce_quantity, current_product_price, country)
@@ -34,6 +36,9 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         new_price, deflation = calculate_deflation(current_product_price, new_price, old_inflation, metrics)
         country.product_price = new_price
         country.quantity = produce_quantity + old_quantity
+
+        metrics.product_price = new_price
+        metrics.quantity = produce_quantity + old_quantity
     
     else:
 
@@ -54,6 +59,9 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
 
+            metrics.product_price = new_price
+            metrics.quantity = produce_quantity + old_quantity
+
 
         # 1.2 Inflation above a given threshold - then - Increase Quantity (maybe price)
         # What was removed - Upper limit for Quantity production
@@ -69,19 +77,26 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
 
+            metrics.product_price = new_price
+            metrics.quantity = produce_quantity + old_quantity
+
             # 1.3 Inflation in between certain limit - then - Increase Product price
         else:
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price, country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
+
+            metrics.product_price = new_price
+            metrics.quantity = produce_quantity + old_quantity
         
-        calculate_inflation(new_price,current_product_price, old_inflation, metrics)
+        calculate_inflation(current_product_price, new_price, old_inflation, metrics)
         # else:
         #     calculate_inflation(current_product_price, current_product_price, old_inflation, metrics)
 
         if country.product_price <= 0.0:
             country.product_price = 0.01
+            metrics.product_price = 0.01
 
 def produce_extra_quantity(produce_quantity, price, country):
 
@@ -99,7 +114,7 @@ def produce_extra_quantity(produce_quantity, price, country):
 def calculate_deflation(current_product_price, new_product_price, old_inflation, metrics):
     
     deflation = (new_product_price - current_product_price)/current_product_price
-    if abs(deflation) < 0.5:
+    if abs(deflation) > 0.5:
         deflation = -0.5
         new_product_price = round(current_product_price + current_product_price * deflation, 2)
     
@@ -142,13 +157,13 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
 
             salary_metrics(each_worker, employee_details_map)
 
-            if not(each_worker.is_employed):
-                unemployed = unemployed + 1
+        if not(each_worker.is_employed):
+            unemployed = unemployed + 1
         
     # Add mertrics
-    metrics.total_filled_jun_pos = employee_details_map["jun_workers"]
-    metrics.total_filled_sen_pos = employee_details_map["sen_workers"]
-    metrics.total_filled_exec_pos = employee_details_map["exec_workers"]
+    # metrics.total_filled_jun_pos = employee_details_map["jun_workers"]
+    # metrics.total_filled_sen_pos = employee_details_map["sen_workers"]
+    # metrics.total_filled_exec_pos = employee_details_map["exec_workers"]
 
     metrics.average_jun_sal = round(employee_details_map["jun_worker_sal"]/employee_details_map["jun_workers"] if employee_details_map["jun_workers"] > 0 else 0, 1)
     metrics.average_sen_sal = round(employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0, 1)
@@ -161,14 +176,14 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
 
 def salary_metrics(each_worker, employee_details_map):
 
-    if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+    if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL and (each_worker.is_employed):
         employee_details_map["jun_workers"] = employee_details_map["jun_workers"] + 1
         employee_details_map["jun_worker_sal"] = employee_details_map["jun_worker_sal"] + each_worker.salary
 
-    elif each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL:
+    elif each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL and (each_worker.is_employed):
         employee_details_map["sen_workers"] = employee_details_map["sen_workers"] + 1
         employee_details_map["sen_worker_sal"] = employee_details_map["sen_worker_sal"] + each_worker.salary
-    else:
+    elif each_worker.skill_level > Worker.SENIOR_SKILL_LEVEL and (each_worker.is_employed):
         employee_details_map["exec_workers"] = employee_details_map["exec_workers"] + 1
         employee_details_map["exec_worker_sal"] = employee_details_map["exec_worker_sal"] + each_worker.salary
         

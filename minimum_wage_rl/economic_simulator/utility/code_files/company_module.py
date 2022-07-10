@@ -438,7 +438,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
 def initialize_company(company, initial_balance, country):
 
     company.company_account_balance = initial_balance    
-    company.country = country
+    # company.country = country
 
     # company.hiring_rate = 0.02
 

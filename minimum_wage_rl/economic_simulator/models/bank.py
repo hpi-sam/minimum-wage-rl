@@ -6,8 +6,9 @@ config_parser = ConfigurationParser.get_instance().parser
 
 class Bank():
 
-    liquid_capital = 0.0
-    interest_rate = config_parser.get("bank","initial_interest_rates")
+    def __init__(self) -> None:
+        self.liquid_capital = 0.0
+        self.interest_rate = float(config_parser.get("bank","initial_interest_rates"))
     # bank_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
         
     def initialize_bank(self, cash):

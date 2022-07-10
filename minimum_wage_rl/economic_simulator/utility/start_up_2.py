@@ -1,4 +1,5 @@
 # from itertools import count
+from models.game_metric import GameMetric
 from models.metrics import Metric
 from models.worker import Worker
 # from ..models.bank import Bank
@@ -14,7 +15,10 @@ from .code_files import country_module
 config_parser = ConfigurationParser.get_instance().parser
 
 # @transaction.atomic
-def start(game):
+def start(game, episode_num):
+
+    game_metric = GameMetric(episode_num)
+    game.game_metric_list.append(game_metric)
 
     min_wage_weightage = float(config_parser.get("worker","initial_balance_weightage"))
 
@@ -28,7 +32,6 @@ def start(game):
     market_obj = Market()
     market_obj.month = market_obj.year = 0
     market_obj.market_value_year = 0
-    
 
     # 2: Create Country
     country = Country()
@@ -93,7 +96,7 @@ def start(game):
 
     # print_metrics(country)
 
-    return game
+    return collect_metrics(country)
 
 def print_metrics(country):
     print("=========================== Year ", country.year, "==========================")

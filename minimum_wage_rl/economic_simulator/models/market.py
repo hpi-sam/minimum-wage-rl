@@ -42,14 +42,15 @@ class Market():
     SMALL_COMPANY_TYPE=0
     MEDIUM_COMPANY_TYPE=1
     LARGE_COMPANY_TYPE=2
-             
-    month = 0
-    year = 0
-    
-    # SET LATER
-    market_value_year = None
-    amount_of_new_citizens = 0
-    inflation_rate = float(config_parser.get("market","inflation"))
 
-    # SET LATER
-    product_price = INITIAL_PRODUCT_PRICE
+    def __init__(self) -> None:
+        self.month = 0
+        self.year = 0
+    
+        # SET LATER
+        self.market_value_year = None
+        self.amount_of_new_citizens = 0
+        self.inflation_rate = float(config_parser.get("market","inflation"))
+
+        # SET LATER
+        self.product_price = Market.INITIAL_PRODUCT_PRICE
