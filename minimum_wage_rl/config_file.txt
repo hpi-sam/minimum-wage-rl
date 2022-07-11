@@ -16,10 +16,10 @@ medium_company_init_balance=3000
 large_company_init_balance=10000
 cmp_age_weightage=0.3
 cmp_acct_balance_weightage=0.7
-initial_product_price=1
+initial_product_price=5.0
 
 [minwage]
-initial_minimum_wage=2.0
+initial_minimum_wage=7.0
 senior_salary_percent=0.05
 exec_salary_percent=0.1
 

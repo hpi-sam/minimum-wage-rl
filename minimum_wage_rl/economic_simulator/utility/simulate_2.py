@@ -1,6 +1,6 @@
-from math import ceil, floor
+# from math import ceil, floor
 
-import numpy as np
+# import numpy as np
 
 from models.metrics import Metric
 # from economic_simulator.utility.code_files.common_module import retire
@@ -57,12 +57,12 @@ def step(game, action_map):
         # Step 2 - run market step
         return run_market(country, country_companies_list, unemployed_workers_list, game)
     else:
-        current_state = dict()
-        current_state["Unemployment Rate"] = float(0.0)
-        current_state["Poverty Rate"] = float(0.0)
-        current_state["Minimum wage"] = float(0.0)
-        current_state["Inflation Rate"] = float(0.0)
-        current_state["population"] = float(0.0)
+        # current_state = dict()
+        # current_state["Unemployment Rate"] = float(0.0)
+        # current_state["Poverty Rate"] = float(0.0)
+        # current_state["Minimum wage"] = float(0.0)
+        # current_state["Inflation Rate"] = float(0.0)
+        # current_state["population"] = float(0.0)
 
         state_values = []
 
@@ -184,7 +184,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list)
     
     # Only for standalone
-    workers_module.create_start_up_for_employed(country, new_companies_list, open_companies_list, startup_workers_list, emp_worker_list, successful_founders_list)                                  
+    workers_module.create_start_up_for_employed(country, new_companies_list, startup_workers_list, open_companies_list, emp_worker_list, successful_founders_list)                                  
 
     retired_workers_list.extend(successful_founders_list)                                                                  
 
@@ -305,7 +305,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
 
     game_metric = game.game_metric_list[-1]
     m_values = [country.year, metrics.minimum_wage, metrics.unemployment_rate, metrics.poverty_rate, metrics.inflation,
-                metrics.product_price,  metrics.quantity, metrics.bank_account_balance, country.population]
+                metrics.product_price,  metrics.quantity, metrics.bank_account_balance, country.population, metrics.population]
     game_metric.metric_list.append(m_values)
     game.game_metric_list[-1] = game_metric
 
@@ -366,12 +366,12 @@ def close_company(each_company, fired_workers):
 
 def get_current_state_reward(country, metrics):
 
-    current_state = dict()
-    current_state["Unemployment Rate"] = float("{:.2f}".format(metrics.unemployment_rate))
-    current_state["Poverty Rate"] = float("{:.2f}".format(metrics.poverty_rate))
-    current_state["Minimum wage"] = metrics.minimum_wage
-    current_state["Inflation Rate"] = float("{:.2f}".format(metrics.inflation_rate))
-    current_state["population"] = metrics.population
+    # current_state = dict()
+    # current_state["Unemployment Rate"] = float("{:.2f}".format(metrics.unemployment_rate))
+    # current_state["Poverty Rate"] = float("{:.2f}".format(metrics.poverty_rate))
+    # current_state["Minimum wage"] = metrics.minimum_wage
+    # current_state["Inflation Rate"] = float("{:.2f}".format(metrics.inflation_rate))
+    # current_state["population"] = metrics.population
 
     # state_values.append(country.unemployment_rate)
     # state_values.append(country.poverty_rate)
@@ -395,6 +395,7 @@ def calculate_reward(metrics):
 
     r1 = 1 - (metrics.unemployment_rate/100)
     #  * unemp_weightage
+    # r2 =  - (metrics.poverty_rate/100)
     r2 = 1 - (metrics.poverty_rate/100)
     # r2 = 100 - (metrics.poverty_rate)
     # * poverty_weightage
@@ -420,10 +421,11 @@ def get_game_state(metric):
     state_values.append(metric.minimum_wage)
     state_values.append(metric.product_price)
     state_values.append(metric.quantity)
-    state_values.append(metric.poverty_rate)
+    # state_values.append(metric.poverty_rate)
     state_values.append(metric.unemployment_rate)
     state_values.append(metric.inflation)
     state_values.append(metric.bank_account_balance)
+    state_values.append(metric.population)
 
     reward = calculate_reward(metric)
 

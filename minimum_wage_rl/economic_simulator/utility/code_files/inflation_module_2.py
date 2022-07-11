@@ -1,9 +1,14 @@
-from models.country import Country
-from models.metrics import Metric
+# from models.country import Country
+# from models.metrics import Metric
 from models.market import Market
 from models.worker import Worker
 from functools import reduce
 from math import ceil, floor
+from utility.config import ConfigurationParser
+config_parser = ConfigurationParser.get_instance().parser
+
+
+initial_product_price = float(config_parser.get("market","initial_product_price"))
 
 def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, metrics):
 
@@ -33,6 +38,10 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             produce_quantity = produce_extra_quantity(produce_quantity, current_product_price, country)
         
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+
+        if new_price < initial_product_price:
+            new_price = initial_product_price
+
         new_price, deflation = calculate_deflation(current_product_price, new_price, old_inflation, metrics)
         country.product_price = new_price
         country.quantity = produce_quantity + old_quantity
@@ -44,6 +53,10 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
         # if produce_quantity > 0:
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+
+        if new_price < initial_product_price:
+            new_price = initial_product_price
+
         inflation = calculate_inflation(current_product_price, new_price, old_inflation, metrics)
         
         # 1.1 Inflation below a given threshold - then - Increase Quantity (maybe price)
@@ -56,6 +69,9 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
+            if new_price < initial_product_price:
+                new_price = initial_product_price
+    
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
 
@@ -74,6 +90,9 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
+            if new_price < initial_product_price:
+                new_price = initial_product_price
+
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
 
@@ -84,6 +103,10 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         else:
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price, country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+
+            if new_price < initial_product_price:
+                new_price = initial_product_price
+
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
 
@@ -117,6 +140,10 @@ def calculate_deflation(current_product_price, new_product_price, old_inflation,
     if abs(deflation) > 0.5:
         deflation = -0.5
         new_product_price = round(current_product_price + current_product_price * deflation, 2)
+
+        if new_product_price < initial_product_price:
+            new_product_price = initial_product_price
+            deflation = (new_product_price - current_product_price)/current_product_price
     
     deflation_rate = (deflation - old_inflation)/old_inflation if old_inflation> 0 else (deflation - old_inflation)
     metrics.inflation = round(deflation, 2)

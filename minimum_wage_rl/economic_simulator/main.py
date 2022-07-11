@@ -1,5 +1,5 @@
 from models.game import Game
-from utility.config import ConfigurationParser
+# from utility.config import ConfigurationParser
 from AI_model.actor_critic import actor_critic_main
 from env import Task
 from utility.publish import export_from_game_metric

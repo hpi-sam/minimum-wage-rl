@@ -34,7 +34,8 @@ class DynamicUpdate():
 
         self.y_values_1 = 2
         self.y_values_2 = 2
-        self.y_values_3 = 3
+        # self.y_values_3 = 3
+        self.y_values_3 = 1
         self.y_values_4 = 1
 
         self.lines_1 = [[] for _ in range(self.y_values_1)]
@@ -48,9 +49,9 @@ class DynamicUpdate():
         self.lines_2[0], = self.ax[0,1].plot([],[],label="Poverty")
         self.lines_2[1], = self.ax[0,1].plot([],[], label="Unemployment")
 
-        self.lines_3[0], = self.ax[1,0].plot([],[],label="Junior")
-        self.lines_3[1], = self.ax[1,0].plot([],[],label="Senior")
-        self.lines_3[2], = self.ax[1,0].plot([],[],label="Executive")
+        self.lines_3[0], = self.ax[1,0].plot([],[],label="Population")
+        # self.lines_3[1], = self.ax[1,0].plot([],[],label="Senior")
+        # self.lines_3[2], = self.ax[1,0].plot([],[],label="Executive")
 
         self.lines_4[0], = self.ax[1,1].plot([],[], label="Minimum Wage")
 
@@ -67,7 +68,7 @@ class DynamicUpdate():
 
         self.ax[0,0].set_title("Product price vs Inflation", fontweight="bold", fontsize=12)
         self.ax[0,1].set_title("Poverty vs Unemployment", fontweight="bold", fontsize=12)
-        self.ax[1,0].set_title("Jobs", fontweight="bold", fontsize=12)
+        self.ax[1,0].set_title("Population", fontweight="bold", fontsize=12)
         self.ax[1,1].set_title("Minimum wage", fontweight="bold", fontsize=12)
 
     def on_running(self, xdata, ydata,ax_value):
@@ -163,7 +164,7 @@ d = DynamicUpdate()
 d()
 
 
-df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode1")
 # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
 # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
 
@@ -177,9 +178,11 @@ average_salary = df_1["Inflation"].tolist()
 poverty_rate = df_1["Poverty Rate"].tolist()
 unemployment_rate = df_1["Unemp Rate"].tolist()
 
-junior_pos = df_1["Junior"].tolist() 
-senior_pos = df_1["Senior"].tolist()
-exec_pos = df_1["Executive"].tolist()
+population = df_1["Population"].tolist()
+
+# junior_pos = df_1["Junior"].tolist() 
+# senior_pos = df_1["Senior"].tolist()
+# exec_pos = df_1["Executive"].tolist()
 
 count = 0
 x = 1
@@ -198,7 +201,8 @@ for year_val,wage in enumerate(mini_wage):
     d.update_xdata(year_val)
     d.plot_repeated(year_val, [monthly_expense[count],average_salary[count]], 1, block_value)
     d.plot_repeated(year_val, [poverty_rate[count],unemployment_rate[count]], 2, block_value)
-    d.plot_repeated(year_val, [junior_pos[count], senior_pos[count], exec_pos[count]], 3, block_value)
+    d.plot_repeated(year_val, [population[count]], 3, block_value)
+    # d.plot_repeated(year_val, [junior_pos[count], senior_pos[count], exec_pos[count]], 3, block_value)
     d.plot_repeated(year_val,[mini_wage[count]],4, block_value)
     count = count + 1
     d.draw()

@@ -50,6 +50,9 @@ class DummyVecEnv():
             obs, rew, info, done  = self.envs[i].step(self.actions[i])
             if done:
                 obs = self.envs[i].reset(episode_number)
+                action_val = {"minimum_wage": obs["Minimum wage"]}
+                obs, rew, info, done = self.envs[i].step(action_val)
+
             data.append([obs, rew, info, done])
         obs, rew, info, done = zip(*data)
         return obs, np.asarray(rew), info, np.asarray(done)

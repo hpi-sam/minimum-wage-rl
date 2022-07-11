@@ -4,7 +4,7 @@ import torch.optim as optim
 from utility import simulate_2
 from utility.config import ConfigurationParser
 import torch
-from . import utility
+# from . import utility
 
 roll_out_length = 5
 discount = 0.9
@@ -22,7 +22,7 @@ penalize_lower_bound = int(config_parser.get("training","penalize_lower_bound"))
 class ActorCriticAgent:
 
     def __init__(self, task, user, action_dim) -> None:    
-        self.actor_model = GaussianActor(action_dim=action_dim) 
+        self.actor_model = GaussianActor(action_dim=action_dim, lower_limit=min_wage_lower_bound) 
         # CategoricalActor()
         self.critic_model = Critic()
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=actor_lr)
@@ -51,9 +51,6 @@ class ActorCriticAgent:
             #     storage.low_action_value_count.append(torch.tensor([0]))
             
             state_values, reward, message, done = self.task.step((action_prediction["action"]).detach().squeeze().numpy(), episode_num) 
-            print("============ type: ", type(state_values))
-            print("============= type in: ", type(state_values[0]))
-            print(state_values)
             next_state = torch.tensor(state_values , dtype=torch.float)
             reward = torch.tensor(reward, dtype=torch.float).unsqueeze(-1)
             terminate = torch.tensor(1 - done).unsqueeze(-1)
