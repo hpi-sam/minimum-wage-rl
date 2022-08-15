@@ -32,18 +32,16 @@ def start(user):
     # save company
 
     metric_obj = Metric()
+    metric_obj.year = 0    
 
     # 1: Create Market 
     market_obj = Market()
     market_obj.month = market_obj.year = 0
     market_obj.market_value_year = 0
-    market_obj.run = 0
-
-    metric_obj.year = 0
 
     # 2: Create Country
     country = Country()
-    country.total_money_printed = Country.INITIAL_BANK_BALANCE    
+    # country.total_money_printed = Country.INITIAL_BANK_BALANCE    
     country_module.create_country(country,all_companies_list)
     country.market = market_obj    
     country.player = user

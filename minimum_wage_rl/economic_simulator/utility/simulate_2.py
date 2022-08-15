@@ -1,4 +1,4 @@
-from math import ceil, floor
+# from math import ceil, floor
 
 from economic_simulator.models.metrics import Metric
 from economic_simulator.utility.code_files.common_module import retire
@@ -21,8 +21,8 @@ from .code_files import hiring_module
 
 from .config import ConfigurationParser
 from django.db import models
-import numpy as np
-from functools import reduce
+# import numpy as np
+# from functools import reduce
 from django.db import transaction
 
 
@@ -106,13 +106,18 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     metrics.year = country.year
 
     total_open_positions = 0
+    total_open_junior_pos = 0
+    total_open_senior_pos = 0
+    total_open_exec_pos = 0
 
     # ================ 1: COUNTRY MODULE - Increase population ================
-    new_workers_list, new_num_of_juniors, new_num_of_seniors, new_num_of_executives =  country_module.add_new_workers(country)
+    new_workers_list, _, _, _ =  country_module.add_new_workers(country)
     fired_workers = []
     employed_workers_list = []
     retired_workers_list = []
-    
+
+    print("Total Workers Currently - ", country.population)
+
     # ================ 2: Retire Unemployed workers ================
     non_retired_workers = []
     for each_unemployed_worker in unemployed_workers_list:
@@ -128,8 +133,10 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     # ================ 3: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
     open_companies_list = []
     closed_companies_list = []
+    comp_count = 0    
     for each_company in country_companies_list:
         
+        comp_count = comp_count + 1        
         # 3.1: Increase age of company
         each_company.company_age = each_company.company_age + 1 
 
@@ -137,7 +144,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         company_module.pay_loan(each_company,country.bank)
 
         # 3.3: Pay taxes
-        company_module.pay_tax(each_company,country.bank)
+        # company_module.pay_tax(each_company,country.bank)
 
         # 3.4: Pay salary to workers and Earn money from workers
         company_module.yearly_financial_transactions(each_company,country, retired_workers_list)
@@ -149,6 +156,10 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         total_open_positions = total_open_positions + each_company.open_junior_pos
         total_open_positions = total_open_positions + each_company.open_senior_pos
         total_open_positions = total_open_positions + each_company.open_exec_pos
+
+        total_open_junior_pos = total_open_junior_pos + each_company.open_junior_pos
+        total_open_senior_pos = total_open_senior_pos  + each_company.open_senior_pos
+        total_open_exec_pos = total_open_exec_pos + each_company.open_exec_pos
 
         # 3.6: Change company size
         company_module.set_company_size(each_company)
@@ -174,6 +185,9 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     all_workers_list.extend(fired_workers)
     all_workers_list.extend(employed_workers_list)
 
+    print("Total Open Position - ", total_open_positions)
+    print("Total Unemployed Workers - ", len(all_workers_list))
+
     new_companies_list = []
     
     min_startup_score = 0
@@ -192,6 +206,10 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     workers_module.evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, 
                                   min_startup_score, max_startup_score)
+
+    print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
+    print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
+    print("Open Exec Pos - ", total_open_exec_pos, " Unemployed Exec Workers - ", len(unemp_exec_worker_list))
 
     # 4.2 Create Start ups
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
@@ -236,11 +254,9 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     if num_of_companies > 0:
         # 1. Junior
         level = "junior"
-        if num_of_companies>0:
-            unemp_jun_worker_list = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
+        unemp_jun_worker_list = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
 
-        # 2. Senior
-        
+        # 2. Senior        
         level = "senior"
         unemp_sen_worker_list = hiring_module.hire_workers(open_companies_list,unemp_sen_worker_list,level, senior_salary,metrics, emp_worker_list)
 
@@ -250,9 +266,20 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
 
     for company_item in open_companies_list:
+        # Pay cost of operation
+        coo = company_module.pay_cost_of_operation(company_item)        
+
+        # Pay taxes
+        tax = company_module.pay_tax(company_item,country.bank)
+        
+        print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
+
         company_module.set_company_size(company_item)
         metrics_module.set_company_size_metrics(company_item, metrics)
 
+        company_item.year_income = 0.0
+
+    print("")
 
     # 5: INFLATION MODULE
     metrics.unemployed_jun_pos = len(unemp_jun_worker_list)

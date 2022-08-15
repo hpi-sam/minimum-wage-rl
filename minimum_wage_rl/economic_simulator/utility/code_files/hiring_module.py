@@ -63,10 +63,14 @@ def hire_workers(companies_list, worker_list, level, salary, metrics, emp_worker
     counter = 0
     extra_open_jobs = 0
     next_round = False
-
-    fixed_hiring = floor(len(worker_list)/len(companies_list))
-    rem_hiring = len(worker_list) % len(companies_list)
-    total_extra_workers = 0
+    if len(worker_list) > len(companies_list):
+        fixed_hiring = floor(len(worker_list)/len(companies_list))
+        rem_hiring = len(worker_list) % len(companies_list)
+        total_extra_workers = 0
+    else:
+        fixed_hiring = 1
+        rem_hiring = 0
+        total_extra_workers = 0
 
     while done:
         

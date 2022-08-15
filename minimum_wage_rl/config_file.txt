@@ -16,7 +16,8 @@ medium_company_init_balance=3000
 large_company_init_balance=10000
 cmp_age_weightage=0.3
 cmp_acct_balance_weightage=0.7
-initial_product_price=1
+initial_product_price=5.0
+expirable_goods=True
 
 [minwage]
 initial_minimum_wage=2.0
@@ -33,16 +34,18 @@ bank_threshold_loan_inflation=0.4
 
 [company]
 hiring_budget_percent=0.2
-small_cmp_skill_improvement=0.5
-medium_cmp_skill_improvement=0.75
-large_cmp_skill_improvement=1
+small_cmp_skill_improvement=0.05
+medium_cmp_skill_improvement=0.05
+large_cmp_skill_improvement=0.05
+cost_of_operation=0.3
+company_earning_percent=0.2
 
 [startup]
 acct_balance_weightage=0.4
 age_weightage=0.2
 skill_set_weightage=0.4
 startup_money_percent=0.5
-bank_loan_budget=0.4
+bank_loan_budget=0.2
 startup_skill=0.2
 
 [country]
@@ -50,6 +53,8 @@ initial_printed_cash=500.0
 citizens=10
 corporate_tax=0.1
 income_tax=0.1
+oil_per_unit_quantity=2.0
+oil_cost_per_litre=1.2
 
 [bank]
 initial_interest_rates=0.01
@@ -63,6 +68,7 @@ initial_acct_balance=0.0
 junior_skill_level=25
 senior_skill_level=70
 initial_balance_weightage=0.5
+savings_percent=0.1
 
 [scenario]
 unregulated=1

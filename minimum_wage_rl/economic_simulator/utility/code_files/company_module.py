@@ -1,3 +1,4 @@
+import logging
 from math import ceil, floor
 
 from .common_module import retire
@@ -5,6 +6,7 @@ from ...models.country import Country
 from ...models.company import Company
 from ...models.worker import Worker
 from ...models.market import Market
+logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 
 
 def pay_loan(company, central_bank):
@@ -16,6 +18,7 @@ def pay_loan(company, central_bank):
         if company.loan_amount < 100:
             total_amount = interest_amount + company.loan_amount
             central_bank.deposit_money(total_amount)
+            logging.info("Loan deposited - " + str(total_amount))            
             company.loan_taken = False
             company.loan_amount = 0.0
         
@@ -24,14 +27,18 @@ def pay_loan(company, central_bank):
             total_amount = interest_amount + installment_amount
             central_bank.deposit_money(total_amount)
             company.loan_amount = company.loan_amount - installment_amount
+            logging.info("Loan deposited - " + str(total_amount))
 
 
 def pay_tax(company, central_bank):
     tax = Country.CORPORATE_TAX * company.company_account_balance
     company.company_account_balance = company.company_account_balance - tax
     central_bank.deposit_money(tax)
+    logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
+    return tax    
 
 def yearly_financial_transactions(company, country, retired_workers_list):
+    
     worker_list = list(company.worker_set.filter(retired=False))
 
     all_workers_list = []    
@@ -43,6 +50,10 @@ def yearly_financial_transactions(company, country, retired_workers_list):
     company.junior_workers_list = []
     company.senior_workers_list = []
     company.exec_workers_list = []
+
+    company.num_junior_workers = 0
+    company.num_senior_workers = 0
+    company.num_executive_workers = 0
 
     total_profit = 0
 
@@ -91,10 +102,11 @@ def yearly_financial_transactions(company, country, retired_workers_list):
     # company.company_account_balance = company.company_account_balance - corporate_tax
     # country.bank.deposit_money(corporate_tax)
 
+    junior_salary_offer = country.minimum_wage
     senior_salary_offer = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
     executive_salary_offer = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 
-    company.avg_junior_salary = cumulative_junior_salary/company.num_junior_workers if company.num_junior_workers > 0 else country.minimum_wage
+    company.avg_junior_salary = cumulative_junior_salary/company.num_junior_workers if company.num_junior_workers > 0 else junior_salary_offer
     company.avg_senior_salary = cumulative_senior_salary/company.num_senior_workers if company.num_senior_workers > 0 else senior_salary_offer
     company.avg_executive_salary = cumulative_executive_salary/company.num_executive_workers if company.num_executive_workers > 0 else executive_salary_offer
 
@@ -142,8 +154,7 @@ def firing(company, operation_map):
             # Fire all juniors
             fired_junior_workers = fire(company.junior_workers_list)
             operation_map["fired_workers"].extend(fired_junior_workers)
-            company.junior_workers_list = list()
-            deficit = deficit - company.num_junior_workers * company.avg_junior_salary
+            company.junior_workers_list = list()            
         else:
             fired_junior_workers = fire(company.junior_workers_list[:num_juniors_to_be_fired])
 
@@ -151,7 +162,9 @@ def firing(company, operation_map):
 
             operation_map["fired_workers"].extend(fired_junior_workers)
             operation_map["employed_workers"].extend(company.junior_workers_list)
-            deficit = deficit - num_juniors_to_be_fired * company.avg_junior_salary
+        
+        company.num_junior_workers = company.num_junior_workers - len(fired_junior_workers)
+        deficit = deficit - len(fired_junior_workers) * company.avg_junior_salary
         
 
     # 2: Firing seniors
@@ -166,15 +179,16 @@ def firing(company, operation_map):
             fired_senior_workers = fire(company.senior_workers_list)
             operation_map["fired_workers"].extend(fired_senior_workers)
             company.senior_workers_list = list()
-            deficit = deficit - company.num_senior_workers * company.avg_senior_salary
         else:
             fired_senior_workers = fire(company.senior_workers_list[:num_seniors_to_be_fired])
             operation_map["fired_workers"].extend(fired_senior_workers)
 
             company.senior_workers_list = company.senior_workers_list[num_seniors_to_be_fired:]            
-            operation_map["employed_workers"].extend(company.senior_workers_list)
-            deficit = deficit - num_seniors_to_be_fired * company.avg_senior_salary
-        
+            operation_map["employed_workers"].extend(company.senior_workers_list)            
+
+        company.num_senior_workers = company.num_senior_workers - len(fired_senior_workers)
+        deficit = deficit - len(fired_senior_workers) * company.avg_senior_salary
+
     # 3: Firing executives
     num_exec_to_be_fired = ceil(deficit/company.avg_executive_salary)
 
@@ -185,7 +199,6 @@ def firing(company, operation_map):
             fired_exec_workers = fire(company.exec_workers_list)
             operation_map["fired_workers"].extend(fired_exec_workers)
             company.exec_workers_list = []
-            deficit = deficit - company.num_executive_workers * company.avg_executive_salary
         else:
             fired_exec_workers = fire(company.exec_workers_list[:num_exec_to_be_fired])            
             operation_map["fired_workers"].extend(fired_exec_workers)
@@ -193,7 +206,8 @@ def firing(company, operation_map):
             company.exec_workers_list = company.exec_workers_list[num_exec_to_be_fired:]
             operation_map["employed_workers"].extend(company.exec_workers_list)            
 
-            deficit = deficit - num_seniors_to_be_fired * company.avg_executive_salary
+        company.num_executive_workers = company.num_executive_workers - len(fired_exec_workers)
+        deficit = deficit - len(fired_exec_workers) * company.avg_executive_salary
 
     if deficit > 0:
         operation_map["close"] = True
@@ -428,10 +442,11 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
 # ========================================= Create Company - START ==========================================
 def initialize_company(company, initial_balance, country):
 
-    company.company_account_balance = initial_balance    
+    company.company_account_balance = initial_balance
+    company.year_income = company.company_account_balance    
     company.country = country
 
-    company.hiring_rate = 0.02
+    # company.hiring_rate = 0.02
 
     company.num_junior_openings = company.num_senior_openings = company.num_executive_openings = 0
     company.junior_salary_offer = country.minimum_wage
@@ -441,25 +456,16 @@ def initialize_company(company, initial_balance, country):
     # Small Company
     # initial_balance >= Market.SMALL_CMP_INIT_BALANCE and 
     if initial_balance < Market.MEDIUM_CMP_INIT_BALANCE:
-        company.executive_hiring_ratio = 2
-        company.senior_hiring_ratio = 2
-        company.junior_hiring_ratio = 6
         company.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
         company.company_size_type = Market.SMALL_COMPANY_TYPE    
     
     # Medium Company
     elif initial_balance >= Market.MEDIUM_CMP_INIT_BALANCE and initial_balance < Market.LARGE_CMP_INIT_BALANCE:
-        company.executive_hiring_ratio = 2
-        company.senior_hiring_ratio = 6
-        company.junior_hiring_ratio = 6
         company.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
         company.company_size_type = Market.MEDIUM_COMPANY_TYPE    
     
     # Large Company
     else:
-        company.executive_hiring_ratio = 6
-        company.senior_hiring_ratio = 6
-        company.junior_hiring_ratio = 6
         company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
         company.company_size_type = Market.LARGE_COMPANY_TYPE
 
@@ -492,4 +498,11 @@ def get_salary_paid(worker, company):
 
     earnings = worker.skill_level * 12
     company.company_account_balance += earnings
+    company.year_income = company.year_income + earnings    
     return earnings
+    
+def pay_cost_of_operation(company):
+    cost_of_operation = Company.COST_OF_OPERATION * company.year_income
+    company.company_account_balance = company.company_account_balance - cost_of_operation
+    logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
+    return cost_of_operation

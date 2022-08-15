@@ -1,6 +1,6 @@
 import numpy as np
 
-from economic_simulator.models import country
+# from economic_simulator.models import country
 from ...models.worker import Worker
 from ...models.country import Country
 from ...models.company import Company
@@ -55,7 +55,7 @@ def add_new_workers(country):
     worker_list = []
 
     # 1: Add 5 - 10 juniors in population
-    num_of_juniors = 20 
+    num_of_juniors = 30 
     # np.random.randint(5,11)
     for i in range(num_of_juniors):
         worker = Worker()
@@ -65,7 +65,7 @@ def add_new_workers(country):
         worker_list.append(worker)
     
     # 2: Add 5 - 10 seniors in population
-    num_of_seniors = 20
+    num_of_seniors = 30
     # np.random.randint(5,11)
     for i in range(num_of_seniors):
         worker = Worker()
@@ -75,7 +75,7 @@ def add_new_workers(country):
         worker_list.append(worker)
     
     # 3: Add 5 - 10 executives in population
-    num_of_executives = 20
+    num_of_executives = 30
     # np.random.randint(5,11)
     for i in range(num_of_executives):
         worker = Worker()
@@ -97,7 +97,7 @@ def initialize_employee(initial_balance, country, worker, age, skill_level):
     worker.salary = 0
     worker.skill_level = skill_level
     # citizen.initial_skill_level = 1
-    worker.bought_essential_product = worker.buy_first_extra_product = worker.buy_second_extra_product = False
+    # worker.bought_essential_product = worker.buy_first_extra_product = worker.buy_second_extra_product = False
     worker.is_employed = worker.has_company = False
 
     # Moving to a country

@@ -1,7 +1,7 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
+# import torch
+# import torch.nn as nn
+# import torch.optim as optim
+# import torch.nn.functional as F
 # from AI_model.AI_DQN import DQN, EpsilonGreedyStrategy, Agent, ReplayMemory, Experience, extract_tensors, QValues
 
 from django.db import models
@@ -15,8 +15,8 @@ class Market(models.Model):
         db_table = "market"
 
     # Magic
-    NUM_CITIZENS_LIMIT = 100
-    CITIZEN_MAX_AGE = 100
+    # NUM_CITIZENS_LIMIT = 100
+    # CITIZEN_MAX_AGE = 100
     INITIAL_PRODUCT_PRICE = config_parser.get("market","initial_product_price")
     
     SENIOR_SALARY_PERCENTAGE = float(config_parser.get("minwage","senior_salary_percent"))
@@ -49,7 +49,7 @@ class Market(models.Model):
     POSSIBLE_QUANTITY_INCREASE = float(config_parser.get("inflation","possible_quantity_increase"))
     MIN_BALANCE_INFLATION = float(config_parser.get("inflation","bank_min_balance_inflation"))
     BANK_LOAN_INFLATION = float(config_parser.get("inflation","bank_threshold_loan_inflation"))
-        
+    EXPIRABLE_GOODS = bool(config_parser.get("market","expirable_goods"))        
     
     SMALL_COMPANY_TYPE=0
     MEDIUM_COMPANY_TYPE=1
@@ -60,10 +60,10 @@ class Market(models.Model):
     month = models.IntegerField(default=0)
     year = models.IntegerField(default=0)
 
-    unregulatedScenario = None
-    adjustedScenario = None
-    dramaticScenario = None
-    aiScenario = None
+    # unregulatedScenario = None
+    # adjustedScenario = None
+    # dramaticScenario = None
+    # aiScenario = None
     
     # SET LATER
     market_value_year = models.FloatField()
@@ -73,24 +73,24 @@ class Market(models.Model):
     # SET LATER
     product_price = models.FloatField(default=INITIAL_PRODUCT_PRICE)
         
-    training = False # bool - Flag for AI training - CHANGED PROGRAMATICALLY
+    # training = False # bool - Flag for AI training - CHANGED PROGRAMATICALLY
 
     # =========== AI Network ==============
-    batch_size = 0
-    gamma = 0.0
-    eps_start = 0
-    eps_end = 0.0
-    eps_decay = 0.0
-    target_update = 0
-    memory_size = 0
-    lr = 0.0
-    num_episodes = 0 # run for more episodes for better results
+    # batch_size = 0
+    # gamma = 0.0
+    # eps_start = 0
+    # eps_end = 0.0
+    # eps_decay = 0.0
+    # target_update = 0
+    # memory_size = 0
+    # lr = 0.0
+    # num_episodes = 0 # run for more episodes for better results
 
-    device = None
-    saved_model = None
+    # device = None
+    # saved_model = None
 
-    def load_model(self):
-        self.saved_model = torch.load("model//trained_model.pt")
+    # def load_model(self):
+    #     self.saved_model = torch.load("model//trained_model.pt")
         
     # def ExitToMenu(self):
     #     self.ResetMarket()
@@ -212,13 +212,13 @@ class Market(models.Model):
     #         print("============ YEAR - " + str(self.year) + "=============")
 
 
-    def update_product_prices(self):
-        self.product_price = round((self.product_price + self.product_price * self.inflation_rate), 3)
+    # def update_product_prices(self):
+    #     self.product_price = round((self.product_price + self.product_price * self.inflation_rate), 3)
         
-    def __request_decision(self):
-        curr_state = self.em.get_state()
-        action = self.saved_model(curr_state).argmax()
-        self.em.take_action(torch.tensor([action]))
+    # def __request_decision(self):
+    #     curr_state = self.em.get_state()
+    #     action = self.saved_model(curr_state).argmax()
+    #     self.em.take_action(torch.tensor([action]))
 
     # def initialize_network(self):
     #     self.batch_size = 20

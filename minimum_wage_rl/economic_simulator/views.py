@@ -4,7 +4,7 @@ from django.shortcuts import render
 # from .utility.simulate import step
 from .utility.start_up_2 import start
 from .utility.simulate_2 import step
-from .utility.publish import export_to_excel
+# from .utility.publish import export_to_excel
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
@@ -134,7 +134,8 @@ def train(request):
 # @permission_classes([])
 #@api_view(http_method_names=['GET'])
 def test_url(request):
-    export_to_excel(request.user)
+    # export_to_excel(request.user)
+    print("test code")
     return Response({'status':200, 'message':"test code"})
 
 

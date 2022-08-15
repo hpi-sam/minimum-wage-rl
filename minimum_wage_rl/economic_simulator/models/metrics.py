@@ -1,7 +1,6 @@
 from django.db import models
 import uuid
 
-from numpy import product, quantile
 from .country import Country
 
 

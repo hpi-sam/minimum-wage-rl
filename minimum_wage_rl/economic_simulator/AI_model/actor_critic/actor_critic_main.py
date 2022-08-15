@@ -7,7 +7,7 @@ from economic_simulator.utility import start_up_2
 from economic_simulator.utility.config import ConfigurationParser
 import torch
 
-roll_out_length = 2
+roll_out_length = 5
 discount = 0.9
 actor_lr = 0.01
 critic_lr = 0.05

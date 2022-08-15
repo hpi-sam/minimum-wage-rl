@@ -19,6 +19,9 @@ class Company(models.Model):
     SML_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","small_cmp_skill_improvement"))
     MEDIUM_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","medium_cmp_skill_improvement"))
     LARGE_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","large_cmp_skill_improvement"))
+    COST_OF_OPERATION = float(config_parser.get("company","cost_of_operation"))
+    COMPANY_EARNING_PERCENT = float(config_parser.get("company","company_earning_percent"))
+
 
     MAX_EXECUTIVE_SALARY = 95       
     MAX_SENIOR_SALARY = 65          
@@ -34,9 +37,9 @@ class Company(models.Model):
     hiring_rate = models.FloatField(default=0.02) # What percentage of the balance does the company spend on hiring -- DEPRECATED
 
     # Employees & Hiring
-    junior_hiring_ratio = models.IntegerField() # How many juniors to hire before moving to next round
-    senior_hiring_ratio = models.IntegerField() # How many seniors to hire on current round before moving to juniors
-    executive_hiring_ratio = models.IntegerField() # How many executives to hire on current round before moving to senior level
+    # junior_hiring_ratio = models.IntegerField() # How many juniors to hire before moving to next round
+    # senior_hiring_ratio = models.IntegerField() # How many seniors to hire on current round before moving to juniors
+    # executive_hiring_ratio = models.IntegerField() # How many executives to hire on current round before moving to senior level
     skill_improvement_rate = models.FloatField() # How fast does the employee skill increase each year
     
     num_junior_openings = models.IntegerField()
@@ -78,136 +81,136 @@ class Company(models.Model):
 
     closed = models.BooleanField(default=False)
     
-    def InitializeCompany(self, initialBalance, companyType, country): #MWCountry
+    # def InitializeCompany(self, initialBalance, companyType, country): #MWCountry
     
-        self.company_account_balance = initialBalance
-        self.company_size_type = companyType
-        self.country = country
+    #     self.company_account_balance = initialBalance
+    #     self.company_size_type = companyType
+    #     self.country = country
 
-        self.hiring_rate = 0.02
+    #     self.hiring_rate = 0.02
 
-        self.num_junior_openings = self.num_senior_openings = self.num_executive_openings = 0
-        self.junior_salary_offer = self.senior_salary_offer = self.executive_salary_offer = country.minimum_wage # Initializing to the bear minimum because companies are jackasses
+    #     self.num_junior_openings = self.num_senior_openings = self.num_executive_openings = 0
+    #     self.junior_salary_offer = self.senior_salary_offer = self.executive_salary_offer = country.minimum_wage # Initializing to the bear minimum because companies are jackasses
 
-        if companyType == 0: # Small
-            self.executive_hiring_ratio = 2
-            self.senior_hiring_ratio = 2
-            self.junior_hiring_ratio = 6
-            self.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
+    #     if companyType == 0: # Small
+    #         self.executive_hiring_ratio = 2
+    #         self.senior_hiring_ratio = 2
+    #         self.junior_hiring_ratio = 6
+    #         self.skill_improvement_rate = Company.SML_CMP_SKILL_IMPROVEMENT
         
-        elif companyType == 1: # Medium
-            self.executive_hiring_ratio = 2
-            self.senior_hiring_ratio = 6
-            self.junior_hiring_ratio = 6
-            self.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
+    #     elif companyType == 1: # Medium
+    #         self.executive_hiring_ratio = 2
+    #         self.senior_hiring_ratio = 6
+    #         self.junior_hiring_ratio = 6
+    #         self.skill_improvement_rate = Company.MEDIUM_CMP_SKILL_IMPROVEMENT
         
-        else: # Large
-            self.executive_hiring_ratio = 6
-            self.senior_hiring_ratio = 6
-            self.junior_hiring_ratio = 6
-            self.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
+    #     else: # Large
+    #         self.executive_hiring_ratio = 6
+    #         self.senior_hiring_ratio = 6
+    #         self.junior_hiring_ratio = 6
+    #         self.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
-    def open_job_positions(self):
+    # def open_job_positions(self):
     
-        self.num_junior_openings = self.num_senior_openings = self.num_executive_openings = 0
-        hrInvestment = self.hiring_rate * self.company_account_balance
+    #     self.num_junior_openings = self.num_senior_openings = self.num_executive_openings = 0
+    #     hrInvestment = self.hiring_rate * self.company_account_balance
 
-        #  Executive Hiring
-        for _ in  range(self.executive_hiring_ratio):
+    #     #  Executive Hiring
+    #     for _ in  range(self.executive_hiring_ratio):
         
-            if hrInvestment > self.executive_salary_offer and hrInvestment >= self.country.minimum_wage:
-                self.num_executive_openings = self.num_executive_openings + 1
-                hrInvestment -= self.executive_salary_offer
+    #         if hrInvestment > self.executive_salary_offer and hrInvestment >= self.country.minimum_wage:
+    #             self.num_executive_openings = self.num_executive_openings + 1
+    #             hrInvestment -= self.executive_salary_offer
             
-            else:
-                break
+    #         else:
+    #             break
 
-        # Senior Hiring
-        for _ in range(self.senior_hiring_ratio):
+    #     # Senior Hiring
+    #     for _ in range(self.senior_hiring_ratio):
     
-            if hrInvestment > self.senior_salary_offer and hrInvestment >= self.country.minimum_wage:
-                self.num_senior_openings = self.num_senior_openings + 1
-                hrInvestment -= self.senior_salary_offer
+    #         if hrInvestment > self.senior_salary_offer and hrInvestment >= self.country.minimum_wage:
+    #             self.num_senior_openings = self.num_senior_openings + 1
+    #             hrInvestment -= self.senior_salary_offer
             
-            else:            
-                break               
+    #         else:            
+    #             break               
 
-        # Junior Hiring
-        for _ in range(self.junior_hiring_ratio):
+    #     # Junior Hiring
+    #     for _ in range(self.junior_hiring_ratio):
 
-            if hrInvestment > self.junior_salary_offer and hrInvestment >= self.country.minimum_wage:
-                self.num_junior_openings = self.num_junior_openings + 1
-                hrInvestment -= self.junior_salary_offer
+    #         if hrInvestment > self.junior_salary_offer and hrInvestment >= self.country.minimum_wage:
+    #             self.num_junior_openings = self.num_junior_openings + 1
+    #             hrInvestment -= self.junior_salary_offer
             
-            else:
-                break
+    #         else:
+    #             break
 
-        return self.num_junior_openings + self.num_senior_openings + self.num_executive_openings
+    #     return self.num_junior_openings + self.num_senior_openings + self.num_executive_openings
 
-    def evaluate_company_step(self):
+    # def evaluate_company_step(self):
     
-        self.pay_taxes()
-        self.year_income = 0        
+    #     self.pay_taxes()
+    #     self.year_income = 0        
 
-        # =============== Adjusting hiring offers to stay competitive in the job market -- START ===============
-        if self.num_executive_openings != 0:
+    #     # =============== Adjusting hiring offers to stay competitive in the job market -- START ===============
+    #     if self.num_executive_openings != 0:
         
-            if self.executive_salary_offer < Company.MAX_EXECUTIVE_SALARY or self.executive_salary_offer < self.country.minimum_wage:            
-                self.executive_salary_offer = self.executive_salary_offer + 1
+    #         if self.executive_salary_offer < Company.MAX_EXECUTIVE_SALARY or self.executive_salary_offer < self.country.minimum_wage:            
+    #             self.executive_salary_offer = self.executive_salary_offer + 1
 
-                if self.executive_salary_offer < self.country.minimum_wage:                
-                    self.executive_salary_offer = self.country.minimum_wage        
+    #             if self.executive_salary_offer < self.country.minimum_wage:                
+    #                 self.executive_salary_offer = self.country.minimum_wage        
         
-        else:        
-            if self.executive_salary_offer > self.country.minimum_wage:
-                self.executive_salary_offer = self.executive_salary_offer - 1
+    #     else:        
+    #         if self.executive_salary_offer > self.country.minimum_wage:
+    #             self.executive_salary_offer = self.executive_salary_offer - 1
             
-        if self.num_senior_openings != 0:
+    #     if self.num_senior_openings != 0:
         
-            if self.senior_salary_offer < Company.MAX_SENIOR_SALARY or self.senior_salary_offer < self.country.minimum_wage:
-                self.senior_salary_offer = self.senior_salary_offer + 1
+    #         if self.senior_salary_offer < Company.MAX_SENIOR_SALARY or self.senior_salary_offer < self.country.minimum_wage:
+    #             self.senior_salary_offer = self.senior_salary_offer + 1
                 
-                if self.senior_salary_offer < self.country.minimum_wage:
-                    self.senior_salary_offer = self.country.minimum_wage     
+    #             if self.senior_salary_offer < self.country.minimum_wage:
+    #                 self.senior_salary_offer = self.country.minimum_wage     
 
-        else:
-            if self.senior_salary_offer > self.country.minimum_wage:
-                self.senior_salary_offer = self.senior_salary_offer - 1
+    #     else:
+    #         if self.senior_salary_offer > self.country.minimum_wage:
+    #             self.senior_salary_offer = self.senior_salary_offer - 1
         
 
-        if self.num_junior_openings != 0:
+    #     if self.num_junior_openings != 0:
         
-            if self.junior_salary_offer < Company.MAX_JUNIOR_OFFER or self.junior_salary_offer < self.country.minimum_wage:
-                self.junior_salary_offer = self.junior_salary_offer + 1
+    #         if self.junior_salary_offer < Company.MAX_JUNIOR_OFFER or self.junior_salary_offer < self.country.minimum_wage:
+    #             self.junior_salary_offer = self.junior_salary_offer + 1
 
-                if self.junior_salary_offer < self.country.minimum_wage:
-                    self.junior_salary_offer = self.country.minimum_wage
+    #             if self.junior_salary_offer < self.country.minimum_wage:
+    #                 self.junior_salary_offer = self.country.minimum_wage
                 
-        else:        
-            if self.junior_salary_offer > self.country.minimum_wage:            
-                self.junior_salary_offer = self.junior_salary_offer - 1
-        # =============== Adjusting hiring offers to stay competitive in the job market -- END ===============
+    #     else:        
+    #         if self.junior_salary_offer > self.country.minimum_wage:            
+    #             self.junior_salary_offer = self.junior_salary_offer - 1
+    #     # =============== Adjusting hiring offers to stay competitive in the job market -- END ===============
 
 
 
-        # ========== Re-evaluating company based on current account balance - START ============
-        if self.company_account_balance > Company.CHANGE_COMPANY_LARGE_BALANCE: # 5000 buffer to go down
-            self.company_size_type = 2 # Scales to a large company
+    #     # ========== Re-evaluating company based on current account balance - START ============
+    #     if self.company_account_balance > Company.CHANGE_COMPANY_LARGE_BALANCE: # 5000 buffer to go down
+    #         self.company_size_type = 2 # Scales to a large company
         
-        elif self.company_account_balance > Company.CHANGE_COMPANY_MEDIUM_BALANCE: # 2500 buffer to go down
-            self.company_size_type = 1 # Scales to a medium company
+    #     elif self.company_account_balance > Company.CHANGE_COMPANY_MEDIUM_BALANCE: # 2500 buffer to go down
+    #         self.company_size_type = 1 # Scales to a medium company
         
-        else:
-            self.company_size_type = 0 # Stays or shrinks to a small company
+    #     else:
+    #         self.company_size_type = 0 # Stays or shrinks to a small company
         # ========== Re-evaluating company based on current account balance - END ============
 
        
         # =========== Decreasing  hiring rate as company progresses and grows - START ===========
-        if self.hiring_rate > Company.MAX_HIRING_RATE:
-            self.hiring_rate -= self.hiring_rate * 0.1
-        else:
-            self.hiring_rate = Company.MAX_HIRING_RATE
-        # =========== Decreasing  hiring rate as company progresses and grows - END ===========
+        # if self.hiring_rate > Company.MAX_HIRING_RATE:
+        #     self.hiring_rate -= self.hiring_rate * 0.1
+        # else:
+        #     self.hiring_rate = Company.MAX_HIRING_RATE
+        # # =========== Decreasing  hiring rate as company progresses and grows - END ===========
         
     # def pay_loan_installment():
     #     # Get the first bank --- NEED TO CHANGE THIS LATER
@@ -229,5 +232,5 @@ class Company(models.Model):
         # installment = 
 
 
-    def pay_taxes(self):
-        self.year_income -= self.country.CORPORATE_TAX * self.year_income # Taxes and other expenses at 40% to limit growth speed
+    # def pay_taxes(self):
+    #     self.year_income -= self.country.CORPORATE_TAX * self.year_income # Taxes and other expenses at 40% to limit growth speed

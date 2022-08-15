@@ -54,9 +54,7 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
 
     for each_startup_founder in startup_workers_list:
 
-        amount_needed = Market.SMALL_CMP_INIT_BALANCE - each_startup_founder.worker_account_balance
-
-        print("Worker - ", str(index) , " Account Balance - ", str(each_startup_founder.worker_account_balance))
+        amount_needed = Market.SMALL_CMP_INIT_BALANCE - each_startup_founder.worker_account_balance        
 
         if bank_startup_budget > amount_needed:
             
