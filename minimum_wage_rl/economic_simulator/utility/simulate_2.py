@@ -21,6 +21,8 @@ from .code_files import metrics_module
 from .code_files import hiring_module
 
 from .config import ConfigurationParser
+import logging
+logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 # from django.db import models
 # import numpy as np
 # from functools import reduce
@@ -33,6 +35,8 @@ discrete_action = bool(config_parser.get("game","discrete_action"))
 
 def step(game, action_map):
     
+    print(" Game - ", game.game_number, " Episode - " +  str(len(game.game_metric_list)) )
+
     country = game.country
 
     # Get all companies with -> closed = False
@@ -54,6 +58,9 @@ def step(game, action_map):
         discrete_action = False
         perform_action(action_map,country,discrete_action)
         
+        
+        logging.info("=========== Game - " + str(game.game_number) + " Episode: " +  str(len(game.game_metric_list)) + " ===========")
+
         # Step 2 - run market step
         return run_market(country, country_companies_list, unemployed_workers_list, game)
     else:
@@ -85,6 +92,9 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     metrics.year = country.year
 
     total_open_positions = 0
+    total_open_junior_pos = 0
+    total_open_senior_pos = 0
+    total_open_exec_pos = 0
 
     # ================ 1: COUNTRY MODULE - Increase population ================
     new_workers_list, _, _, _ =  country_module.add_new_workers(country)
@@ -92,6 +102,8 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     employed_workers_list = []
     retired_workers_list = []
     
+    print("Total Workers Currently - ", country.population)
+
     # ================ 2: Retire Unemployed workers ================
     non_retired_workers = []
     for each_unemployed_worker in unemployed_workers_list:
@@ -108,8 +120,10 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     # ================ 3: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
     open_companies_list = []
     closed_companies_list = []
+    comp_count = 0
     for each_company in country_companies_list:
         
+        comp_count = comp_count + 1
         # 3.1: Increase age of company
         each_company.company_age = each_company.company_age + 1 
 
@@ -117,7 +131,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         company_module.pay_loan(each_company,country.bank)
 
         # 3.3: Pay taxes
-        company_module.pay_tax(each_company,country.bank)
+        
 
         # 3.4: Pay salary to workers and Earn money from workers
         all_emp_workers_list = company_module.yearly_financial_transactions(each_company,country, retired_workers_list)
@@ -127,11 +141,15 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         # Step 1: Fire people
         # Step 2: Create Open Positions - Junior, Senior and Executive
         operation_map = {"close":False,"fired_workers":[],"employed_workers":[]}
-        company_module.hiring_and_firing(each_company, operation_map)
+        company_module.hiring_and_firing(comp_count, each_company, operation_map)
 
         total_open_positions = total_open_positions + each_company.open_junior_pos
         total_open_positions = total_open_positions + each_company.open_senior_pos
         total_open_positions = total_open_positions + each_company.open_exec_pos
+
+        total_open_junior_pos = total_open_junior_pos + each_company.open_junior_pos
+        total_open_senior_pos = total_open_senior_pos  + each_company.open_senior_pos
+        total_open_exec_pos = total_open_exec_pos + each_company.open_exec_pos
 
         # 3.6: Change company size
         company_module.set_company_size(each_company)
@@ -150,12 +168,16 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         else:
             open_companies_list.append(each_company)
 
-    # ================ 4: WORKERS MODULE ================
+    # ================ 4: WORKERS MODULE - create startup, hire workers ================
     all_workers_list = []
+
     all_workers_list.extend(unemployed_workers_list)
     all_workers_list.extend(new_workers_list)
     all_workers_list.extend(fired_workers)
     # all_workers_list.extend(employed_workers_list)  --- for standalone
+
+    print("Total Open Position - ", total_open_positions)
+    print("Total Unemployed Workers - ", len(all_workers_list))
 
     new_companies_list = []
     
@@ -172,9 +194,14 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     unemp_worker_list = []
 
     # 4.1 Worker Evaluation : worker score, startup score, 
+    # Standalone -> for standalone only unemployed, fired and new workers are sent to this method in all_workers_list
     workers_module.evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, 
                                   min_startup_score, max_startup_score)
+
+    print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
+    print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
+    print("Open Exec Pos - ", total_open_exec_pos, " Unemployed Exec Workers - ", len(unemp_exec_worker_list))
 
     # Only for standalone
     workers_module.evaluate_emp_worker(open_companies_list, emp_worker_list, min_startup_score, max_startup_score)                                  
@@ -182,7 +209,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     # 4.2 Create Start ups
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list)
-    
+
     # Only for standalone
     workers_module.create_start_up_for_employed(country, new_companies_list, startup_workers_list, open_companies_list, emp_worker_list, successful_founders_list)                                  
 
@@ -236,11 +263,22 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
 
 
     for company_item in open_companies_list:
+        # Pay cost of operation
+        coo = company_module.pay_cost_of_operation(company_item)        
+
+        # Pay taxes
+        tax = company_module.pay_tax(company_item,country.bank)
+
+        print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
+
         company_module.set_company_size(company_item)
         metrics_module.set_company_size_metrics(company_item, metrics)
 
+        company_item.year_income = 0.0
 
-    # 5: INFLATION MODULE
+    print("")
+
+    # 5: INFLATION MODULE - set product prices
     metrics.unemployed_jun_pos = len(unemp_jun_worker_list)
     metrics.unemployed_sen_pos = len(unemp_sen_worker_list)
     metrics.unemployed_exec_pos = len(unemp_exec_worker_list)
@@ -430,6 +468,3 @@ def get_game_state(metric):
     reward = calculate_reward(metric)
 
     return state_values, reward
-
-
-

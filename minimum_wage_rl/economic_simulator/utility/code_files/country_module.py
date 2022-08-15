@@ -57,7 +57,7 @@ def add_new_workers(country):
     worker_list = []
 
     # 1: Add 5 - 10 juniors in population
-    num_of_juniors = 20
+    num_of_juniors = 30
     for i in range(num_of_juniors):
         worker = Worker()
         age = np.random.randint(19,25)
@@ -66,7 +66,7 @@ def add_new_workers(country):
         worker_list.append(worker)
     
     # 2: Add 5 - 10 seniors in population
-    num_of_seniors = 20
+    num_of_seniors = 30
     for i in range(num_of_seniors):
         worker = Worker()
         age = np.random.randint(30,35)
@@ -75,7 +75,7 @@ def add_new_workers(country):
         worker_list.append(worker)
     
     # 3: Add 5 - 10 executives in population
-    num_of_executives = 20
+    num_of_executives = 30
     for i in range(num_of_executives):
         worker = Worker()
         age = np.random.randint(40,45)

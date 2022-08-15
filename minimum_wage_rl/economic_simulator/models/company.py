@@ -13,6 +13,8 @@ class Company():
     SML_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","small_cmp_skill_improvement"))
     MEDIUM_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","medium_cmp_skill_improvement"))
     LARGE_CMP_SKILL_IMPROVEMENT = float(config_parser.get("company","large_cmp_skill_improvement"))
+    COST_OF_OPERATION = float(config_parser.get("company","cost_of_operation"))
+    COMPANY_EARNING_PERCENT = float(config_parser.get("company","company_earning_percent"))
     # Magic Numbers
     # Possible action in future
 

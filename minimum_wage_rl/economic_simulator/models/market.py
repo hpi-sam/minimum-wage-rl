@@ -1,3 +1,4 @@
+from xmlrpc.client import boolean
 from utility.config import ConfigurationParser
 config_parser = ConfigurationParser.get_instance().parser
 
@@ -38,6 +39,8 @@ class Market():
     POSSIBLE_QUANTITY_INCREASE = float(config_parser.get("inflation","possible_quantity_increase"))
     MIN_BALANCE_INFLATION = float(config_parser.get("inflation","bank_min_balance_inflation"))
     BANK_LOAN_INFLATION = float(config_parser.get("inflation","bank_threshold_loan_inflation"))
+    EXPIRABLE_GOODS = boolean(config_parser.get("market","expirable_goods"))
+
             
     SMALL_COMPANY_TYPE=0
     MEDIUM_COMPANY_TYPE=1

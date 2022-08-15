@@ -1,3 +1,4 @@
+import logging
 from math import ceil, floor
 
 from .common_module import retire
@@ -8,6 +9,7 @@ from models.country import Country
 from models.company import Company
 from models.worker import Worker
 from models.market import Market
+logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 
 
 def pay_loan(company, central_bank):
@@ -19,6 +21,7 @@ def pay_loan(company, central_bank):
         if company.loan_amount < 100:
             total_amount = interest_amount + company.loan_amount
             central_bank.deposit_money(total_amount)
+            logging.info("Loan deposited - " + str(total_amount))
             company.loan_taken = False
             company.loan_amount = 0.0
         
@@ -27,12 +30,16 @@ def pay_loan(company, central_bank):
             total_amount = interest_amount + installment_amount
             central_bank.deposit_money(total_amount)
             company.loan_amount = company.loan_amount - installment_amount
+            logging.info("Loan deposited - " + str(total_amount))
 
 
 def pay_tax(company, central_bank):
-    tax = Country.CORPORATE_TAX * company.company_account_balance
+    tax = Country.CORPORATE_TAX * company.year_income
+    # tax = Country.CORPORATE_TAX * company.company_account_balance
     company.company_account_balance = company.company_account_balance - tax
     central_bank.deposit_money(tax)
+    logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
+    return tax
 
 def yearly_financial_transactions(company, country, retired_workers_list):
     worker_list = company.employed_workers_list
@@ -110,15 +117,23 @@ def yearly_financial_transactions(company, country, retired_workers_list):
 
 # ===================================== HIRING AND FIRING - START ===================================== 
 
-def hiring_and_firing(company, operation_map):
+def hiring_and_firing(i, company, operation_map):
 
     if company.company_account_balance < Market.MINIMUM_COMPANY_BALANCE:
         firing(company, operation_map)
     else:
-        hiring(company)
+        hiring(i, company)
         operation_map["employed_workers"].extend(company.junior_workers_list)
         operation_map["employed_workers"].extend(company.senior_workers_list)
         operation_map["employed_workers"].extend(company.exec_workers_list)
+
+    
+
+    print("Total Hiring Current Year - ", end="")
+    print("Junior - ", company.open_junior_pos, end="")
+    print(" Senior - ", company.open_senior_pos, end="")
+    print(" Exec - ", company.open_exec_pos)
+
 
 def firing(company, operation_map):
     deficit = Market.MINIMUM_COMPANY_BALANCE - company.company_account_balance
@@ -217,7 +232,7 @@ def fire(workers_list):
     return workers_list
 
 
-def hiring(company):
+def hiring(i, company):
 
     current_junior_job_percentage = 0.0
     current_senior_job_percentage = 0.0
@@ -240,6 +255,9 @@ def hiring(company):
     if company.company_account_balance > Market.MINIMUM_COMPANY_BALANCE:
 
         hiring_budget = Market.COMPANY_HIRING_BUDGET_PERCENT * company.company_account_balance
+        
+        print("Company - ", i, " Balance - ", company.company_account_balance, end="")
+        print(", Hiring Budget - ", hiring_budget)
 
         total_workers = company.num_junior_workers + company.num_senior_workers + company.num_executive_workers
 
@@ -437,7 +455,8 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
 # ========================================= Create Company - START ==========================================
 def initialize_company(company, initial_balance, country):
 
-    company.company_account_balance = initial_balance    
+    company.company_account_balance = initial_balance
+    company.year_income = company.company_account_balance
     # company.country = country
 
     # company.hiring_rate = 0.02
@@ -486,10 +505,18 @@ def set_company_size(company):
 def get_salary_paid(worker, company):
     worker.worker_account_balance += worker.salary * 12
     company.company_account_balance -= worker.salary * 12
+     
     
     # Pay income tax
     worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
 
     earnings = worker.skill_level * 12
     company.company_account_balance += earnings
+    company.year_income = company.year_income + earnings
     return earnings
+
+def pay_cost_of_operation(company):
+    cost_of_operation = Company.COST_OF_OPERATION * company.year_income
+    company.company_account_balance = company.company_account_balance - cost_of_operation
+    logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
+    return cost_of_operation

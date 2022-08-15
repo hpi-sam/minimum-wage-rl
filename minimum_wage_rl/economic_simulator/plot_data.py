@@ -164,7 +164,7 @@ d = DynamicUpdate()
 d()
 
 
-df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode1")
+df_1 = pd.read_excel("data\\v13\\game_5.xlsx", sheet_name="episode6")
 # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
 # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
 

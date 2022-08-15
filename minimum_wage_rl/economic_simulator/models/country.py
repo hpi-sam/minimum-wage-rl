@@ -10,7 +10,9 @@ class Country():
     INITIAL_MIN_WAGE = float(config_parser.get("minwage","initial_minimum_wage"))
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
     INCOME_TAX = float(config_parser.get("country","income_tax"))
-    INITIAL_BANK_BALANCE = float(config_parser.get("bank","initial_bank_balance"))      
+    INITIAL_BANK_BALANCE = float(config_parser.get("bank","initial_bank_balance"))
+    OIL_PER_UNIT_QUANTITY = float(config_parser.get("country","oil_per_unit_quantity"))
+    OIL_COST_PER_LITRE = float(config_parser.get("country","oil_cost_per_litre"))
 
     def __init__(self) -> None:
 

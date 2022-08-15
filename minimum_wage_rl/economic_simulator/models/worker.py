@@ -33,6 +33,8 @@ class Worker():
 
     SKILL_SET_WEIGHTAGE = float(config_parser.get("worker","skill_set_weightage"))
     EXPERIENCE_WEIGHTAGE = float(config_parser.get("worker","experience_weightage"))
+    SAVINGS_PERCENT = float(config_parser.get("worker","savings_percent"))
+
 
     def __init__(self) -> None:
         # country_of_residence = None

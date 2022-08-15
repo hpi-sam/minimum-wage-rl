@@ -4,7 +4,7 @@ from AI_model.actor_critic import actor_critic_main
 from env import Task
 from utility.publish import export_from_game_metric
 
-num_workers = 5
+num_workers = 2
 
 
 def make_env(num_workers):
