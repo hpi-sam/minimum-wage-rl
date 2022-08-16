@@ -210,7 +210,7 @@ def start_company(amount_needed, worker, country, loan_taken):
     country.bank.liquid_capital = country.bank.liquid_capital - amount_needed
     
     # Create positions
-    hiring(company)
+    hiring(9999, company)
     return company, amount_needed
 
 def get_hired(worker_list,salary, company,emp_worker_list):

@@ -29,7 +29,7 @@ class Worker():
     ENTREPRENERSHIP_NORMALIZING_FACTOR = 300
     JOB_CHANGE_THRESHOLD = 95
     JOB_SATISFACTION_FACTOR = 100
-    INITIAL_BANK_BALANCE = float(config_parser.get("worker","initial_acct_balance")) 
+    INITIAL_WORKER_BANK_BALANCE = float(config_parser.get("worker","initial_acct_balance")) 
 
     SKILL_SET_WEIGHTAGE = float(config_parser.get("worker","skill_set_weightage"))
     EXPERIENCE_WEIGHTAGE = float(config_parser.get("worker","experience_weightage"))

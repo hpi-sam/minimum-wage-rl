@@ -59,7 +59,7 @@ def step(game, action_map):
         perform_action(action_map,country,discrete_action)
         
         
-        logging.info("=========== Game - " + str(game.game_number) + " Episode: " +  str(len(game.game_metric_list)) + " ===========")
+        logging.info("=========== Game - " + str(game.game_number) + " Episode: " +  str(len(game.game_metric_list)) +  " Year: " + str(country.year) + " ===========")
 
         # Step 2 - run market step
         return run_market(country, country_companies_list, unemployed_workers_list, game)
@@ -176,8 +176,8 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     all_workers_list.extend(fired_workers)
     # all_workers_list.extend(employed_workers_list)  --- for standalone
 
-    print("Total Open Position - ", total_open_positions)
-    print("Total Unemployed Workers - ", len(all_workers_list))
+    # print("Total Open Position - ", total_open_positions)
+    # print("Total Unemployed Workers - ", len(all_workers_list))
 
     new_companies_list = []
     
@@ -199,9 +199,9 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, 
                                   min_startup_score, max_startup_score)
 
-    print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
-    print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
-    print("Open Exec Pos - ", total_open_exec_pos, " Unemployed Exec Workers - ", len(unemp_exec_worker_list))
+    # print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
+    # print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
+    # print("Open Exec Pos - ", total_open_exec_pos, " Unemployed Exec Workers - ", len(unemp_exec_worker_list))
 
     # Only for standalone
     workers_module.evaluate_emp_worker(open_companies_list, emp_worker_list, min_startup_score, max_startup_score)                                  
@@ -269,7 +269,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         # Pay taxes
         tax = company_module.pay_tax(company_item,country.bank)
 
-        print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
+        # print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
 
         company_module.set_company_size(company_item)
         metrics_module.set_company_size_metrics(company_item, metrics)

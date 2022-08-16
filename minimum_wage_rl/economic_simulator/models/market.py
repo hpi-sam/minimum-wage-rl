@@ -1,4 +1,3 @@
-from xmlrpc.client import boolean
 from utility.config import ConfigurationParser
 config_parser = ConfigurationParser.get_instance().parser
 
@@ -7,7 +6,8 @@ class Market():
     # Magic
     # NUM_CITIZENS_LIMIT = 100
     # CITIZEN_MAX_AGE = 100
-    INITIAL_PRODUCT_PRICE = config_parser.get("market","initial_product_price")
+    INITIAL_PRODUCT_PRICE = float(config_parser.get("market","initial_product_price"))
+    PRODUCT_PRICE_THRESHOLD = float(config_parser.get("market","product_price_threshold")) 
     
     SENIOR_SALARY_PERCENTAGE = float(config_parser.get("minwage","senior_salary_percent"))
     EXEC_SALARY_PERCENTAGE = float(config_parser.get("minwage","exec_salary_percent"))
@@ -39,7 +39,7 @@ class Market():
     POSSIBLE_QUANTITY_INCREASE = float(config_parser.get("inflation","possible_quantity_increase"))
     MIN_BALANCE_INFLATION = float(config_parser.get("inflation","bank_min_balance_inflation"))
     BANK_LOAN_INFLATION = float(config_parser.get("inflation","bank_threshold_loan_inflation"))
-    EXPIRABLE_GOODS = boolean(config_parser.get("market","expirable_goods"))
+    EXPIRABLE_GOODS = bool(config_parser.get("market","expirable_goods"))
 
             
     SMALL_COMPANY_TYPE=0

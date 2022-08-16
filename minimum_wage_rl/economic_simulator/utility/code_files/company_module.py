@@ -60,7 +60,7 @@ def yearly_financial_transactions(company, country, retired_workers_list):
 
     for each_worker in worker_list:
         
-        # Increase age of worker here
+        # Increase age of worker here - only for standalone
         each_worker.age = each_worker.age + 1
         retire_flag = False
 
@@ -129,10 +129,10 @@ def hiring_and_firing(i, company, operation_map):
 
     
 
-    print("Total Hiring Current Year - ", end="")
-    print("Junior - ", company.open_junior_pos, end="")
-    print(" Senior - ", company.open_senior_pos, end="")
-    print(" Exec - ", company.open_exec_pos)
+    # print("Total Hiring Current Year - ", end="")
+    # print("Junior - ", company.open_junior_pos, end="")
+    # print(" Senior - ", company.open_senior_pos, end="")
+    # print(" Exec - ", company.open_exec_pos)
 
 
 def firing(company, operation_map):
@@ -256,8 +256,8 @@ def hiring(i, company):
 
         hiring_budget = Market.COMPANY_HIRING_BUDGET_PERCENT * company.company_account_balance
         
-        print("Company - ", i, " Balance - ", company.company_account_balance, end="")
-        print(", Hiring Budget - ", hiring_budget)
+        # print("Company - ", i, " Balance - ", company.company_account_balance, end="")
+        # print(", Hiring Budget - ", hiring_budget)
 
         total_workers = company.num_junior_workers + company.num_senior_workers + company.num_executive_workers
 
