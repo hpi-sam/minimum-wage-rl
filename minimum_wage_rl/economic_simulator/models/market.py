@@ -17,7 +17,8 @@ class Market(models.Model):
     # Magic
     # NUM_CITIZENS_LIMIT = 100
     # CITIZEN_MAX_AGE = 100
-    INITIAL_PRODUCT_PRICE = config_parser.get("market","initial_product_price")
+    INITIAL_PRODUCT_PRICE = float(config_parser.get("market","initial_product_price"))
+    PRODUCT_PRICE_THRESHOLD = float(config_parser.get("market","product_price_threshold")) 
     
     SENIOR_SALARY_PERCENTAGE = float(config_parser.get("minwage","senior_salary_percent"))
     EXEC_SALARY_PERCENTAGE = float(config_parser.get("minwage","exec_salary_percent"))

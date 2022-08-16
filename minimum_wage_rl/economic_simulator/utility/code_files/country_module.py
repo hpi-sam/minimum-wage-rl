@@ -55,33 +55,33 @@ def add_new_workers(country):
     worker_list = []
 
     # 1: Add 5 - 10 juniors in population
-    num_of_juniors = 30 
+    num_of_juniors = 20 
     # np.random.randint(5,11)
     for i in range(num_of_juniors):
         worker = Worker()
         age = np.random.randint(19,25)
-        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-20)
-        initialize_employee(Worker.INITIAL_BANK_BALANCE, country, worker, age, skill_level)
+        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-10)
+        initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     
     # 2: Add 5 - 10 seniors in population
-    num_of_seniors = 30
+    num_of_seniors = 20
     # np.random.randint(5,11)
     for i in range(num_of_seniors):
         worker = Worker()
         age = np.random.randint(30,35)
         skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.JUNIOR_SKILL_LEVEL+3)
-        initialize_employee(Worker.INITIAL_BANK_BALANCE, country, worker, age, skill_level)
+        initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     
     # 3: Add 5 - 10 executives in population
-    num_of_executives = 30
+    num_of_executives = 20
     # np.random.randint(5,11)
     for i in range(num_of_executives):
         worker = Worker()
         age = np.random.randint(40,45)
         skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL+3)
-        initialize_employee(Worker.INITIAL_BANK_BALANCE, country, worker, age, skill_level)
+        initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
 
     country.population = country.population + (num_of_juniors + num_of_seniors + num_of_executives)

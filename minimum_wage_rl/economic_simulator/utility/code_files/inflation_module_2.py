@@ -9,7 +9,7 @@ config_parser = ConfigurationParser.get_instance().parser
 import logging
 logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 
-initial_product_price = float(config_parser.get("market","initial_product_price"))
+# initial_product_price = float(config_parser.get("market","initial_product_price"))
 
 def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, metrics):
 
@@ -48,8 +48,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
-        if new_price < initial_product_price:
-            new_price = initial_product_price
+        if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+            new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
         new_price, deflation = calculate_deflation(current_product_price, new_price, old_inflation, metrics, country)
         country.product_price = new_price
@@ -63,8 +63,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         # if produce_quantity > 0:
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
-        if new_price < initial_product_price:
-            new_price = initial_product_price
+        if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+            new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
         inflation = calculate_inflation(current_product_price, new_price, old_inflation, metrics, country)
         
@@ -78,8 +78,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
-            if new_price < initial_product_price:
-                new_price = initial_product_price
+            if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+                new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
     
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
@@ -99,8 +99,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
-            if new_price < initial_product_price:
-                new_price = initial_product_price
+            if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+                new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
@@ -113,8 +113,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             produce_quantity = produce_extra_quantity(produce_quantity,current_product_price, country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
-            if new_price < initial_product_price:
-                new_price = initial_product_price
+            if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+                new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
@@ -161,8 +161,8 @@ def calculate_deflation(current_product_price, new_product_price, old_inflation,
         deflation = -0.5
         new_product_price = round(current_product_price + current_product_price * deflation, 2)
 
-        if new_product_price < initial_product_price:
-            new_product_price = initial_product_price
+        if new_product_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+            new_product_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
             deflation = (new_product_price - current_product_price)/current_product_price
     
     deflation_rate = (deflation - old_inflation)/old_inflation if old_inflation> 0 else (deflation - old_inflation)
