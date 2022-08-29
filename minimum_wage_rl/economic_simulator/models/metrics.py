@@ -28,6 +28,14 @@ class Metric():
 
         self.unemployment_rate = 0.0
         self.poverty_rate = 0.0
+        
+        # add-to-web
+        self.unemployed_junior_rate = 0.0
+        self.unemployed_senior_rate = 0.0
+        self.unemployed_exec_rate = 0.0
+
+        self.old_poverty_rate = 0.0
+        self.old_unemployment_rate = 0.0
 
         self.population = 0
         self.minimum_wage = 0.0

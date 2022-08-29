@@ -167,6 +167,7 @@ def produce_extra_quantity(produce_quantity, price, country):
 
         country.bank.liquid_capital = country.bank.liquid_capital - money_available
         country.bank.liquid_capital = country.bank.liquid_capital - transport_cost
+        print("Bank Balance after production - ", country.bank.liquid_capital)
         logging.info("Money Spent - " + str(money_available))
         return int(possible_quantity)
 
@@ -203,6 +204,14 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
                             "jun_worker_sal": 0.0, "sen_worker_sal": 0.0, "exec_worker_sal": 0.0}
 
     unemployed = 0
+    unemployed_jun = 0
+    unemployed_sen = 0
+    unemployed_exec = 0
+
+    total_junior = 0
+    total_senior = 0
+    total_exec = 0
+    
     if country.product_price < 0.0:
         print("=========================== LOW PRICE =======================")
     
@@ -228,8 +237,25 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
             salary_metrics(each_worker, employee_details_map)
 
         total_money_deposited = total_money_deposited + worker_money_deposited
+
+        if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+            total_junior = total_junior  + 1
+        elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
+            total_senior = total_senior + 1
+        else:
+            total_exec = total_exec + 1
+
+
+
         if not(each_worker.is_employed):
             unemployed = unemployed + 1
+            
+            if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+                unemployed_jun = unemployed_jun  + 1
+            elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
+                unemployed_sen = unemployed_sen + 1
+            else:
+                unemployed_exec = unemployed_exec + 1
 
     logging.info("Total Money deposited - " + str(total_money_deposited))
     logging.info("Country Quantity - " + str(country.quantity))
@@ -243,6 +269,14 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     metrics.average_sen_sal = round(employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0, 1)
     metrics.average_exec_sal = round(employee_details_map["exec_worker_sal"]/employee_details_map["exec_workers"] if employee_details_map["exec_workers"] > 0 else 0, 1)
     metrics.average_sal = round((employee_details_map["jun_worker_sal"] + employee_details_map["sen_worker_sal"] + employee_details_map["exec_worker_sal"])/len(fin_workers_list) if len(fin_workers_list) > 0 else 0, 1)
+    
+    metrics.old_poverty_rate = metrics.poverty_rate
+    metrics.old_unemployment_rate = metrics.unemployment_rate
+    
+    metrics.unemployed_junior_rate = round((unemployed_jun/total_junior) *100 , 2)
+    metrics.unemployed_senior_rate = round((unemployed_sen/total_senior) *100 , 2)
+    metrics.unemployed_exec_rate = round((unemployed_exec/total_exec) *100 , 2)
+
     metrics.unemployment_rate = round(unemployed/len(fin_workers_list) * 100, 2)
     metrics.poverty_rate = round(poverty_count/len(fin_workers_list) * 100, 2)
     metrics.population = len(fin_workers_list)

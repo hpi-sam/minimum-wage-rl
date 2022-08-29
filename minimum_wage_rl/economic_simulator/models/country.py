@@ -13,6 +13,9 @@ class Country():
     INITIAL_BANK_BALANCE = float(config_parser.get("bank","initial_bank_balance"))
     OIL_PER_UNIT_QUANTITY = float(config_parser.get("country","oil_per_unit_quantity"))
     OIL_COST_PER_LITRE = float(config_parser.get("country","oil_cost_per_litre"))
+    
+    # add-to-web
+    POPULATION_GROWTH = int(config_parser.get("country","population_growth"))
 
     def __init__(self) -> None:
 

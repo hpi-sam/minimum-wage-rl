@@ -361,7 +361,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
             if key == "junior_pos" and value > 0:
 
                 hiring_budget = hiring_budget - (company.avg_junior_salary * 12)
-                if hiring_budget > 0:
+                if hiring_budget >= 0:
                     open_junior_pos = open_junior_pos + 1
                     job_position_map[key] = value - 1
                 else:
@@ -371,7 +371,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
             if key == "senior_pos" and value > 0:
 
                 hiring_budget = hiring_budget - (company.avg_senior_salary * 12)
-                if hiring_budget > 0:
+                if hiring_budget >= 0:
                     open_senior_pos = open_senior_pos + 1
                     job_position_map[key] = value - 1
                 else:
@@ -381,7 +381,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
             if key == "exec_pos" and value > 0:
 
                 hiring_budget = hiring_budget - (company.avg_executive_salary * 12)
-                if hiring_budget > 0:
+                if hiring_budget >= 0:
                     open_exec_pos = open_exec_pos + 1
                     job_position_map[key] = value - 1
                 else:

@@ -15,6 +15,7 @@ class Worker():
 
     BUY_EXTRA_ACCT_BALANCE = 5
     BUY_LUXURY_ACCT_BALANCE = 10
+    # GENERAL_SKILL_LEVEL = int(config_parser.get("worker","general_skill_level"))
     JUNIOR_SKILL_LEVEL = int(config_parser.get("worker","junior_skill_level"))
     SENIOR_SKILL_LEVEL = int(config_parser.get("worker","senior_skill_level"))
     DELTA_JOB_CHANGE_SALARY = 10

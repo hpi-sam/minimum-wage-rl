@@ -1,5 +1,16 @@
 from django.test import TestCase
 
+
+# import torch
+
+
+# a = torch.randn((3,3), requires_grad=True)
+# w1 = torch.randn((3,3), requires_grad=True)
+
+# b = w1 * a
+
+# b.grad_fn
+
 # Create your tests here.
 # game = Game(1)
 # game.reset()

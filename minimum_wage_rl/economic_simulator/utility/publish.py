@@ -6,7 +6,9 @@ import pandas as pd
 #         "Avg Jun", "Avg Sen", "Avg Exec", "Avg Sal", "Unemp Rate", "Poverty Rate", "Population", "Minimum wage",
 #         "Inflation", "Inflation Rate", "Bank Balance", "Product Price", "Quantity"]
 
-col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", "Inflation", "Product Price", "Quantity", "Bank Balance", "Population", "Mertic Population"]
+col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", "Inflation", "Product Price", 
+"Quantity", "Bank Balance", "Population", "Junior Employment", "Senior Unemployment", "Executive Unemployment",
+"Small Comp", "Medium Comp", "Large Comp"]
 
 
 def get_metric_data(data_map, metric):

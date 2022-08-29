@@ -42,11 +42,16 @@ def step(game, action_map):
     # Get all companies with -> closed = False
     country_companies_list = country.company_list
 
-    # Increase age of unemployed workers by 1
+    
     
     # for each_worker in country.employed_workers:
     #     each_worker.age = each_worker.age + 1
-    if len(country_companies_list) > 0:
+
+
+    # Increase age of unemployed workers by 1
+    # 
+    # 
+    if len(country_companies_list) > 0 and country.bank.liquid_capital > 0:
         for each_worker in country.unemployed_workers:
             each_worker.age = each_worker.age + 1
 
@@ -75,7 +80,12 @@ def step(game, action_map):
 
         reward = -10000
 
-        message = "Game Over, all companies have shutdown"
+        message = "Game Over, "
+        if len(country_companies_list) <= 0 :
+            message = message + "All companies have shutdown "
+
+        if country.bank.liquid_capital <= 0:
+            message = message + "Bank has shutdown"
 
         done = True
         
@@ -341,9 +351,12 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     # current_state, 
     state_values, reward, message, done =  get_current_state_reward(country, metrics)
 
+    # For excel
     game_metric = game.game_metric_list[-1]
-    m_values = [country.year, metrics.minimum_wage, metrics.unemployment_rate, metrics.poverty_rate, metrics.inflation,
-                metrics.product_price,  metrics.quantity, metrics.bank_account_balance, country.population, metrics.population]
+    m_values = [country.year, round(metrics.minimum_wage,2), metrics.unemployment_rate, metrics.poverty_rate, metrics.inflation,
+                metrics.product_price,  metrics.quantity, round(metrics.bank_account_balance,2), country.population, 
+                metrics.unemployed_junior_rate, metrics.unemployed_senior_rate, metrics.unemployed_exec_rate, 
+                metrics.num_small_companies, metrics.num_medium_companies, metrics.num_large_companies]
     game_metric.metric_list.append(m_values)
     game.game_metric_list[-1] = game_metric
 
@@ -370,13 +383,13 @@ def print_needed_data(game, metrics, country,retired_people):
     # print("large cmps - ", metrics.num_large_companies)
     print("Bank balance - ", metrics.bank_account_balance)
 
-    print("Filled Junior Jobs - ", metrics.total_filled_jun_pos, end="")
-    print(" , Filled Senior Jobs - ", metrics.total_filled_sen_pos, end="")
-    print(" , Filled Executive Jobs - ", metrics.total_filled_exec_pos)
+    print("Hired Juniors (Current Year) - ", metrics.total_filled_jun_pos, end="")
+    print(" , Hired Seniors (Current Year) - ", metrics.total_filled_sen_pos, end="")
+    print(" , Hired Executives (Current Year) - ", metrics.total_filled_exec_pos)
 
-    print("Unemployed Junior Jobs - ", metrics.unemployed_jun_pos, end="")
-    print(" , Unemployed Senior Jobs - ", metrics.unemployed_sen_pos, end="")
-    print(" , Unemployed Executive Jobs - ", metrics.unemployed_exec_pos)
+    print("Unemployed Juniors - ", metrics.unemployed_jun_pos, end="")
+    print(" , Unemployed Seniors - ", metrics.unemployed_sen_pos, end="")
+    print(" , Unemployed Executives - ", metrics.unemployed_exec_pos)
     
     print("Average Junior Salary - ", metrics.average_jun_sal, end="")
     print(" , Average Senior Salary - ", metrics.average_sen_sal, end="")
@@ -431,6 +444,9 @@ def calculate_reward(metrics):
     poverty_weightage = int(config_parser.get("reward","poverty_weightage"))
     unemp_weightage = int(config_parser.get("reward","unemp_weightage"))
 
+    # r1 = metrics.old_poverty_rate - metrics.poverty_rate
+    # r2 = metrics.old_unemployment_rate - metrics.unemployment_rate
+    
     r1 = 1 - (metrics.unemployment_rate/100)
     #  * unemp_weightage
     # r2 =  - (metrics.poverty_rate/100)

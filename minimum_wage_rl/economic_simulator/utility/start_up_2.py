@@ -116,11 +116,11 @@ def get_money_circulation(all_workers_list, country, min_wage_weightage):
     money_circulation = 0
 
     for each_worker in all_workers_list:
-        if each_worker.skill_level < Worker.JUNIOR_SKILL_LEVEL:
+        if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
             each_worker.worker_account_balance += (jun_sal * 12)
             money_circulation += jun_sal * 12
         
-        elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level < Worker.SENIOR_SKILL_LEVEL):
+        elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
             each_worker.worker_account_balance += (sen_sal * 12)
             money_circulation += sen_sal * 12
         
