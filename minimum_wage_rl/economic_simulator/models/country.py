@@ -1,6 +1,4 @@
 import uuid
-import numpy as np
-from numpy import random
 
 from economic_simulator.models.game import Game
 from .market import Market
@@ -20,13 +18,14 @@ class Country(models.Model):
     INITIAL_NUM_SMALL_COMPANIES = int(config_parser.get("market","num_small_business"))
     INITIAL_NUM_MEDIUM_COMPANIES = int(config_parser.get("market","num_medium_business"))
     INITIAL_NUM_LARGE_COMPANIES = int(config_parser.get("market","num_large_business"))
-    INITIAL_NUM_OF_CITIZENS = int(config_parser.get("country","citizens"))
+    INITIAL_POPULATION = int(config_parser.get("country","initial_population"))
     INITIAL_MIN_WAGE = float(config_parser.get("minwage","initial_minimum_wage"))
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
     INCOME_TAX = float(config_parser.get("country","income_tax"))
     INITIAL_BANK_BALANCE = float(config_parser.get("bank","initial_bank_balance"))
     OIL_PER_UNIT_QUANTITY = float(config_parser.get("country","oil_per_unit_quantity"))
     OIL_COST_PER_LITRE = float(config_parser.get("country","oil_cost_per_litre"))
+    POPULATION_GROWTH = int(config_parser.get("country","population_growth"))    
 
     # 2: Components
     country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -64,36 +63,7 @@ class Country(models.Model):
     total_executive_jobs = models.FloatField(default=0.0)
     temp_worker_list = []
     temp_company_list = []
-    
-    
-    # fixed_cash_printing = models.FloatField(default=float(config_parser.get("country","initial_printed_cash")))
-    # total_money_printed = models.FloatField(default=0.0)
-
-    # number_of_banks = models.IntegerField(default=1)
 
 
 
 
-
-    # def ResetCountry(self):
-    #     self.companies = dict()
-    #     self.workers = dict()
-    #     self.minimum_wage = Country.INITIAL_MIN_WAGE
-    #     self.num_small_companies = Country.INITIAL_NUM_SMALL_COMPANIES
-    #     self.num_medium_company = Country.INITIAL_NUM_MEDIUM_COMPANIES
-    #     self.num_large_company = Country.INITIAL_NUM_LARGE_COMPANIES
-        
-    # def print_money(self, bank):
-    #     self.total_money_printed = self.total_money_printed + self.fixed_cash_printing
-    #     bank.deposit_money(self.fixed_cash_printing)
-
-
-    # def add_new_citizens(country, amount):
-    #     from .worker import Worker
-    #     all_citizens_list = []
-    #     for _ in range(amount):
-    #         citizen = Worker()
-    #         citizen.InitializeEmployee(0, country)
-    #         all_citizens_list.append(citizen)
-        
-    #     return all_citizens_list

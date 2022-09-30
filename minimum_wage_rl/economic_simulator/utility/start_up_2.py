@@ -24,13 +24,6 @@ def start(user):
     all_workers_list = []
     all_companies_list = []
 
-    # save bank : bank.save()
-    # save game : game.save()
-    # save market : market_obj.save()
-    # save country : country.save()
-    # save worker
-    # save company
-
     metric_obj = Metric()
     metric_obj.year = 0    
 
@@ -63,14 +56,14 @@ def start(user):
     country_module.create_bank(bank, country, Country.INITIAL_BANK_BALANCE)
 
     # 5: Create Game
-    game_number = get_latest_game_number(user)    
+    game_number = get_latest_game_number(user)
     game = Game()
     game.player = user
     game.game_number = game_number
     country.game = game
 
     # 6: Create Workers
-    all_workers_list, new_num_of_juniors, new_num_of_seniors, new_num_of_executives = country_module.add_new_workers(country)
+    all_workers_list, new_num_of_juniors, new_num_of_seniors, new_num_of_executives = country_module.add_new_workers(country, Country.INITIAL_POPULATION)
     
     metric_obj.unemployed_jun_pos = new_num_of_juniors
     metric_obj.unemployed_sen_pos = new_num_of_seniors
@@ -80,7 +73,9 @@ def start(user):
     metric_obj.average_sen_sal = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
     metric_obj.average_exec_sal = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 
-    metric_obj.average_sal = (metric_obj.average_jun_sal + metric_obj.average_sen_sal + metric_obj.average_exec_sal)/len(all_workers_list)
+    metric_obj.average_sal = (metric_obj.average_jun_sal * new_num_of_juniors   + 
+                            metric_obj.average_sen_sal * new_num_of_seniors + 
+                            metric_obj.average_exec_sal * new_num_of_executives)/len(all_workers_list)
 
     metric_obj.unemployment_rate = 100
     metric_obj.poverty_rate = 100
@@ -132,7 +127,7 @@ def start(user):
 
     metric_obj.save()
 
-    print_metrics(country)
+    print_needed(metric_obj, country)
 
     return collect_metrics(country)
 
@@ -188,24 +183,31 @@ def get_latest_game_number(user):
         game_number = max_game_query["max_game_number"]  + 1
     return game_number
 
+def print_needed(metrics, country):
+    # metrics = Metric()
+    print("====================== YEAR ", metrics.year , "======================")
+    print("Year - " ,metrics.year)
+    print("Minwage - ", metrics.minimum_wage)
+    print("Population - ", metrics.population)
+    print("retired people - ", metrics.num_retired)
+    print("Bank balance - ", metrics.bank_account_balance)
+    print("Product price - ", country.product_price)
+    print("Money Circulation - ", metrics.money_circulation)
+    print("Inflation - ", metrics.inflation)
+    print("Quantity - ", country.quantity)
+    print("Unemployment - ", metrics.unemployment_rate)
+    print("Poverty Rate - ", metrics.poverty_rate)
 
+    print("--------------------------- Average Balance ---------------------------")
+    print("Average Jun Acct balance - ", metrics.jun_worker_avg_balance)
+    print("Average Sen Acct balance - ", metrics.sen_worker_avg_balance)
+    print("Average Exec Acct balance - ", metrics.exec_worker_avg_balance)
 
-# # startup
-# def add_new_citizens(country, amount):
-#     for _ in range(amount):
-#         citizen = Worker()
-#         InitializeEmployee(0, country, citizen)
-#         all_citizens_list.append(citizen)
+    print("============== Hired Level ========================")
+    print("Current year Jun hired - ", metrics.current_year_filled_jun_pos)
+    print("Current year Sen hired - ", metrics.current_year_filled_sen_pos)
+    print("Current year Exec hired - ", metrics.current_year_filled_exec_pos)
 
-# def InitializeEmployee(initialBalance, country, citizen): #MWCountry
-        
-#     citizen.worker_account_balance = initialBalance
-
-#     citizen.salary = citizen.age = 0
-#     citizen.skill_level = 1
-#     # citizen.initial_skill_level = 1
-#     citizen.bought_essential_product = citizen.buy_first_extra_product = citizen.buy_second_extra_product = False
-#     citizen.is_employed = citizen.has_company = False
-
-#     # Moving to a country
-#     citizen.country_of_residence = country
+    print("Total Jun Hired - ", metrics.total_filled_jun_pos)
+    print("Total Sen Hired - ", metrics.total_filled_sen_pos)
+    print("Total Exec Hired - ", metrics.total_filled_exec_pos)

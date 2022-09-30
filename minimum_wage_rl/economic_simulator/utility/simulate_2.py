@@ -1,5 +1,6 @@
 # from math import ceil, floor
 
+from math import ceil
 from economic_simulator.models.metrics import Metric
 from economic_simulator.utility.code_files.common_module import retire
 from ..models.worker import Worker
@@ -27,8 +28,7 @@ from django.db import transaction
 
 
 config_parser = ConfigurationParser.get_instance().parser
-
-discrete_action = bool(config_parser.get("game","discrete_action"))
+discrete_action = config_parser.getboolean("game","discrete_action")
 
 def step(action_map, user):
     
@@ -40,7 +40,7 @@ def step(action_map, user):
     # Get all "OPEN" companies 
     country_companies_list = list(country.company_set.filter(closed=False))
 
-    if len(country_companies_list) > 0:
+    if len(country_companies_list) > 0 and country.bank.liquid_capital > 0:
         # Increase age of all workers by 1
         Worker.objects.filter(country_of_residence=country).update(age=F("age") + 1)
 
@@ -52,7 +52,7 @@ def step(action_map, user):
 
         # action_map = {"minimum_wage":action}
         # Step 1 - Change minimum wage - Perform action function
-        discrete_action = False
+        # discrete_action = False
         perform_action(action_map,country,discrete_action)
 
         country.temp_worker_list.extend(country_workers_list)
@@ -111,12 +111,13 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     total_open_exec_pos = 0
 
     # ================ 1: COUNTRY MODULE - Increase population ================
-    new_workers_list, _, _, _ =  country_module.add_new_workers(country)
+    # new_workers_list, _, _, _ =  country_module.add_new_workers(country)
+    new_workers_list = []
     fired_workers = []
     employed_workers_list = []
     retired_workers_list = []
 
-    print("Total Workers Currently - ", country.population)
+    # print("Total Workers Currently - ", country.population)
 
     # ================ 2: Retire Unemployed workers ================
     non_retired_workers = []
@@ -207,15 +208,17 @@ def run_market(country, country_companies_list, unemployed_workers_list):
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, 
                                   min_startup_score, max_startup_score)
 
-    print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
-    print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
-    print("Open Exec Pos - ", total_open_exec_pos, " Unemployed Exec Workers - ", len(unemp_exec_worker_list))
+    # print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
+    # print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
+    # print("Open Exec Pos - ", total_open_exec_pos, " Unemployed Exec Workers - ", len(unemp_exec_worker_list))
 
     # 4.2 Create Start ups
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list)
 
-    retired_workers_list.extend(successful_founders_list)                                                                  
+    metrics.num_retired = len(retired_workers_list)
+    metrics.startup_founders = len(successful_founders_list)
+    # retired_workers_list.extend(successful_founders_list)                                                                  
 
     # 4.3 Getting hired and Set metrics
     # Input unemp_jun_worker_list, unemp_sen_worker_list, unemp_exec_worker_list, 
@@ -254,25 +257,34 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     if num_of_companies > 0:
         # 1. Junior
         level = "junior"
-        unemp_jun_worker_list = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
+        unemp_jun_worker_list, num_jun_hired = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
 
         # 2. Senior        
         level = "senior"
-        unemp_sen_worker_list = hiring_module.hire_workers(open_companies_list,unemp_sen_worker_list,level, senior_salary,metrics, emp_worker_list)
+        unemp_sen_worker_list, num_sen_hired = hiring_module.hire_workers(open_companies_list,unemp_sen_worker_list,level, senior_salary,metrics, emp_worker_list)
 
         # 3. Executive
         level = "exec"
-        unemp_exec_worker_list = hiring_module.hire_workers(open_companies_list,unemp_exec_worker_list,level, exec_salary,metrics, emp_worker_list)
+        unemp_exec_worker_list, num_of_exec_hired = hiring_module.hire_workers(open_companies_list,unemp_exec_worker_list,level, exec_salary,metrics, emp_worker_list)
+        
+        metrics.current_year_filled_jun_pos = num_jun_hired
+        metrics.current_year_filled_sen_pos = num_sen_hired
+        metrics.current_year_filled_exec_pos = num_of_exec_hired
 
+
+
+    smll_comp_acct_balance = 0.0
+    medium_comp_acct_balance = 0.0
+    large_comp_acct_balance = 0.0
 
     for company_item in open_companies_list:
         # Pay cost of operation
-        coo = company_module.pay_cost_of_operation(company_item)        
+        coo = company_module.pay_cost_of_operation(company_item, country.bank)
 
         # Pay taxes
-        tax = company_module.pay_tax(company_item,country.bank)
+        tax = company_module.pay_tax(company_item, country.bank)
         
-        print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
+        # print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
 
         company_module.set_company_size(company_item)
         metrics_module.set_company_size_metrics(company_item, metrics)
@@ -301,6 +313,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     inflation_module_2.buy_products(fin_workers_list, country, poverty_count, metrics)
 
     metrics.bank_account_balance = float(country.bank.liquid_capital)
+    metrics.money_circulation = country.money_circulation
     
     # 7: Save all data
     # Try bulk update and bulk create 
@@ -335,9 +348,98 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         retired_people = retired_people + 1
         each_worker.save()
 
+    cmp_metrics(metrics, country)
+
     print_needed_data(metrics, country, retired_people)
 
     return get_current_state_reward(country, metrics)
+
+
+def cmp_metrics(metrics, country):
+    # select num(workers) from companies inner join workers on company_id == worker.company_id where worker_skill < 10
+    # Average juniors, seniors, executes in small, medium, large companies
+    small_cmps = 0
+    small_jun_workers = 0
+    small_sen_workers = 0
+    small_exec_workers = 0
+
+    medium_cmps = 0
+    medium_jun_workers = 0
+    medium_sen_workers = 0
+    medium_exec_workers = 0
+
+    large_cmps = 0
+    large_jun_workers = 0
+    large_sen_workers = 0
+    large_exec_workers = 0
+
+    smll_acct_balance = 0.0
+    medium_acct_balance = 0.0
+    large_acct_balance = 0.0
+
+    all_cmps = list(country.company_set.filter(closed=False))
+
+    for company in all_cmps:
+        #Small Company:
+        if company.company_account_balance < Market.MEDIUM_CMP_INIT_BALANCE:
+            small_cmps = small_cmps + 1
+            smll_acct_balance = smll_acct_balance + company.company_account_balance
+            # juniors
+            jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
+            small_jun_workers = small_jun_workers + len(jun_workers)
+
+            sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
+            small_sen_workers = small_sen_workers + len(sen_workers)
+
+            exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
+            small_exec_workers = small_exec_workers + len(exec_workers)
+
+        elif company.company_account_balance >= Market.MEDIUM_CMP_INIT_BALANCE and company.company_account_balance < Market.LARGE_CMP_INIT_BALANCE:
+            medium_cmps = medium_cmps + 1
+            medium_acct_balance = medium_acct_balance + company.company_account_balance
+            # juniors
+            jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
+            medium_jun_workers = medium_jun_workers + len(jun_workers)
+
+            sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
+            medium_sen_workers = medium_sen_workers + len(sen_workers)
+
+            exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
+            medium_exec_workers = medium_exec_workers + len(exec_workers)
+        else:
+            large_cmps = large_cmps + 1
+            large_acct_balance = large_acct_balance + company.company_account_balance
+            # juniors
+            jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
+            large_jun_workers = large_jun_workers + len(jun_workers)
+
+            sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
+            large_sen_workers = large_sen_workers + len(sen_workers)
+
+            exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
+            large_exec_workers = large_exec_workers + len(exec_workers)
+
+    jun_data = Worker.objects.filter(is_employed=False).filter(skill_level__lte=10).aggregate(jun_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
+    sen_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=10).filter(skill_level__lte=20).aggregate(sen_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
+    exec_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=20).aggregate(exec_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
+    # jun_count = Worker.objects.filter(is_employed=False and skill_level<)
+
+    metrics.uemp_jun_acct_balance = jun_data["jun_sum"]/jun_data["count_people"]
+    metrics.uemp_sen_acct_balance = sen_data["sen_sum"]/jun_data["count_people"]
+    metrics.uemp_exec_acct_balance = exec_data["exec_sum"]/jun_data["count_people"]
+
+    metrics.avg_juniors_small_cmp = ceil(small_jun_workers/small_cmps) if small_cmps>0 else 0
+    metrics.avg_seniors_small_cmp = ceil(small_sen_workers/small_cmps) if small_cmps>0 else 0
+    metrics.avg_execs_small_cmp = ceil(small_exec_workers/small_cmps) if small_cmps>0 else 0
+    metrics.avg_juniors_medium_cmp = ceil(medium_jun_workers/medium_cmps) if medium_cmps>0 else 0
+    metrics.avg_seniors_medium_cmp = ceil(medium_sen_workers/medium_cmps) if medium_cmps>0 else 0
+    metrics.avg_execs_medium_cmp = ceil(medium_exec_workers/medium_cmps) if medium_cmps>0 else 0
+    metrics.avg_juniors_large_cmp = ceil(large_jun_workers/large_cmps) if large_cmps>0 else 0
+    metrics.avg_seniors_large_cmp = ceil(large_sen_workers/large_cmps) if large_cmps>0 else 0
+    metrics.avg_execs_large_cmp = ceil(large_exec_workers/large_cmps) if large_cmps>0 else 0
+    metrics.small_comp_acct_balance = smll_acct_balance/small_cmps if small_cmps>0 else 0
+    metrics.medium_comp_acct_balance = medium_acct_balance/medium_cmps if medium_cmps>0 else 0
+    metrics.large_comp_acct_balance = large_acct_balance/large_cmps if large_cmps>0 else 0
 
 
 def print_needed_data(metrics, country,retired_people):
@@ -350,13 +452,59 @@ def print_needed_data(metrics, country,retired_people):
     print("retired people - ", retired_people)
     print("Bank balance - ", metrics.bank_account_balance)
     print("Product price - ", country.product_price)
+    print("Money Circulation - ", metrics.money_circulation)
     print("Inflation - ", metrics.inflation)
     print("Quantity - ", country.quantity)
     print("Unemployment - ", metrics.unemployment_rate)
     print("Poverty Rate - ", metrics.poverty_rate)
-    # print("Num small cmp - ", metrics.num_small_companies)
-    # print("Num medium cmp - ", metrics.num_medium_companies)
-    # print("Num large cmp - ", metrics.num_large_companies)
+
+    print("--------------------------- Average Balance ---------------------------")
+    print("Average Jun Acct balance - ", metrics.jun_worker_avg_balance)
+    print("Average Sen Acct balance - ", metrics.sen_worker_avg_balance)
+    print("Average Exec Acct balance - ", metrics.exec_worker_avg_balance)
+
+    print("============== Hired Level ========================")
+    print("Current year Jun hired - ", metrics.current_year_filled_jun_pos)
+    print("Current year Sen hired - ", metrics.current_year_filled_sen_pos)
+    print("Current year Exec hired - ", metrics.current_year_filled_exec_pos)
+
+    print("Total Jun Hired - ", metrics.total_filled_jun_pos)
+    print("Total Sen Hired - ", metrics.total_filled_sen_pos)
+    print("Total Exec Hired - ", metrics.total_filled_exec_pos)
+
+    print("UnEmployed Juniors - ", metrics.unemployed_jun_pos)
+    print("UnEmployed Seniors", metrics.unemployed_sen_pos)
+    print("UnEmployed Exec", metrics.unemployed_exec_pos)
+
+    print("======================== Predict Next Employment =======================")
+    print("Average Number of Juniors in Small Company", metrics.avg_juniors_small_cmp)
+    print("Average Number of Seniors in Small Company", metrics.avg_seniors_small_cmp) 
+    print("Average Number of Executives in Small Company", metrics.avg_execs_small_cmp)
+    print("")
+    print("Average Number of Juniors in Medium Company", metrics.avg_juniors_medium_cmp)
+    print("Average Number of Seniors in Medium Company", metrics.avg_seniors_medium_cmp)
+    print("Average Number of Executives in Medium Company", metrics.avg_execs_medium_cmp)
+    print("")
+    print("Average Number of Juniors in Large Company", metrics.avg_juniors_large_cmp) 
+    print("Average Number of Seniors in Large Company", metrics.avg_seniors_large_cmp)
+    print("Average Number of Executives in Large Company", metrics.avg_execs_large_cmp)
+    print("")
+    print("Average account balance in small company", metrics.small_comp_acct_balance)
+    print("Average account balance in medium company", metrics.medium_comp_acct_balance)
+    print("Average account balance in large company", metrics.large_comp_acct_balance)
+    print("")
+    print("Average Junior Skill", metrics.avg_jun_skill_level)
+    print("Average Seniors Skill", metrics.avg_sen_skill_level)
+    print("Average Executives Skill", metrics.avg_exec_skill_level)
+
+
+    print("Num small cmp - ", metrics.num_small_companies)
+    print("Num medium cmp - ", metrics.num_medium_companies)
+    print("Num large cmp - ", metrics.num_large_companies)
+
+    print("Unemployed Jun Acct balance - ", metrics.uemp_jun_acct_balance)
+    print("Unemployed Sen Acct balance - ", metrics.uemp_sen_acct_balance)
+    print("Unemployed Exec Acct balance - ", metrics.uemp_exec_acct_balance)
     # print("Junior Jobs - ", metrics.total_filled_jun_pos)
     # print("Senior Jobs - ", metrics.total_filled_sen_pos)
     # print("Executive Jobs - ", metrics.total_filled_exec_pos)
@@ -393,11 +541,19 @@ def get_current_state_reward(country, metrics):
     # state_values = []
 
     current_state = dict()
+    current_state["Minimum wage"] = float("{:.2f}".format(metrics.minimum_wage))
     current_state["Unemployment Rate"] = float("{:.2f}".format(metrics.unemployment_rate))
     current_state["Poverty Rate"] = float("{:.2f}".format(metrics.poverty_rate))
-    current_state["Minimum wage"] = metrics.minimum_wage
-    current_state["Inflation Rate"] = float("{:.2f}".format(metrics.inflation_rate))
-    current_state["population"] = metrics.population
+    current_state["Quantity"] = metrics.quantity
+    current_state["Inflation"] = float("{:.2f}".format(metrics.inflation))
+    current_state["Product Price"] = float("{:.2f}".format(metrics.product_price))
+    current_state["Population"] = metrics.population
+    current_state["Small Companies"] = metrics.num_small_companies
+    current_state["Medium Companies"] = metrics.num_medium_companies
+    current_state["Large Companies"] = metrics.num_large_companies
+    current_state["Bank Balance"] = metrics.bank_account_balance
+    current_state["Retired Current Year"] = metrics.num_retired
+    current_state["Start Up Founders Current Year"] = metrics.startup_founders
 
 
     # state_values.append(country.unemployment_rate)

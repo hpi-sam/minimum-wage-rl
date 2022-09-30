@@ -15,11 +15,11 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
     inflation_weightage = country.inflation if country.inflation > 0 else 0.0
 
-    emp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), emp_worker_list, 0 )
-    unemp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), unemp_worker_list, 0 )
+    all_emp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), emp_worker_list, 0 )
+    all_unemp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), unemp_worker_list, 0 )
 
     old_money_circulation = country.money_circulation
-    current_money_circulation = emp_workers_acct + unemp_workers_acct
+    current_money_circulation = all_emp_workers_acct + all_unemp_workers_acct
     country.money_circulation = current_money_circulation    
     velocity_of_money = 1
     current_product_price = country.product_price
@@ -42,9 +42,13 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
     # 1. Check if latest money circulation is less than previous money circulation
     if current_money_circulation <= old_money_circulation:
+        
+        new_price = current_money_circulation/(produce_quantity)
+        if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+            new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
         if produce_quantity > 0:
-            produce_quantity = produce_extra_quantity(produce_quantity, current_product_price, country)
+            produce_quantity = import_quantity(produce_quantity, new_price, country)
         
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
@@ -68,14 +72,15 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
         inflation = calculate_inflation(current_product_price, new_price, old_inflation, metrics, country)
         
-        # 1.1 Inflation below a given threshold - then - Increase Quantity (maybe price)
-        if inflation <= Market.LOW_THRESHOLD_INFLATION:
+        # 1.1 Inflation below a given threshold  OR Inflation above a given threshold
+        # then - Increase Quantity (maybe price)
+        if inflation <= Market.LOW_THRESHOLD_INFLATION or inflation > Market.HIGH_THRESHOLD_INFLATION:
             new_quantity = int(current_money_circulation/current_product_price)
             new_quantity = max(new_quantity, needed_quantity)
 
             produce_quantity = new_quantity - old_quantity
 
-            produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
+            produce_quantity = import_quantity(produce_quantity,current_product_price,country)
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
             if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
@@ -90,29 +95,36 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
         # 1.2 Inflation above a given threshold - then - Increase Quantity (maybe price)
         # What was removed - Upper limit for Quantity production
-        elif inflation > Market.HIGH_THRESHOLD_INFLATION:
-            new_quantity = int(current_money_circulation/current_product_price)
-            new_quantity = max(new_quantity, needed_quantity)
+        # elif inflation > Market.HIGH_THRESHOLD_INFLATION:
+            # new_quantity = int(current_money_circulation/current_product_price)
+            # new_quantity = max(new_quantity, needed_quantity)
 
-            produce_quantity = new_quantity - old_quantity
+            # produce_quantity = new_quantity - old_quantity
 
-            produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
-            new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+            # produce_quantity = produce_extra_quantity(produce_quantity,current_product_price,country)
+            # new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
 
-            if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
-                new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
+            # if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
+            #     new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
-            country.product_price = new_price
-            country.quantity = produce_quantity + old_quantity
+            # country.product_price = new_price
+            # country.quantity = produce_quantity + old_quantity
 
-            metrics.product_price = new_price
-            metrics.quantity = produce_quantity + old_quantity
+            # metrics.product_price = new_price
+            # metrics.quantity = produce_quantity + old_quantity
 
-            # 1.3 Inflation in between certain limit - then - Increase Product price
+            # 1.2 Inflation in between certain limit - then - Increase Product price
         else:
-            produce_quantity = produce_extra_quantity(produce_quantity,current_product_price, country)
-            new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+            # Here importing with old rate
+            # produce_quantity = import_quantity(produce_quantity,current_product_price, country)
 
+            # Import with new price, above code is commented
+            produce_quantity = import_quantity(produce_quantity,new_price, country)
+            
+
+            # But selling locally at new rate
+            new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+            
             if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
                 new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
@@ -130,7 +142,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             country.product_price = 0.01
             metrics.product_price = 0.01
 
-def produce_extra_quantity(produce_quantity, price, country):
+def import_quantity(produce_quantity, price, country):
 
     money_needed = produce_quantity * price
     transport_cost = produce_quantity * Country.OIL_PER_UNIT_QUANTITY * Country.OIL_COST_PER_LITRE
@@ -187,6 +199,22 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
                             "jun_worker_sal": 0.0, "sen_worker_sal": 0.0, "exec_worker_sal": 0.0}
 
     unemployed = 0
+    unemployed_jun = 0
+    unemployed_sen = 0
+    unemployed_exec = 0
+
+    total_junior = 0
+    total_senior = 0
+    total_exec = 0
+
+    jun_skill_level = 0.0
+    sen_skill_level = 0.0
+    exec_skill_level = 0.0
+
+    jun_acct_balance = 0.0
+    sen_acct_balance = 0.0
+    exec_acct_balance = 0.0
+
     if country.product_price < 0.0:
         print("=========================== LOW PRICE =======================")
 
@@ -212,8 +240,29 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
             salary_metrics(each_worker, employee_details_map)
 
         total_money_deposited = total_money_deposited + worker_money_deposited
+        
+
+        if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+            total_junior = total_junior  + 1
+            jun_skill_level = jun_skill_level + each_worker.skill_level
+            jun_acct_balance = jun_acct_balance + each_worker.worker_account_balance
+        elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
+            total_senior = total_senior + 1
+            sen_skill_level = sen_skill_level + each_worker.skill_level
+            sen_acct_balance = sen_acct_balance + each_worker.worker_account_balance
+        else:
+            total_exec = total_exec + 1
+            exec_skill_level = exec_skill_level + each_worker.skill_level
+            exec_acct_balance = exec_acct_balance + each_worker.worker_account_balance
+        
         if not(each_worker.is_employed):
             unemployed = unemployed + 1
+            if each_worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+                unemployed_jun = unemployed_jun  + 1
+            elif (each_worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (each_worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
+                unemployed_sen = unemployed_sen + 1
+            else:
+                unemployed_exec = unemployed_exec + 1            
 
     logging.info("Total Money deposited - " + str(total_money_deposited))
     logging.info("Country Quantity - " + str(country.quantity))
@@ -223,10 +272,29 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     metrics.total_filled_sen_pos = employee_details_map["sen_workers"]
     metrics.total_filled_exec_pos = employee_details_map["exec_workers"]
 
+    metrics.avg_jun_skill_level = jun_skill_level/total_junior
+    metrics.avg_sen_skill_level = sen_skill_level/total_senior
+    metrics.avg_exec_skill_level = exec_skill_level/total_exec
+
+    metrics.jun_worker_avg_balance = jun_acct_balance/total_junior
+    metrics.sen_worker_avg_balance = sen_acct_balance/total_senior
+    metrics.exec_worker_avg_balance = exec_acct_balance/total_exec
+
     metrics.average_jun_sal = round(employee_details_map["jun_worker_sal"]/employee_details_map["jun_workers"] if employee_details_map["jun_workers"] > 0 else 0, 1)
     metrics.average_sen_sal = round(employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0, 1)
     metrics.average_exec_sal = round(employee_details_map["exec_worker_sal"]/employee_details_map["exec_workers"] if employee_details_map["exec_workers"] > 0 else 0, 1)
     metrics.average_sal = round((employee_details_map["jun_worker_sal"] + employee_details_map["sen_worker_sal"] + employee_details_map["exec_worker_sal"])/len(fin_workers_list) if len(fin_workers_list) > 0 else 0, 1)
+
+    metrics.old_poverty_rate = metrics.poverty_rate
+    metrics.old_unemployment_rate = metrics.unemployment_rate
+
+    total_employed = employee_details_map["jun_workers"] + employee_details_map["sen_workers"] + employee_details_map["exec_workers"]
+
+    metrics.unemployed_junior_rate = round((unemployed_jun/total_junior) *100 , 2)
+    metrics.unemployed_senior_rate = round((unemployed_sen/total_senior) *100 , 2)
+    metrics.unemployed_exec_rate = round((unemployed_exec/total_exec) *100 , 2)
+
+    # metrics.average_sal = round((employee_details_map["jun_worker_sal"] + employee_details_map["sen_worker_sal"] + employee_details_map["exec_worker_sal"])/total_employed if total_employed > 0 else 0, 1)
     metrics.unemployment_rate = round(unemployed/len(fin_workers_list) * 100, 2)
     metrics.poverty_rate = round(poverty_count/len(fin_workers_list) * 100, 2)
     metrics.population = len(fin_workers_list)

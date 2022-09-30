@@ -55,8 +55,6 @@ def yearly_financial_transactions(company, country, retired_workers_list):
     company.num_senior_workers = 0
     company.num_executive_workers = 0
 
-    total_profit = 0
-
     for each_worker in worker_list:
         
         retire_flag = False
@@ -118,7 +116,6 @@ def hiring_and_firing(company, operation_map, country):
 
     
     if company.company_account_balance < Market.MINIMUM_COMPANY_BALANCE:
-        print(country.minimum_wage)
         firing(company, operation_map)
     else:
         hiring(company)
@@ -501,8 +498,12 @@ def get_salary_paid(worker, company):
     company.year_income = company.year_income + earnings    
     return earnings
     
-def pay_cost_of_operation(company):
-    cost_of_operation = Company.COST_OF_OPERATION * company.year_income
+def pay_cost_of_operation(company, central_bank):
+    cost_of_operation = Company.COST_OF_OPERATION * company.company_account_balance
     company.company_account_balance = company.company_account_balance - cost_of_operation
+
+    # Add to standalone
+    central_bank.deposit_money(cost_of_operation)
+
     logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
     return cost_of_operation
