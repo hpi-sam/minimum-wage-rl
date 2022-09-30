@@ -6,7 +6,7 @@ class Country():
     INITIAL_NUM_SMALL_COMPANIES = int(config_parser.get("market","num_small_business"))
     INITIAL_NUM_MEDIUM_COMPANIES = int(config_parser.get("market","num_medium_business"))
     INITIAL_NUM_LARGE_COMPANIES = int(config_parser.get("market","num_large_business"))
-    INITIAL_NUM_OF_CITIZENS = int(config_parser.get("country","citizens"))
+    INITIAL_POPULATION = int(config_parser.get("country","initial_population"))
     INITIAL_MIN_WAGE = float(config_parser.get("minwage","initial_minimum_wage"))
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
     INCOME_TAX = float(config_parser.get("country","income_tax"))

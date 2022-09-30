@@ -134,7 +134,7 @@ class ActorCriticAgent:
             self.writer.add_histogram(f"{name}_critic.grad", param.grad, loss_step)
             # print(param.grad)
 
-        print("here")
+        # print("here")
 
     def reset(self, episode_num):
         self.task.reset(episode_num)

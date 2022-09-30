@@ -21,7 +21,7 @@ def pay_loan(company, central_bank):
         if company.loan_amount < 100:
             total_amount = interest_amount + company.loan_amount
             central_bank.deposit_money(total_amount)
-            logging.info("Loan deposited - " + str(total_amount))
+            # logging.info("Loan deposited - " + str(total_amount))
             company.loan_taken = False
             company.loan_amount = 0.0
         
@@ -30,15 +30,15 @@ def pay_loan(company, central_bank):
             total_amount = interest_amount + installment_amount
             central_bank.deposit_money(total_amount)
             company.loan_amount = company.loan_amount - installment_amount
-            logging.info("Loan deposited - " + str(total_amount))
+            # logging.info("Loan deposited - " + str(total_amount))
 
 
 def pay_tax(company, central_bank):
-    tax = Country.CORPORATE_TAX * company.year_income
+    tax = Country.CORPORATE_TAX * company.company_account_balance
     # tax = Country.CORPORATE_TAX * company.company_account_balance
     company.company_account_balance = company.company_account_balance - tax
     central_bank.deposit_money(tax)
-    logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
+    # logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
     return tax
 
 def yearly_financial_transactions(company, country, retired_workers_list):
@@ -65,9 +65,10 @@ def yearly_financial_transactions(company, country, retired_workers_list):
         retire_flag = False
 
         if each_worker.age >= 60:
-            retire(each_worker, country)
-            retire_flag = True
-            retired_workers_list.append(each_worker)
+            # retire(each_worker, country)
+            # retire_flag = True
+            # retired_workers_list.append(each_worker)
+            pass
 
         if not(retire_flag):
             each_worker.skill_improvement_rate =  company.skill_improvement_rate
@@ -174,7 +175,7 @@ def firing(company, operation_map):
             
         company.num_junior_workers = company.num_junior_workers - len(fired_junior_workers)
         deficit = deficit - len(fired_junior_workers) * company.avg_junior_salary
-        
+        # logging.info("Number of fired Juniors - ", len(fired_junior_workers))
 
     # 2: Firing seniors
     num_seniors_to_be_fired = ceil(deficit/company.avg_senior_salary)
@@ -197,7 +198,8 @@ def firing(company, operation_map):
         
         company.num_senior_workers = company.num_senior_workers - len(fired_senior_workers)
         deficit = deficit - len(fired_senior_workers) * company.avg_senior_salary
-        
+        # logging.info("Number of fired Seniors - ", len(fired_senior_workers))
+
     # 3: Firing executives
     num_exec_to_be_fired = ceil(deficit/company.avg_executive_salary)
 
@@ -218,6 +220,7 @@ def firing(company, operation_map):
         
         company.num_executive_workers = company.num_executive_workers - len(fired_exec_workers)
         deficit = deficit - len(fired_exec_workers) * company.avg_executive_salary
+        # logging.info("Number of fired Execs - ", len(fired_exec_workers))
 
     if deficit > 0:
         operation_map["close"] = True
@@ -515,8 +518,9 @@ def get_salary_paid(worker, company):
     company.year_income = company.year_income + earnings
     return earnings
 
-def pay_cost_of_operation(company):
-    cost_of_operation = Company.COST_OF_OPERATION * company.year_income
+def pay_cost_of_operation(company, central_bank):
+    cost_of_operation = Company.COST_OF_OPERATION * company.company_account_balance
     company.company_account_balance = company.company_account_balance - cost_of_operation
-    logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
+    central_bank.deposit_money(cost_of_operation)
+    # logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
     return cost_of_operation

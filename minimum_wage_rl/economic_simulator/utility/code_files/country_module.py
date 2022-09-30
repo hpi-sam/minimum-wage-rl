@@ -52,35 +52,35 @@ def create_bank(initial_bank_balance):
     
 
 
-def add_new_workers(country):
+def add_new_workers(country, num_of_citizens):
 
     worker_list = []
 
     # 1: Add 5 - 10 juniors in population
     # add-to-web
-    num_of_juniors = country.POPULATION_GROWTH
+    num_of_juniors = num_of_citizens
     for i in range(num_of_juniors):
         worker = Worker()
-        age = np.random.randint(19,25)
-        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-10)
+        age = np.random.randint(18,20)
+        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     
     # 2: Add 5 - 10 seniors in population
-    num_of_seniors = country.POPULATION_GROWTH
+    num_of_seniors = num_of_citizens
     for i in range(num_of_seniors):
         worker = Worker()
-        age = np.random.randint(30,35)
-        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.JUNIOR_SKILL_LEVEL+3)
+        age = np.random.randint(20,23)
+        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     
     # 3: Add 5 - 10 executives in population
-    num_of_executives = country.POPULATION_GROWTH
+    num_of_executives = num_of_citizens
     for i in range(num_of_executives):
         worker = Worker()
-        age = np.random.randint(40,45)
-        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL+3)
+        age = np.random.randint(23,25)
+        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.EXEC_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
 

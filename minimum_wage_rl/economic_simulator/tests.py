@@ -1,7 +1,25 @@
 from django.test import TestCase
 
 
-# import torch
+# import gym
+
+# print("hello")
+
+import numpy as np
+
+l1 = np.array([1.1])
+print(l1.shape)
+
+
+# from ..economic_simulator.utility.config import ConfigurationParser
+# config_parser = ConfigurationParser.get_instance().parser
+# JUNIOR_SKILL_LEVEL = int(config_parser.get("worker","junior_skill_level"))
+
+# print(JUNIOR_SKILL_LEVEL)
+
+
+# import atari_py
+# print(atari_py.list_games())
 
 
 # a = torch.randn((3,3), requires_grad=True)

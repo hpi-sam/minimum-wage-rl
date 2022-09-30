@@ -59,7 +59,7 @@ def export_from_game_metric(game_num, game_metric_list):
         df_list.append(new_df)
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter('game_' + str(game_num)+ '.xlsx')
+    writer = pd.ExcelWriter('game_test_' + str(game_num)+ '.xlsx')
 
     # Write each dataframe to a different worksheet.
     for index,each_df in enumerate(df_list):

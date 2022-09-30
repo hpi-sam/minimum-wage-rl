@@ -56,7 +56,7 @@ def start(game, episode_num):
     country.bank = bank
 
     # 5: Create Workers
-    all_workers_list, new_num_of_juniors, new_num_of_seniors, new_num_of_executives = country_module.add_new_workers(country)
+    all_workers_list, new_num_of_juniors, new_num_of_seniors, new_num_of_executives = country_module.add_new_workers(country, Country.INITIAL_POPULATION)
     country.unemployed_workers = all_workers_list
 
     metric_obj.unemployed_jun_pos = new_num_of_juniors
@@ -132,10 +132,14 @@ def get_money_circulation(all_workers_list, country, min_wage_weightage):
 
 def collect_metrics(country):
     current_state = dict()
-    current_state["Unemployment Rate"] = float("{:.2f}".format(100.0))
-    current_state["Poverty Rate"] = float("{:.2f}".format(0.0))
     current_state["Minimum wage"] = country.minimum_wage
+    current_state["product price"] = country.product_price
+    current_state["quantity"] = country.quantity
+ 
+    current_state["Unemployment Rate"] = float("{:.2f}".format(100.0))
     current_state["Inflation Rate"] = float("{:.2f}".format(0.0))
+    current_state["Bank balance"] = country.bank.liquid_capital
+    # current_state["Poverty Rate"] = float("{:.2f}".format(0.0))
     current_state["population"] = country.population
 
     return current_state

@@ -14,7 +14,8 @@ class Game():
         self.game_metric_list = list()
     
     def test(self):
-        print("------------> " , self.game_number)
+        # print("------------> " , self.game_number)
+        pass
 
     def reset(self, episode_number):
         return start(self, episode_number)
