@@ -61,7 +61,7 @@ def add_new_workers(country, num_of_citizens):
     for _ in range(num_of_juniors):
         worker = Worker()
         age = np.random.randint(18,20)
-        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-5)
+        skill_level = np.random.randint(6, Worker.JUNIOR_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         worker_list.append(worker)
     

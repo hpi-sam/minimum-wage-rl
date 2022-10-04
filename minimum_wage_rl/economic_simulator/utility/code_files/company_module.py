@@ -87,10 +87,16 @@ def yearly_financial_transactions(company, country, retired_workers_list):
                 company.exec_workers_list.append(each_worker)
 
             # Giving value back to company and getting salary and Pay income tax
-            profit_from_each_worker = get_salary_paid(each_worker, company)
+            # profit_from_each_worker = get_salary_paid(each_worker, company)
             # total_profit = total_profit + profit_from_each_worker
         
-            all_workers_list.append(each_worker)
+            # all_workers_list.append(each_worker)
+    all_workers_list.extend(company.exec_workers_list)
+    all_workers_list.extend(company.senior_workers_list)
+    all_workers_list.extend(company.junior_workers_list)
+
+    for worker_obj in all_workers_list:
+        get_salary_paid(worker_obj, company)
 
 # ***************************************************************************************
 # ****************** CHANGE COMPANY TYPE and IMPROVE WORKER SKILL RATE ******************
@@ -487,16 +493,20 @@ def set_company_size(company):
         company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
 def get_salary_paid(worker, company):
-    worker.worker_account_balance += worker.salary * 12
-    company.company_account_balance -= worker.salary * 12
-    
-    # Pay income tax
-    worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
 
-    earnings = worker.skill_level * 12
-    company.company_account_balance += earnings
-    company.year_income = company.year_income + earnings    
-    return earnings
+    if (company.company_account_balance + (worker.skill_level * 12) - (worker.salary * 12)) >= 0:    
+        worker.worker_account_balance += worker.salary * 12
+        company.company_account_balance -= worker.salary * 12
+    
+        # Pay income tax
+        worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
+
+        earnings = worker.skill_level * 12
+        company.company_account_balance += earnings
+        company.year_income = company.year_income + earnings    
+        return earnings
+    else:
+        return 0
     
 def pay_cost_of_operation(company, central_bank):
     cost_of_operation = Company.COST_OF_OPERATION * company.company_account_balance

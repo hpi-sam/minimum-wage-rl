@@ -13,7 +13,8 @@ def evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_lis
 
         # 3.1 Increase skill set for employed people
         if worker.is_employed:
-            worker.skill_level = worker.skill_level  + worker.skill_improvement_rate
+            if worker.skill_level < get_skill_level(worker):
+                worker.skill_level = worker.skill_level  + worker.skill_improvement_rate
         
         # 3.2 Calculate worker score
         # (w1 * skillset) + (w2 * experience) 
@@ -120,7 +121,7 @@ def start_company(amount_needed, worker, country, loan_taken):
     hiring(company)
     return company, amount_needed
 
-def get_hired(worker_list,salary, company,emp_worker_list):
+def get_hired(worker_list, salary, company, emp_worker_list):
     for worker in worker_list:
         worker.is_employed=True
         worker.salary=salary
@@ -130,6 +131,16 @@ def get_hired(worker_list,salary, company,emp_worker_list):
 
         worker.works_for_company = company
         emp_worker_list.append(worker)
+
+def get_skill_level(worker):
+
+    if worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+       return Worker.JUNIOR_SKILL_LEVEL
+    elif (worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
+       return Worker.SENIOR_SKILL_LEVEL
+        
+    else:
+        return Worker.EXEC_SKILL_LEVEL
 
 # ==================================== old code ========================================
 # def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):

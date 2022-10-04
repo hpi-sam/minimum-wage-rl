@@ -163,7 +163,7 @@ def perform_get_action(request):
     
     min_wage_action = request.GET.get('minimum_wage',None)
     action_map = dict()
-    action_map["minimum_wage"] = min_wage_action
+    action_map["minimum_wage"] = float(min_wage_action)
 
     if min_wage_action:
         user_data, state_values, reward, message, done = step(action_map, request.user)

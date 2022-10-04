@@ -144,6 +144,13 @@ def run_market(country, country_companies_list, unemployed_workers_list):
         # 3.2: Pay Loan
         company_module.pay_loan(each_company,country.bank)
 
+        # 3.3: Pay Cost of operation
+        coo = company_module.pay_cost_of_operation(each_company, country.bank)        
+
+        # Pay taxes
+        tax = company_module.pay_tax(each_company, country.bank)        
+
+
         # 3.3: Pay taxes
         # company_module.pay_tax(each_company,country.bank)
 
@@ -255,17 +262,20 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     exec_salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
 
     if num_of_companies > 0:
-        # 1. Junior
-        level = "junior"
-        unemp_jun_worker_list, num_jun_hired = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
+
+        # 3. Executive
+        level = "exec"
+        unemp_exec_worker_list, num_of_exec_hired = hiring_module.hire_workers(open_companies_list,unemp_exec_worker_list,level, exec_salary,metrics, emp_worker_list)
 
         # 2. Senior        
         level = "senior"
         unemp_sen_worker_list, num_sen_hired = hiring_module.hire_workers(open_companies_list,unemp_sen_worker_list,level, senior_salary,metrics, emp_worker_list)
 
-        # 3. Executive
-        level = "exec"
-        unemp_exec_worker_list, num_of_exec_hired = hiring_module.hire_workers(open_companies_list,unemp_exec_worker_list,level, exec_salary,metrics, emp_worker_list)
+        # 1. Junior
+        level = "junior"
+        unemp_jun_worker_list, num_jun_hired = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
+
+
         
         metrics.current_year_filled_jun_pos = num_jun_hired
         metrics.current_year_filled_sen_pos = num_sen_hired
@@ -279,10 +289,10 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
     for company_item in open_companies_list:
         # Pay cost of operation
-        coo = company_module.pay_cost_of_operation(company_item, country.bank)
+        # coo = company_module.pay_cost_of_operation(company_item, country.bank)
 
         # Pay taxes
-        tax = company_module.pay_tax(company_item, country.bank)
+        # tax = company_module.pay_tax(company_item, country.bank)
         
         # print("Coo - ", coo, " Year income - ", company_item.year_income, " Tax - ", tax)
 
