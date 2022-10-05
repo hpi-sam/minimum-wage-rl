@@ -14,6 +14,8 @@ Old version **base_url = http://ccloud@minwage-app.sp.only.sap:8000**
 or
 
 New version **base_url = http://ccloud@minwage-app.sp.only.sap:8001**
+
+
 Latest version **base_url = http://ccloud@minwage-app.sp.only.sap:8002**
 
 1. Create User
@@ -52,13 +54,13 @@ Latest version **base_url = http://ccloud@minwage-app.sp.only.sap:8002**
 # Hints to play
    
    1. **If you see Bank balance is moderate but, product price is high.**
-      Increase minimum wage by little bit or decrease it a bit.
-      This causes low inflation or negative inflation and makes country to import products rather than increasing the price.
+      * Increase minimum wage by little bit or decrease it a bit.
+      * This causes low inflation or negative inflation and makes country to import products rather than increasing the price.
   
    2. **If bank balance is low and product price moderate, but people poor because of low minimum wage.**
-      Then increase minimum wage more than hint 1.
-      This causes minimum wage to increase however product prices will also increase.
+      * Then increase minimum wage more than hint 1.
+      * This causes minimum wage to increase however product prices will also increase.
    
    3. **If bank balance is high, product price is high, people are poor.**
-      Then you can increase minimum wage even more (more than hint-2), this causes country to import lot of products instead of increasing product price. 
-      However bank balance will decrease considerably while importing, that is why lot of bank-balance is needed.
+      * Then you can increase minimum wage even more (more than hint-2), this causes country to import lot of products instead of increasing product price. 
+      * However bank balance will decrease considerably while importing, that is why lot of bank-balance is needed.
