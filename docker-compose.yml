@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  simulator_app:
+    build: .
+  proxy_server:
+    build: ./nginx
+    ports:
+        - 8080:80

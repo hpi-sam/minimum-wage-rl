@@ -87,3 +87,9 @@ class Metric(models.Model):
     uemp_jun_acct_balance = models.FloatField(default=0.0)
     uemp_sen_acct_balance = models.FloatField(default=0.0)
     uemp_exec_acct_balance = models.FloatField(default=0.0)
+
+    old_money_circulation = models.FloatField(default=0.0)
+    old_bank_account_balance = models.FloatField(default=0.0)
+
+    produced_quantity = models.IntegerField(default=0)
+    num_of_open_companies = models.IntegerField(default=0)

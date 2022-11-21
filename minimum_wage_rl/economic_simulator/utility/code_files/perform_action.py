@@ -23,7 +23,7 @@ def perform_action(action_map, country, discrete):
     if discrete:
         country.minimum_wage = country.minimum_wage + min_wage_value
     else:
-        country.minimum_wage = min_wage_value
+        country.minimum_wage = float(min_wage_value)
 
     # if discrete:
     # for attribute_name,attribute_value in action_map.items():

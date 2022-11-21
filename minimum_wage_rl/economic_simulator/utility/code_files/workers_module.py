@@ -7,13 +7,13 @@ from .company_module import get_salary_paid, hiring, initialize_company
 from .common_module import retire
 
 def evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_list, unemp_sen_worker_list, unemp_exec_worker_list, 
-                    emp_worker_list, min_startup_score, max_startup_score):
+                    emp_worker_list, min_startup_score, max_startup_score, MAX_SKILL_LEVEL):
 
     for worker in all_workers_list:
 
         # 3.1 Increase skill set for employed people
         if worker.is_employed:
-            if worker.skill_level < get_skill_level(worker):
+            if worker.skill_level < MAX_SKILL_LEVEL:
                 worker.skill_level = worker.skill_level  + worker.skill_improvement_rate
         
         # 3.2 Calculate worker score
@@ -33,14 +33,17 @@ def evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_lis
             if max_startup_score < worker.start_up_score:
                 max_startup_score = worker.start_up_score
 
-            startup_workers_list.append(worker)
-        
+            if len(startup_workers_list) < 200:
+                startup_workers_list.append(worker)
+            else:
+                add_to_workers_basket(worker, unemp_jun_worker_list, unemp_sen_worker_list,  unemp_exec_worker_list, emp_worker_list)
+            
         else:
             add_to_workers_basket(worker, unemp_jun_worker_list, unemp_sen_worker_list,  unemp_exec_worker_list, emp_worker_list)
 
 # ================================ CREATE START UP ===============================================
 def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
-                                  unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list):
+                                  unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list, MAX_SKILL_LEVEL, open_companies_list):
 
     startup_workers_list = sorted(startup_workers_list, key=lambda obj: obj.start_up_score, reverse=True)
 
@@ -52,42 +55,46 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
     
 
     index = 0
+    if len(open_companies_list) < 200:
+        for each_startup_founder in startup_workers_list:
 
-    for each_startup_founder in startup_workers_list:
+            amount_needed = Market.SMALL_CMP_INIT_BALANCE - each_startup_founder.worker_account_balance        
 
-        amount_needed = Market.SMALL_CMP_INIT_BALANCE - each_startup_founder.worker_account_balance        
+            if bank_startup_budget > amount_needed:
+                
+                # successful_startup_index.append(index)                     
 
-        if bank_startup_budget > amount_needed:
+                # Loan needed
+                if amount_needed > 0:
+                    company, amount_needed = start_company(amount_needed, each_startup_founder, country, loan_taken=True)
+                    bank_startup_budget = bank_startup_budget - amount_needed
+                    new_companies_list.append(company)                
+
+                # Loan not needed -  Can open company without loan
+                else:
+                    company, amount_needed = start_company(0, each_startup_founder, country, loan_taken=False)
+                    bank_startup_budget = bank_startup_budget - amount_needed
+                    new_companies_list.append(company)
+                
+                retire(each_startup_founder, country)
+                successful_founders_list.append(each_startup_founder)
             
-            # successful_startup_index.append(index)                     
-
-            # Loan needed
-            if amount_needed > 0:
-                company, amount_needed = start_company(amount_needed, each_startup_founder, country, loan_taken=True)
-                bank_startup_budget = bank_startup_budget - amount_needed
-                new_companies_list.append(company)                
-
-            # Loan not needed -  Can open company without loan
+            # Company could not be created
             else:
-                company, amount_needed = start_company(0, each_startup_founder, country, loan_taken=False)
-                bank_startup_budget = bank_startup_budget - amount_needed
-                new_companies_list.append(company)
-            
-            retire(each_startup_founder, country)
-            successful_founders_list.append(each_startup_founder)
-        
-        # Company could not be created
-        else:
-            each_startup_founder.skill_level = each_startup_founder.skill_level + \
-                                               each_startup_founder.skill_level * Market.STARTUP_SKILL_IMPROVEMENT
+                if each_startup_founder <= MAX_SKILL_LEVEL:
+                    each_startup_founder.skill_level = each_startup_founder.skill_level + \
+                                                    each_startup_founder.skill_level * Market.STARTUP_SKILL_IMPROVEMENT
 
-            each_startup_founder.worker_score = (Worker.SKILL_SET_WEIGHTAGE * each_startup_founder.skill_level) + \
-                                                (Worker.EXPERIENCE_WEIGHTAGE * (each_startup_founder.age-18))
+                each_startup_founder.worker_score = (Worker.SKILL_SET_WEIGHTAGE * each_startup_founder.skill_level) + \
+                                                    (Worker.EXPERIENCE_WEIGHTAGE * (each_startup_founder.age-18))
 
-            add_to_workers_basket(each_startup_founder, unemp_jun_worker_list,unemp_sen_worker_list,
-                         unemp_exec_worker_list, emp_worker_list)
+                add_to_workers_basket(each_startup_founder, unemp_jun_worker_list,unemp_sen_worker_list,
+                                unemp_exec_worker_list, emp_worker_list)
 
-        index = index + 1
+            index = index + 1
+    else:
+        for each_startup_founder in startup_workers_list:
+            add_to_workers_basket(each_startup_founder, unemp_jun_worker_list,unemp_sen_worker_list,unemp_exec_worker_list, emp_worker_list)
 
 
 def add_to_workers_basket(worker, unemp_jun_worker_list,unemp_sen_worker_list,
@@ -132,15 +139,15 @@ def get_hired(worker_list, salary, company, emp_worker_list):
         worker.works_for_company = company
         emp_worker_list.append(worker)
 
-def get_skill_level(worker):
+# def get_skill_level(worker):
 
-    if worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
-       return Worker.JUNIOR_SKILL_LEVEL
-    elif (worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
-       return Worker.SENIOR_SKILL_LEVEL
+#     if worker.skill_level <= Worker.JUNIOR_SKILL_LEVEL:
+#        return Worker.JUNIOR_SKILL_LEVEL
+#     elif (worker.skill_level > Worker.JUNIOR_SKILL_LEVEL) and (worker.skill_level <= Worker.SENIOR_SKILL_LEVEL):
+#        return Worker.SENIOR_SKILL_LEVEL
         
-    else:
-        return Worker.EXEC_SKILL_LEVEL
+#     else:
+#         return Worker.EXEC_SKILL_LEVEL
 
 # ==================================== old code ========================================
 # def get_hired(needed_positions, unemployed_worker_list,salary, company,emp_worker_list):

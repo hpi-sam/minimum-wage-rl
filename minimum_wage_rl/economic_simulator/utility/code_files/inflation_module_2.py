@@ -14,7 +14,14 @@ logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minim
 def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, metrics):
 
     inflation_weightage = country.inflation if country.inflation > 0 else 0.0
-
+    
+    if country.inflation > 5.0:
+        inflation_weightage = 5.0
+    elif country.inflation <= 0:
+        inflation_weightage = 0
+    else:
+        inflation_weightage = country.inflation
+    
     all_emp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), emp_worker_list, 0 )
     all_unemp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), unemp_worker_list, 0 )
 
@@ -47,6 +54,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
             new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
 
+        new_price, deflation = calculate_deflation(current_product_price, new_price, old_inflation, metrics, country)
+
         if produce_quantity > 0:
             produce_quantity = import_quantity(produce_quantity, new_price, country)
         
@@ -61,6 +70,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
         metrics.product_price = new_price
         metrics.quantity = produce_quantity + old_quantity
+        metrics.produced_quantity = produce_quantity + old_quantity
     
     else:
 
@@ -91,7 +101,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
             metrics.product_price = new_price
             metrics.quantity = produce_quantity + old_quantity
-
+            metrics.produced_quantity = produce_quantity + old_quantity
 
         # 1.2 Inflation above a given threshold - then - Increase Quantity (maybe price)
         # What was removed - Upper limit for Quantity production
@@ -133,6 +143,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
             metrics.product_price = new_price
             metrics.quantity = produce_quantity + old_quantity
+            metrics.produced_quantity = produce_quantity + old_quantity            
         
         calculate_inflation(current_product_price, new_price, old_inflation, metrics, country)
         # else:
@@ -145,6 +156,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 def import_quantity(produce_quantity, price, country):
 
     money_needed = produce_quantity * price
+    oil_cost = Country.OIL_COST_PER_LITRE
+    # oil_cost = np.random.normal(loc=Country.OIL_COST_PER_LITRE, scale=0.2)
     transport_cost = produce_quantity * Country.OIL_PER_UNIT_QUANTITY * Country.OIL_COST_PER_LITRE
 
     if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > (money_needed + transport_cost):
@@ -157,9 +170,9 @@ def import_quantity(produce_quantity, price, country):
         possible_quantity = ceil(money_available/price)
         transport_cost = possible_quantity * Country.OIL_PER_UNIT_QUANTITY * Country.OIL_COST_PER_LITRE
 
-        print("Cost of import - ", transport_cost)
-        print("Production cost - ", money_available)
-        print("Possible Quantity - ", possible_quantity)
+        # print("Cost of import - ", transport_cost)
+        # print("Production cost - ", money_available)
+        # print("Possible Quantity - ", possible_quantity)
 
         country.bank.liquid_capital = country.bank.liquid_capital - money_available
         country.bank.liquid_capital = country.bank.liquid_capital - transport_cost
@@ -216,8 +229,9 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     exec_acct_balance = 0.0
 
     if country.product_price < 0.0:
-        print("=========================== LOW PRICE =======================")
-
+        # print("=========================== LOW PRICE =======================")
+        pass
+    
     total_money_deposited = 0
     for each_worker in fin_workers_list:
     # if this condition true buy products
@@ -272,13 +286,13 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     metrics.total_filled_sen_pos = employee_details_map["sen_workers"]
     metrics.total_filled_exec_pos = employee_details_map["exec_workers"]
 
-    metrics.avg_jun_skill_level = jun_skill_level/total_junior
-    metrics.avg_sen_skill_level = sen_skill_level/total_senior
-    metrics.avg_exec_skill_level = exec_skill_level/total_exec
+    metrics.avg_jun_skill_level = jun_skill_level/total_junior if total_junior>0 else 0
+    metrics.avg_sen_skill_level = sen_skill_level/total_senior if total_senior>0 else 0
+    metrics.avg_exec_skill_level = exec_skill_level/total_exec if total_exec>0 else 0
 
-    metrics.jun_worker_avg_balance = jun_acct_balance/total_junior
-    metrics.sen_worker_avg_balance = sen_acct_balance/total_senior
-    metrics.exec_worker_avg_balance = exec_acct_balance/total_exec
+    metrics.jun_worker_avg_balance = jun_acct_balance/total_junior if total_junior>0 else 0
+    metrics.sen_worker_avg_balance = sen_acct_balance/total_senior if total_senior>0 else 0
+    metrics.exec_worker_avg_balance = exec_acct_balance/total_exec if total_exec>0 else 0
 
     metrics.average_jun_sal = round(employee_details_map["jun_worker_sal"]/employee_details_map["jun_workers"] if employee_details_map["jun_workers"] > 0 else 0, 1)
     metrics.average_sen_sal = round(employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0, 1)
@@ -290,9 +304,9 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
 
     total_employed = employee_details_map["jun_workers"] + employee_details_map["sen_workers"] + employee_details_map["exec_workers"]
 
-    metrics.unemployed_junior_rate = round((unemployed_jun/total_junior) *100 , 2)
-    metrics.unemployed_senior_rate = round((unemployed_sen/total_senior) *100 , 2)
-    metrics.unemployed_exec_rate = round((unemployed_exec/total_exec) *100 , 2)
+    metrics.unemployed_junior_rate = round((unemployed_jun/total_junior) *100 , 2) if total_junior> 0 else 0
+    metrics.unemployed_senior_rate = round((unemployed_sen/total_senior) *100 , 2) if total_senior> 0 else 0
+    metrics.unemployed_exec_rate = round((unemployed_exec/total_exec) *100 , 2) if total_exec> 0 else 0
 
     # metrics.average_sal = round((employee_details_map["jun_worker_sal"] + employee_details_map["sen_worker_sal"] + employee_details_map["exec_worker_sal"])/total_employed if total_employed > 0 else 0, 1)
     metrics.unemployment_rate = round(unemployed/len(fin_workers_list) * 100, 2)

@@ -60,9 +60,10 @@ def yearly_financial_transactions(company, country, retired_workers_list):
         retire_flag = False
 
         if each_worker.age >= 60:
-            retire(each_worker, country)
-            retire_flag = True
-            retired_workers_list.append(each_worker)
+            # retire(each_worker, country)
+            # retire_flag = True
+            # retired_workers_list.append(each_worker)
+            pass
 
         if not(retire_flag):
             each_worker.skill_improvement_rate =  company.skill_improvement_rate
@@ -164,10 +165,11 @@ def firing(company, operation_map):
             company.junior_workers_list = company.junior_workers_list[num_juniors_to_be_fired:]
 
             operation_map["fired_workers"].extend(fired_junior_workers)
-            operation_map["employed_workers"].extend(company.junior_workers_list)
         
         company.num_junior_workers = company.num_junior_workers - len(fired_junior_workers)
         deficit = deficit - len(fired_junior_workers) * company.avg_junior_salary
+    
+    operation_map["employed_workers"].extend(company.junior_workers_list)
         
 
     # 2: Firing seniors
@@ -187,10 +189,11 @@ def firing(company, operation_map):
             operation_map["fired_workers"].extend(fired_senior_workers)
 
             company.senior_workers_list = company.senior_workers_list[num_seniors_to_be_fired:]            
-            operation_map["employed_workers"].extend(company.senior_workers_list)            
 
         company.num_senior_workers = company.num_senior_workers - len(fired_senior_workers)
         deficit = deficit - len(fired_senior_workers) * company.avg_senior_salary
+    
+    operation_map["employed_workers"].extend(company.senior_workers_list)            
 
     # 3: Firing executives
     num_exec_to_be_fired = ceil(deficit/company.avg_executive_salary)
@@ -207,10 +210,11 @@ def firing(company, operation_map):
             operation_map["fired_workers"].extend(fired_exec_workers)
 
             company.exec_workers_list = company.exec_workers_list[num_exec_to_be_fired:]
-            operation_map["employed_workers"].extend(company.exec_workers_list)            
 
         company.num_executive_workers = company.num_executive_workers - len(fired_exec_workers)
         deficit = deficit - len(fired_exec_workers) * company.avg_executive_salary
+    
+    operation_map["employed_workers"].extend(company.exec_workers_list)            
 
     if deficit > 0:
         operation_map["close"] = True

@@ -22,19 +22,21 @@ from .code_files import hiring_module
 
 from .config import ConfigurationParser
 from django.db import models
-# import numpy as np
+import numpy as np
 # from functools import reduce
 from django.db import transaction
 
 
 config_parser = ConfigurationParser.get_instance().parser
 discrete_action = config_parser.getboolean("game","discrete_action")
+max_steps = int(config_parser.get("meta","training_steps"))
+MAX_SKILL_LEVEL = int(config_parser.get("worker","exec_skill_level"))
 
-def step(action_map, user):
+def step(action_map, user, ai_flag, player_game_number):
     
     # Get all data from DB
 
-    game = __get_latest_game(user)
+    game = __get_latest_game(user, player_game_number)
     country = Country.objects.get(player=user, game=game)
 
     # Get all "OPEN" companies 
@@ -60,7 +62,7 @@ def step(action_map, user):
         # Step 2 - Change inflation rate : fixed as of now
         
         # Step 3 - run market step
-        return run_market(country, country_companies_list, unemployed_workers_list)
+        return run_market(game, country, country_companies_list, unemployed_workers_list)
     
     else:
         current_state = dict()
@@ -78,15 +80,15 @@ def step(action_map, user):
 
         done = True
         
-        return current_state, state_values, reward, message, done
+        return game, current_state, state_values, reward, message, done
         
     # return self.get_state_and_reward()
 
-def __get_latest_game(user):
+def __get_latest_game(user, player_game_number):
     
     game_obj = None
     max_game_number = None
-    max_game_query = Game.objects.filter(player=user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))
+    max_game_query = Game.objects.filter(player=user, game_ended=False, player_game_number=player_game_number).aggregate(max_game_number=models.Max("game_number"))
     
     if not max_game_query:
         pass
@@ -98,7 +100,7 @@ def __get_latest_game(user):
 
 
 @transaction.atomic
-def run_market(country, country_companies_list, unemployed_workers_list):
+def run_market(game, country, country_companies_list, unemployed_workers_list):
     
     retired_people = 0
     country.year = country.year + 1 
@@ -110,9 +112,13 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     total_open_senior_pos = 0
     total_open_exec_pos = 0
 
+    metrics.old_bank_account_balance = float(country.bank.liquid_capital)
     # ================ 1: COUNTRY MODULE - Increase population ================
-    # new_workers_list, _, _, _ =  country_module.add_new_workers(country)
-    new_workers_list = []
+    if country.year % 2 == 0:
+        new_workers_list =  country_module.increase_population(country)
+    else:
+        new_workers_list = []
+    # new_workers_list = []
     fired_workers = []
     employed_workers_list = []
     retired_workers_list = []
@@ -120,16 +126,16 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     # print("Total Workers Currently - ", country.population)
 
     # ================ 2: Retire Unemployed workers ================
-    non_retired_workers = []
-    for each_unemployed_worker in unemployed_workers_list:
-        if each_unemployed_worker.age >= 60:
-            workers_module.retire(each_unemployed_worker, country)
-            retired_workers_list.append(each_unemployed_worker)
-            # retired_people = retired_people + 1
-        else:
-            non_retired_workers.append(each_unemployed_worker)
+    # non_retired_workers = []
+    # for each_unemployed_worker in unemployed_workers_list:
+    #     if each_unemployed_worker.age >= 60:
+    #         workers_module.retire(each_unemployed_worker, country)
+    #         retired_workers_list.append(each_unemployed_worker)
+    #         # retired_people = retired_people + 1
+    #     else:
+    #         non_retired_workers.append(each_unemployed_worker)
 
-    unemployed_workers_list = list(non_retired_workers)
+    # unemployed_workers_list = list(non_retired_workers)
 
     # ================ 3: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
     open_companies_list = []
@@ -213,7 +219,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     # 4.1 Worker Evaluation : worker score, startup score, 
     workers_module.evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_list, 
                                   unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, 
-                                  min_startup_score, max_startup_score)
+                                  min_startup_score, max_startup_score, MAX_SKILL_LEVEL)
 
     # print("Open Junior Pos - ", total_open_junior_pos, " Unemployed Junior Workers - ", len(unemp_jun_worker_list))
     # print("Open Senior Pos - ", total_open_senior_pos, " Unemployed Senior Workers - ", len(unemp_sen_worker_list))
@@ -221,7 +227,7 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
     # 4.2 Create Start ups
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
-                                  unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list)
+                                  unemp_sen_worker_list, unemp_exec_worker_list, emp_worker_list, successful_founders_list, MAX_SKILL_LEVEL, open_companies_list)
 
     metrics.num_retired = len(retired_workers_list)
     metrics.startup_founders = len(successful_founders_list)
@@ -340,7 +346,8 @@ def run_market(country, country_companies_list, unemployed_workers_list):
     # save metrics
     metrics.country_of_residence = country
     metrics.product_price = country.product_price
-    metrics.quantity  = country.quantity 
+    metrics.quantity  = country.quantity
+    metrics.num_of_open_companies = len(open_companies_list)
     metrics.save()
     
     # save company list
@@ -362,8 +369,8 @@ def run_market(country, country_companies_list, unemployed_workers_list):
 
     print_needed_data(metrics, country, retired_people)
 
-    return get_current_state_reward(country, metrics)
-
+    return get_current_state_reward(game, country, metrics)
+    
 
 def cmp_metrics(metrics, country):
     # select num(workers) from companies inner join workers on company_id == worker.company_id where worker_skill < 10
@@ -434,9 +441,20 @@ def cmp_metrics(metrics, country):
     exec_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=20).aggregate(exec_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
     # jun_count = Worker.objects.filter(is_employed=False and skill_level<)
 
-    metrics.uemp_jun_acct_balance = jun_data["jun_sum"]/jun_data["count_people"]
-    metrics.uemp_sen_acct_balance = sen_data["sen_sum"]/jun_data["count_people"]
-    metrics.uemp_exec_acct_balance = exec_data["exec_sum"]/jun_data["count_people"]
+    if jun_data["jun_sum"] == None or jun_data["count_people"] <=0:
+        metrics.uemp_jun_acct_balance = 0
+    else:
+        metrics.uemp_jun_acct_balance = jun_data["jun_sum"]/jun_data["count_people"]
+    
+    if sen_data["sen_sum"] == None or sen_data["count_people"] <=0:
+        metrics.uemp_sen_acct_balance = 0
+    else:
+        metrics.uemp_sen_acct_balance = sen_data["sen_sum"]/sen_data["count_people"]
+    
+    if exec_data["exec_sum"] == None or exec_data["count_people"] <=0:
+        metrics.uemp_exec_acct_balance = 0
+    else:
+        metrics.uemp_exec_acct_balance = exec_data["exec_sum"]/exec_data["count_people"]
 
     metrics.avg_juniors_small_cmp = ceil(small_jun_workers/small_cmps) if small_cmps>0 else 0
     metrics.avg_seniors_small_cmp = ceil(small_sen_workers/small_cmps) if small_cmps>0 else 0
@@ -546,11 +564,12 @@ def close_company(each_company, fired_workers):
     return each_company
 
 
-def get_current_state_reward(country, metrics):
+def get_current_state_reward(game, country, metrics):
     
     # state_values = []
 
     current_state = dict()
+    current_state["Year"] = int(metrics.year)
     current_state["Minimum wage"] = float("{:.2f}".format(metrics.minimum_wage))
     current_state["Unemployment Rate"] = float("{:.2f}".format(metrics.unemployment_rate))
     current_state["Poverty Rate"] = float("{:.2f}".format(metrics.poverty_rate))
@@ -574,12 +593,24 @@ def get_current_state_reward(country, metrics):
     state_values, reward = get_game_state(metrics)
     done =  False
     message = ""
-    # state_reward = dict()
-    # state_reward["state"] = state_values
-    # state_reward["reward"] = reward
-    # state_reward["done"] = False
+    if country.year >= max_steps:
+        done =  True
+        message = message + "End of Episode"
+    elif metrics.num_of_open_companies <= 0:
+        done = True
+        message = message + "Game over, Companies are closed"
+        reward = -100
+    elif country.bank.liquid_capital <= 0:
+        done = True        
+        message = message + "Game over, Bank has shutdown"
+        reward = -100        
+    else:
+        done = False
+        message = message + "Episode - " + str(country.year)
+    
+    info = {"message" : message, "money_circulation":country.money_circulation}
 
-    return current_state, state_values, reward, message, done
+    return game, current_state, state_values, reward, info, done
 
 def calculate_reward(metrics):
 
@@ -593,29 +624,47 @@ def calculate_reward(metrics):
     # r1 +
     return  r1 + r2
 
-def get_state(user):
-    game = __get_latest_game(user)
+def get_state(user, ai_flag, player_game_number):
+    game = __get_latest_game(user, player_game_number)
 
-    country = Country.objects.get(player=user, game=game)
-    metric = Metric.objects.filter(country_of_residence=country).last()
+    country = Country.objects.get(player=user, game=game, ai_flag=ai_flag)
+    max_query = Metric.objects.filter(country_of_residence=country).aggregate(max_year=models.Max("year"))
+    max_metric_year = max_query["max_year"]
+    metric = Metric.objects.filter(country_of_residence=country, year=max_metric_year).first()
 
     # country_companies_list = list(country.company_set.all())
     # country_workers_list = list(country.worker_set.filter(retired=False))
 
-    return get_current_state_reward(country, metric)
+    return get_current_state_reward(game, country, metric)
+
+# def get_game_state(metric):
+#     # game = __get_latest_game(user)
+#     # metric = Metric.objects.filter(player=user, game=game).last()
+#     state_values = []
+#     state_values.append(metric.minimum_wage)
+#     state_values.append(metric.product_price)
+#     state_values.append(metric.quantity)
+#     state_values.append(metric.poverty_rate)
+#     state_values.append(metric.unemployment_rate)
+
+#     state_values.append(metric.inflation)
+#     state_values.append(metric.bank_account_balance)
+
+#     reward = calculate_reward(metric)
+
+#     return state_values, reward
 
 def get_game_state(metric):
-    # game = __get_latest_game(user)
-    # metric = Metric.objects.filter(player=user, game=game).last()
     state_values = []
     state_values.append(metric.minimum_wage)
     state_values.append(metric.product_price)
-    state_values.append(metric.quantity)
-    state_values.append(metric.poverty_rate)
-    state_values.append(metric.unemployment_rate)
-
+    state_values.append(float("{:.6f}".format(np.log(metric.produced_quantity))))
+    state_values.append(metric.unemployment_rate/100)
     state_values.append(metric.inflation)
-    state_values.append(metric.bank_account_balance)
+    state_values.append(float("{:.6f}".format(np.log(metric.bank_account_balance))))    
+    state_values.append(metric.poverty_rate/100)
+    state_values.append(float("{:.6f}".format(np.log(metric.money_circulation))))
+    state_values.append(float("{:.6f}".format(np.log(metric.population))))
 
     reward = calculate_reward(metric)
 

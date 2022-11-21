@@ -4,6 +4,7 @@ from django.shortcuts import render
 # from .utility.simulate import step
 from .utility.start_up_2 import start
 from .utility.simulate_2 import step
+from .utility.simulate_2 import get_state
 from .utility.publish import export_to_excel
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -19,18 +20,30 @@ from .serializer import UserSerializer
 from django.db import models
 from .AI_model.actor_critic import actor_critic_main
 from rest_framework.authtoken.views import ObtainAuthToken
+import numpy as np
+from stable_baselines3 import SAC
 
 # Create your views here.
+
+model = SAC.load("economic_simulator/sac_model")
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def start_game(request):    
-    user_data = start(request.user)
+def start_game(request):
 
-    ai_data = user_data.copy()
+    level = 1
+    ai_flag = False
+    player_game = None
+    player_game_state, player_game = start(request.user, level, ai_flag, player_game)
 
-    final_response = {"User Data": user_data, "AI Data": ai_data}
+
+    # player_game_number
+    ai_flag = True
+    ai_game_state, ai_game = start(request.user, level, ai_flag, player_game)
+    # ai_game_state = player_game_state.copy()
+
+    final_response = {"User Data": player_game_state, "AI Data": ai_game_state}
 
     json_reponse = json.loads(json.dumps(final_response))
     return Response({'status':200, 'message':json_reponse})
@@ -95,26 +108,30 @@ def create_user(request):
     return Response({'status':200, 'message':'User Created'})
 
 
-# @api_view(http_method_names=['GET'])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated])
-# def test_obj(request):
-
-#     print(request.user)
-
-#     return Response({'status':200, 'message':'Hello from here'})
-
 @api_view(http_method_names=['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def perform_action(request):
 
     action_map = request.data
-    user_data, state_values, reward, message, done = step(action_map, request.user)
+    user = request.user
+    return __run_step(user, action_map)
 
-    ai_data = user_data.copy()
+def __run_step(user, action_map):
+    ai_flag = False
+    player_game_number = 0
+    game, user_data, state_values, reward, message, done = step(action_map, user, ai_flag, player_game_number)
 
-    final_response = {"User Data": user_data, "AI Data": ai_data}
+    ai_flag = True
+    
+    ai_game, ai_current_state, ai_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
+    ai_game_state = np.array(ai_state_values)
+    ai_minwage_action, _states = model.predict(ai_game_state, deterministic=True)
+    ai_action_map = {"minimum_wage": ai_minwage_action}
+    
+    ai_game, ai_game_state, state_values, reward, message, done = step(ai_action_map, user, ai_flag, game.game_number)
+
+    final_response = {"User Data": user_data, "AI Data": ai_game_state}
 
     json_reponse = json.loads(json.dumps(final_response))
     return Response({'status':200, 'message':json_reponse})
@@ -128,13 +145,13 @@ def train(request):
 
 
 @api_view(http_method_names=['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-# @authentication_classes([])
-# @permission_classes([])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+@authentication_classes([])
+@permission_classes([])
 #@api_view(http_method_names=['GET'])
 def test_url(request):
-    export_to_excel(request.user)
+    # export_to_excel(request.user)
     print("test code")
     return Response({'status':200, 'message':"test code"})
 
@@ -165,17 +182,20 @@ def perform_get_action(request):
     action_map = dict()
     action_map["minimum_wage"] = float(min_wage_action)
 
-    if min_wage_action:
-        user_data, state_values, reward, message, done = step(action_map, request.user)
+    user = request.user
+    return __run_step(user, action_map)
 
-        ai_data = user_data.copy()
+    # if min_wage_action:
+    #     user_data, state_values, reward, message, done = step(action_map, request.user)
 
-        final_response = {"User Data": user_data, "AI Data": ai_data}
+    #     ai_data = user_data.copy()
 
-        json_reponse = json.loads(json.dumps(final_response))
-        return Response({'status':200, 'message':json_reponse})
-    else:
-        return Response({'status':400, 'message':"Invalid Minimum wage"})
+    #     final_response = {"User Data": user_data, "AI Data": ai_data}
+
+    #     json_reponse = json.loads(json.dumps(final_response))
+    #     return Response({'status':200, 'message':json_reponse})
+    # else:
+    #     return Response({'status':400, 'message':"Invalid Minimum wage"})
 
 # @api_view(http_method_names=['POST'])
 # @authentication_classes([TokenAuthentication])
