@@ -11,6 +11,7 @@ from .config import ConfigurationParser
 from django.db import models
 from .code_files import country_module
 from django.db import transaction
+import numpy as np
 
 from economic_simulator.models import country
 
@@ -26,12 +27,18 @@ def start(user, level, ai_flag, player_game):
 
 
     config_level = None
+    stagflation_config = False
+
     if game.level == 1:
         config_level = "Level_1"
     elif game.level == 2:
         config_level = "Level_2"    
     elif game.level == 3:
         config_level = "Level_3"
+    elif game.level == 4:
+        level = np.random.randint(1,4)
+        config_level = "Level_" + str(level)
+        stagflation_config = True
 
     RICH_JUN_PERCENT = config_parser.getfloat(config_level,"rich_jun_workers_percentage")
     RICH_SEN_PERCENT = config_parser.getfloat(config_level,"rich_sen_workers_percentage")
@@ -72,6 +79,10 @@ def start(user, level, ai_flag, player_game):
 
     country.market = market_obj    
     country.player = user
+
+    # 2.1 Add Stagflation settings
+    if stagflation_config:
+        set_stagflation_parameters(country)
 
     # 3: Create Company
     all_companies_list = country_module.create_company(country)
@@ -152,9 +163,6 @@ def start(user, level, ai_flag, player_game):
     metric_obj.produced_quantity = country.quantity
     metric_obj.money_circulation = money_circulation
 
-    # market_obj.save()
-    # country.save() metric.bank_account_balance
-
     game.save()
 
     country.bank.save()
@@ -190,6 +198,11 @@ def start(user, level, ai_flag, player_game):
     print_needed(metric_obj, country)
 
     return collect_metrics(country), game
+
+def set_stagflation_parameters(country):
+    country.stagflation_flag = True
+    country.stagflation_start = np.random.randint(4,8)
+    country.stagflation_end = country.stagflation_start + Country.STAGFLATION_DURATION
 
 def get_central_bank_balance(initial_bank_balance_percent, country):
     quant = (country.population * 12)

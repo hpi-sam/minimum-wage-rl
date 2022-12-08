@@ -156,9 +156,9 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 def import_quantity(produce_quantity, price, country):
 
     money_needed = produce_quantity * price
-    oil_cost = Country.OIL_COST_PER_LITRE
+    oil_cost = country.OIL_COST_PER_LITRE
     # oil_cost = np.random.normal(loc=Country.OIL_COST_PER_LITRE, scale=0.2)
-    transport_cost = produce_quantity * Country.OIL_PER_UNIT_QUANTITY * Country.OIL_COST_PER_LITRE
+    transport_cost = produce_quantity * Country.OIL_PER_UNIT_QUANTITY * country.OIL_COST_PER_LITRE
 
     if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > (money_needed + transport_cost):
         country.bank.liquid_capital = country.bank.liquid_capital - money_needed
@@ -168,7 +168,7 @@ def import_quantity(produce_quantity, price, country):
     else:
         money_available =  country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION
         possible_quantity = ceil(money_available/price)
-        transport_cost = possible_quantity * Country.OIL_PER_UNIT_QUANTITY * Country.OIL_COST_PER_LITRE
+        transport_cost = possible_quantity * Country.OIL_PER_UNIT_QUANTITY * country.OIL_COST_PER_LITRE
 
         # print("Cost of import - ", transport_cost)
         # print("Production cost - ", money_available)

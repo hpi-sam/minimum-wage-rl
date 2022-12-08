@@ -32,7 +32,10 @@ model = SAC.load("economic_simulator/sac_model")
 @permission_classes([IsAuthenticated])
 def start_game(request):
 
-    level = 1
+    default_level = "1"
+    level = int(request.GET.get('level', default_level))
+    # request.GET.get('level', default_level)
+
     ai_flag = False
     player_game = None
     player_game_state, player_game = start(request.user, level, ai_flag, player_game)
@@ -58,28 +61,30 @@ def end_game(request):
     return close_game(user)
 
 def close_game(user):
-    game_obj = get_latest_game(user)
+    # game_obj = get_latest_game(user)
+    game_obj_list = get_all_games_for_user(user)
 
-    if game_obj == None:
+    if game_obj_list == None:
         return Response({"status":200, "message":"No Game to end"})
     else:
-        game_obj.game_ended = True
-        game_obj.save()
+        for each_game in game_obj_list:
+            each_game.game_ended = True
+            each_game.save()
         return Response({"status":200, "message":"Game to ended successfully"})
 
-def get_latest_game(user):
+def get_all_games_for_user(user):
     
-    game_obj = None
-    max_game_number = None
-    max_game_query = Game.objects.filter(player=user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))
+    game_objects = None
+    game_objects = list(Game.objects.filter(player=user, game_ended = False))
     
-    if not max_game_query:
-        pass
-    else:
-        max_game_number = max_game_query["max_game_number"]
-        game_obj = Game.objects.filter(player=user, game_ended = False, game_number = max_game_number).first()
+    # max_game_query = Game.objects.filter(player=user, game_ended=False).aggregate(max_game_number=models.Max("game_number"))    
+    # if not max_game_query:
+    # pass
+    # else:
+    # max_game_number = max_game_query["max_game_number"]
+    # game_obj = Game.objects.filter(player=user, game_ended = False, game_number = max_game_number).first()
 
-    return game_obj
+    return game_objects
 
 @api_view(['GET'])
 def delete_user(request):

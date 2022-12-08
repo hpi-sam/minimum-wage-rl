@@ -26,13 +26,22 @@ class Country(models.Model):
     INITIAL_NUM_MEDIUM_COMPANIES = int(config_parser.get("market","num_medium_business"))
     INITIAL_NUM_LARGE_COMPANIES = int(config_parser.get("market","num_large_business"))
     # INITIAL_POPULATION = int(config_parser.get("country","initial_population"))
+    INITIAL_COST_OF_OPERATION = float(config_parser.get("company","cost_of_operation"))
     INITIAL_MIN_WAGE = float(config_parser.get("minwage","initial_minimum_wage"))
     CORPORATE_TAX = float(config_parser.get("country","corporate_tax"))
     INCOME_TAX = float(config_parser.get("country","income_tax"))
     INITIAL_BANK_BALANCE = float(config_parser.get("bank","initial_bank_balance"))
     OIL_PER_UNIT_QUANTITY = float(config_parser.get("country","oil_per_unit_quantity"))
-    OIL_COST_PER_LITRE = float(config_parser.get("country","oil_cost_per_litre"))
+    # OIL_COST_PER_LITRE = float(config_parser.get("country","oil_cost_per_litre"))
+    INITIAL_OIL_COST = float(config_parser.get("country","oil_cost_per_litre"))
     POPULATION_GROWTH = int(config_parser.get("country","population_growth"))    
+
+    # 1.1  STAGFLATION PARAMETERS
+    STAGFLATION_DURATION = int(config_parser.get("stagflation","stagflation_duration"))
+    OIL_RATE_INCREASE = float(config_parser.get("stagflation","oil_rate_increase"))
+    COST_OF_OPERATION_INCREASE = float(config_parser.get("stagflation","cost_of_operation_increase"))
+    REVENUE_DECREASE_RATE = float(config_parser.get("stagflation","revenue_decrease_rate"))    
+
 
     # 2: Components
     country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -72,3 +81,12 @@ class Country(models.Model):
     temp_company_list = []     
 
     ai_flag = models.BooleanField(False)
+
+    # STAGFLATION PARAMETERS
+    stagflation_flag = models.BooleanField(default=False)
+    stagflation_start = models.FloatField(default=0.0)
+    stagflation_end = models.FloatField(default=0.0)
+
+    COMPANY_REVENUE_PERCENTAGE = models.FloatField(default=1.0)
+    OIL_COST_PER_LITRE = models.FloatField(default=INITIAL_OIL_COST)  
+    COST_OF_OPERATION = models.FloatField(default=INITIAL_COST_OF_OPERATION)

@@ -97,7 +97,7 @@ def yearly_financial_transactions(company, country, retired_workers_list):
     all_workers_list.extend(company.junior_workers_list)
 
     for worker_obj in all_workers_list:
-        get_salary_paid(worker_obj, company)
+        get_salary_paid(worker_obj, company, country)
 
 # ***************************************************************************************
 # ****************** CHANGE COMPANY TYPE and IMPROVE WORKER SKILL RATE ******************
@@ -496,7 +496,7 @@ def set_company_size(company):
         company.company_size_type = Market.LARGE_COMPANY_TYPE
         company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
-def get_salary_paid(worker, company):
+def get_salary_paid(worker, company, country):
 
     if (company.company_account_balance + (worker.skill_level * 12) - (worker.salary * 12)) >= 0:    
         worker.worker_account_balance += worker.salary * 12
@@ -505,19 +505,19 @@ def get_salary_paid(worker, company):
         # Pay income tax
         worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
 
-        earnings = worker.skill_level * 12
-        company.company_account_balance += earnings
-        company.year_income = company.year_income + earnings    
-        return earnings
+        company_earnings = worker.skill_level * country.COMPANY_REVENUE_PERCENTAGE * 12
+        company.company_account_balance += company_earnings
+        company.year_income = company.year_income + company_earnings
+        return company_earnings
     else:
         return 0
     
-def pay_cost_of_operation(company, central_bank):
-    cost_of_operation = Company.COST_OF_OPERATION * company.company_account_balance
+def pay_cost_of_operation(country, company, central_bank):
+    cost_of_operation = country.COST_OF_OPERATION * company.company_account_balance
     company.company_account_balance = company.company_account_balance - cost_of_operation
 
     # Add to standalone
-    central_bank.deposit_money(cost_of_operation)
+    # central_bank.deposit_money(cost_of_operation)
 
     logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
     return cost_of_operation

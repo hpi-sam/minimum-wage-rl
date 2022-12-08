@@ -51,7 +51,6 @@ startup_skill=0.2
 
 [country]
 initial_printed_cash=500.0
-
 corporate_tax=0.15
 income_tax=0.1
 oil_per_unit_quantity=0.5
@@ -113,6 +112,11 @@ penalize_lower_bound=5
 poverty_weightage = 1
 unemp_weightage = 1
 
+[stagflation]
+stagflation_duration=10
+oil_rate_increase=0.2
+cost_of_operation_increase=0.15
+revenue_decrease_rate=0.2
 
 [Level_1]
 rich_jun_workers_percentage=0

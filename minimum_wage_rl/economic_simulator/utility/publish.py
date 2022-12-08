@@ -7,14 +7,18 @@ from django.db.models import Max
 
 from economic_simulator.models import game
 
-col_values=["Year", "Minimum wage", "Unemp Rate", "Poverty Rate", 
-            "Population", "Inflation", "Product Price", "Quantity",
-            "Bank Balance", "Small Comp", "Medium Comp", 
-            "Large Comp", "Filled Jun", "Filled Sen", "Filled Exec",
-            "Avg Jun Skill", "Avg Sen Skill", "Avg Exec Skill",
-            "Unemp Jun", "Unemp Sen", "Unemp Exec", 
-            "Avg Jun", "Avg Sen", "Avg Exec", "Avg Sal",         
-            "Inflation Rate"]
+# col_values=["Year", "Minimum wage", "Unemp Rate", "Poverty Rate", 
+#             "Population", "Inflation", "Product Price", "Quantity",
+#             "Bank Balance", "Small Comp", "Medium Comp", 
+#             "Large Comp", "Filled Jun", "Filled Sen", "Filled Exec",
+#             "Avg Jun Skill", "Avg Sen Skill", "Avg Exec Skill",
+#             "Unemp Jun", "Unemp Sen", "Unemp Exec", 
+#             "Avg Jun", "Avg Sen", "Avg Exec", "Avg Sal",         
+#             "Inflation Rate"]
+
+col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", "Inflation", "Product Price", 
+"Quantity", "Bank Balance", "Population", "Oil Cost", "Company Revenue",  "Cost of Operation", "Junior Employment", "Senior Unemployment", "Executive Unemployment",
+"Small Comp", "Medium Comp", "Large Comp", "Money Circulation", "Game Level"]            
 
 # col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", 
 # "Inflation", "Product Price", 

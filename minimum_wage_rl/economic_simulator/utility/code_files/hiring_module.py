@@ -56,7 +56,7 @@ def set_metrics(level, metrics, num_hires):
         metrics.total_filled_sen_pos = metrics.total_filled_sen_pos + num_hires
 
 
-def hire_workers(companies_list, worker_list, level, salary, metrics, emp_workers_list) -> list:
+def hire_workers(country, companies_list, worker_list, level, salary, metrics, emp_workers_list) -> list:
 
     done = True
     company_index = 0
@@ -106,7 +106,7 @@ def hire_workers(companies_list, worker_list, level, salary, metrics, emp_worker
                 change_num_positions(level, each_company, total_hiring)
                 worker_list = worker_list[total_hiring:]
                 # hire(hiring_workers, each_company, emp_workers_list, jun_salary)
-                workers_module.get_hired(hiring_workers, salary, each_company, emp_workers_list)
+                workers_module.get_hired(country, hiring_workers, salary, each_company, emp_workers_list)
                 set_metrics(level, metrics,len(hiring_workers))
                 number_of_hired = number_of_hired + total_hiring
 

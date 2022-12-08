@@ -123,6 +123,10 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
     employed_workers_list = []
     retired_workers_list = []
 
+    # ================ 1.1: Add Stagflation settings ================
+    if country.stagflation_flag:
+        set_stagflation_values(country)
+
     # print("Total Workers Currently - ", country.population)
 
     # ================ 2: Retire Unemployed workers ================
@@ -151,7 +155,7 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
         company_module.pay_loan(each_company,country.bank)
 
         # 3.3: Pay Cost of operation
-        coo = company_module.pay_cost_of_operation(each_company, country.bank)        
+        coo = company_module.pay_cost_of_operation(country, each_company, country.bank)        
 
         # Pay taxes
         tax = company_module.pay_tax(each_company, country.bank)        
@@ -271,15 +275,15 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
 
         # 3. Executive
         level = "exec"
-        unemp_exec_worker_list, num_of_exec_hired = hiring_module.hire_workers(open_companies_list,unemp_exec_worker_list,level, exec_salary,metrics, emp_worker_list)
+        unemp_exec_worker_list, num_of_exec_hired = hiring_module.hire_workers(country, open_companies_list,unemp_exec_worker_list,level, exec_salary,metrics, emp_worker_list)
 
         # 2. Senior        
         level = "senior"
-        unemp_sen_worker_list, num_sen_hired = hiring_module.hire_workers(open_companies_list,unemp_sen_worker_list,level, senior_salary,metrics, emp_worker_list)
+        unemp_sen_worker_list, num_sen_hired = hiring_module.hire_workers(country, open_companies_list,unemp_sen_worker_list,level, senior_salary,metrics, emp_worker_list)
 
         # 1. Junior
         level = "junior"
-        unemp_jun_worker_list, num_jun_hired = hiring_module.hire_workers(open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
+        unemp_jun_worker_list, num_jun_hired = hiring_module.hire_workers(country, open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
 
 
         
@@ -468,6 +472,36 @@ def cmp_metrics(metrics, country):
     metrics.small_comp_acct_balance = smll_acct_balance/small_cmps if small_cmps>0 else 0
     metrics.medium_comp_acct_balance = medium_acct_balance/medium_cmps if medium_cmps>0 else 0
     metrics.large_comp_acct_balance = large_acct_balance/large_cmps if large_cmps>0 else 0
+
+def set_stagflation_values(country):
+    if country.year > country.stagflation_end:
+        country.stagflation_flag = False
+    else:
+        if country.year >= country.stagflation_start and country.year <= country.stagflation_start + 2:
+                # increase oil price
+            increased_oil_rate = country.OIL_COST_PER_LITRE * Country.OIL_RATE_INCREASE
+            country.OIL_COST_PER_LITRE = country.OIL_COST_PER_LITRE + increased_oil_rate
+
+                # increase cost of operation for company
+            increased_cost_of_op = country.COST_OF_OPERATION * Country.COST_OF_OPERATION_INCREASE
+            country.COST_OF_OPERATION = country.COST_OF_OPERATION + increased_cost_of_op
+
+			    # decrease how much companies earn from each employee
+            decreased_revenue_rate = country.COMPANY_REVENUE_PERCENTAGE * Country.REVENUE_DECREASE_RATE
+            country.COMPANY_REVENUE_PERCENTAGE = country.COMPANY_REVENUE_PERCENTAGE - decreased_revenue_rate
+                
+        elif country.year > country.stagflation_start + 2 and country.year < country.stagflation_end - 2:
+                # maintain same metrics
+            pass
+        elif country.year >= country.stagflation_end - 2 and country.year <= country.stagflation_end:
+                # push oil price little towards normal                
+            country.OIL_COST_PER_LITRE = round(country.OIL_COST_PER_LITRE/(1+country.OIL_RATE_INCREASE), 2)
+
+                # push cost of operation for company little towards normal
+            country.COST_OF_OPERATION = round(country.COST_OF_OPERATION/(1+country.COST_OF_OPERATION_INCREASE), 2)
+                
+                # increase how much companies earn from each employee towards normal
+            country.COMPANY_REVENUE_PERCENTAGE = round(country.COMPANY_REVENUE_PERCENTAGE/(1-Country.REVENUE_DECREASE_RATE), 2)
 
 
 def print_needed_data(metrics, country,retired_people):
