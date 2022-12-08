@@ -30,7 +30,7 @@ Latest version **base_url = http://ccloud@minwage-app.sp.only.sap:8002**
 
 3. Start Game (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
     * Method : GET
-    * Endpoint: base_url/start-game
+    * Endpoint: base_url/start-game?level=<level_number>
     * Authorization: API Key  Token <>
 
 4. Perform Get Action (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
