@@ -98,7 +98,7 @@ ai_scenario_file=ai_scenario_data_test.xlsx
 root_folder=data
 
 [meta]
-training_steps=100
+training_steps=15
 market_steps=3600
 
 [training]

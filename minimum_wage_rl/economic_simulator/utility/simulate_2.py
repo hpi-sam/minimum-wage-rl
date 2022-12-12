@@ -629,7 +629,7 @@ def get_current_state_reward(game, country, metrics):
     message = ""
     if country.year >= max_steps:
         done =  True
-        message = message + "End of Episode"
+        message = message + "Game Ended"
     elif metrics.num_of_open_companies <= 0:
         done = True
         message = message + "Game over, Companies are closed"
@@ -640,9 +640,10 @@ def get_current_state_reward(game, country, metrics):
         reward = -100        
     else:
         done = False
-        message = message + "Episode - " + str(country.year)
+        message = message
     
-    info = {"message" : message, "money_circulation":country.money_circulation}
+    info = message
+    # {"message" : message, "money_circulation":country.money_circulation}
 
     return game, current_state, state_values, reward, info, done
 

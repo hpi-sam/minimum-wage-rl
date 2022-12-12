@@ -46,9 +46,11 @@ def start_game(request):
     ai_game_state, ai_game = start(request.user, level, ai_flag, player_game)
     # ai_game_state = player_game_state.copy()
 
-    final_response = {"User Data": player_game_state, "AI Data": ai_game_state}
+    final_response = {"User Data": player_game_state, "AI Data": ai_game_state, "end flag":False, "message":""}
 
     json_reponse = json.loads(json.dumps(final_response))
+    
+
     return Response({'status':200, 'message':json_reponse})
 
 
@@ -136,7 +138,7 @@ def __run_step(user, action_map):
     
     ai_game, ai_game_state, state_values, reward, message, done = step(ai_action_map, user, ai_flag, game.game_number)
 
-    final_response = {"User Data": user_data, "AI Data": ai_game_state}
+    final_response = {"User Data": user_data, "AI Data": ai_game_state, "end flag":done, "message":message}
 
     json_reponse = json.loads(json.dumps(final_response))
     return Response({'status':200, 'message':json_reponse})
