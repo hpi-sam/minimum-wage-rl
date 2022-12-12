@@ -639,6 +639,8 @@ def get_current_state_reward(game, country, metrics):
         message = message + "Game over, Bank has shutdown"
         reward = -100        
     else:
+        if country.year < 4:
+            message = message + "Game Started in Level-" + str(game.level)
         done = False
         message = message
     
