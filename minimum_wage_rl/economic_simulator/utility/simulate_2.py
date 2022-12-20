@@ -1,5 +1,4 @@
 # from math import ceil, floor
-
 import numpy as np
 from models.metrics import Metric
 # from economic_simulator.utility.code_files.common_module import retire
@@ -33,25 +32,11 @@ config_parser = ConfigurationParser.get_instance(file_name).parser
 env_file = "env_config_file.txt"
 config_parser_env = ConfigurationParser.get_instance(env_file).parser
 
-# Money_Circulation_MAX = 484882
-# config_parser_env.getint("money_circulation","max")
-# Money_Circulation_MIN = 144356
-# config_parser_env.getint("money_circulation","min")
-
-# Bank_Balance_MAX = 19343183
-# config_parser_env.getint("bank_balance","max")
-# Bank_Balance_MIN = 126369
-# config_parser_env.getint("bank_balance","min")
-
-# Quantity_MAX = 819115
-# config_parser_env.getint("quantity","max")
-# Quantity_MIN = 1
-# config_parser_env.getint("quantity","min")
-
-
 discrete_action = config_parser.getboolean("game","discrete_action")
 max_steps = int(config_parser.get("meta","training_steps"))
 MAX_SKILL_LEVEL = int(config_parser.get("worker","exec_skill_level"))
+
+
 
 def step(game, action_map):
     
@@ -84,6 +69,7 @@ def step(game, action_map):
         
         logging.info("=========== Game - " + str(game.game_number) + " Episode: " +  str(game.episode_number) +  " Year: " + str(country.year) + " ===========")
         # logging.info("Minimum wage - " + str(country.minimum_wage))
+
         # Step 2 - run market step
         return run_market(country, country_companies_list, unemployed_workers_list, game)
     else:
@@ -103,7 +89,6 @@ def step(game, action_map):
 
         done = True
         
-        # current_state, 
         info = {"message" : message, "money_circulation": country.money_circulation}
         return state_values, float(reward), done, info
 
@@ -127,6 +112,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         new_workers_list =  country_module.increase_population(country)
     else:
         new_workers_list = []
+
     # new_workers_list = []
     fired_workers = []
     employed_workers_list = []
@@ -169,6 +155,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         # 3.3: Pay Cost of operation
         coo = company_module.pay_cost_of_operation(country, each_company, country.bank)        
 
+
         # Pay taxes
         tax = company_module.pay_tax(each_company, country.bank)        
 
@@ -204,6 +191,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         
         fired_workers.extend(operation_map["fired_workers"])
         employed_workers_list.extend(operation_map["employed_workers"])
+
 
         # Only for stand-alone
         each_company.employed_workers_list = operation_map["employed_workers"]
@@ -250,6 +238,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
 
     # Only for standalone: Employed workers are sent to this method, which are present in open_companies_list
     workers_module.evaluate_emp_worker(open_companies_list, emp_worker_list, min_startup_score, max_startup_score, MAX_SKILL_LEVEL)                                  
+
 
     # 4.2 Create Start ups
     workers_module.create_start_up(country, new_companies_list, startup_workers_list, unemp_jun_worker_list, 
@@ -301,6 +290,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         # print("Executives Hired - ", num_of_exec_hired)
 
 
+
         # 2. Senior
         level = "senior"
         # print("Senior Before - UnEmployed Senior workers", len(unemp_sen_worker_list) , " Employed Workers - ", len(emp_worker_list))
@@ -314,7 +304,6 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
         unemp_jun_worker_list, num_jun_hired = hiring_module.hire_workers(country, open_companies_list,unemp_jun_worker_list,level, jun_salary, metrics, emp_worker_list)
         # print("Junior After - UnEmployed Junior workers", len(unemp_jun_worker_list) , " Employed Workers - ", len(emp_worker_list))
         # print("Juniors Hired - ", num_jun_hired)
-
 
         metrics.current_year_filled_jun_pos = num_jun_hired
         metrics.current_year_filled_sen_pos = num_sen_hired
@@ -478,6 +467,7 @@ def set_stagflation_values(country):
             country.COMPANY_REVENUE_PERCENTAGE = round(country.COMPANY_REVENUE_PERCENTAGE/(1-Country.REVENUE_DECREASE_RATE), 2)
 
 
+
 def print_needed_data(game, metrics, country,retired_people):
 
     print("====================== YEAR: ", metrics.year , " Game: ", str(game.game_number) , " Episode: ", str(len(game.game_metric_list)), "======================")
@@ -533,7 +523,6 @@ def get_current_state_reward(country, metrics):
 
     metrics.population = country.population
 
-
     current_state = dict()
     current_state["Year"] = int(metrics.year)
     current_state["Minimum wage"] = float("{:.2f}".format(metrics.minimum_wage))
@@ -551,8 +540,6 @@ def get_current_state_reward(country, metrics):
     current_state["Start Up Founders Current Year"] = metrics.startup_founders
 
 
-
-
     state_values, reward = get_game_state(metrics)
 
     message = ""
@@ -562,17 +549,19 @@ def get_current_state_reward(country, metrics):
     elif len(country_companies_list) == 0:
         done = True
         message = message + "Game over, Companies are closed"
+
         reward = -1
     elif country.bank.liquid_capital <= 0:
         done = True        
         message = message + "Game over, Bank has shutdown"
         reward = -1   
+
     else:
         done = False
         message = message + "Episode - " + str(country.year)
-    
     info = {"message" : message, "money_circulation":country.money_circulation}
     return current_state, state_values, float(reward), done, info
+
 
 def calculate_reward(metrics):
     poverty_weightage = int(config_parser.get("reward","poverty_weightage"))
@@ -580,11 +569,12 @@ def calculate_reward(metrics):
 
     # r1 = metrics.old_poverty_rate - metrics.poverty_rate
     # r2 = metrics.old_unemployment_rate - metrics.unemployment_rate
-    
+
     r1 = 1- (metrics.unemployment_rate/100)
     #  * unemp_weightage
     # r2 =  - (metrics.poverty_rate/100)
     r2 = -metrics.poverty_rate/100
+
     # r2 = 100 - (metrics.poverty_rate)
     # * poverty_weightage
     # r1 +
@@ -597,8 +587,9 @@ def get_state(game):
     #  Country.objects.get(player=user, game=game)
     metric = country.metrics_list[-1] 
     # Metric.objects.filter(country_of_residence=country).last()
-    # current_state, 
+    # current_state,
     current_state, state_values, reward, done, info = get_current_state_reward(country, metric)
+
 
 
     # current_state,

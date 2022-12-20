@@ -186,6 +186,7 @@ def firing(company, operation_map):
         # logging.info("Number of fired Juniors - ", len(fired_junior_workers))
     operation_map["employed_workers"].extend(company.junior_workers_list)
 
+
     # 2: Firing seniors
     num_seniors_to_be_fired = ceil(deficit/company.avg_senior_salary)
 
@@ -209,6 +210,7 @@ def firing(company, operation_map):
         deficit = deficit - len(fired_senior_workers) * company.avg_senior_salary
         # logging.info("Number of fired Seniors - ", len(fired_senior_workers))
     operation_map["employed_workers"].extend(company.senior_workers_list)
+
     # 3: Firing executives
     num_exec_to_be_fired = ceil(deficit/company.avg_executive_salary)
 
@@ -231,6 +233,7 @@ def firing(company, operation_map):
         deficit = deficit - len(fired_exec_workers) * company.avg_executive_salary
         # logging.info("Number of fired Execs - ", len(fired_exec_workers))
     operation_map["employed_workers"].extend(company.exec_workers_list)
+
 
     if deficit > 0:
         operation_map["close"] = True

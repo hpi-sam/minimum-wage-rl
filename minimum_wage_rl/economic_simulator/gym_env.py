@@ -8,6 +8,7 @@ from utility.config import ConfigurationParser
 file_name = "config_file.txt"
 config_parser = ConfigurationParser.get_instance(file_name).parser
 
+
 min_wage_lower_limit = config_parser.get("minwage","initial_minimum_wage")
 product_price_lower_limit = config_parser.get("market","initial_product_price")
 

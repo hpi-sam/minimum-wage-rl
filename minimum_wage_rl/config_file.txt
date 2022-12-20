@@ -51,6 +51,7 @@ startup_skill=0.2
 
 [country]
 initial_printed_cash=500.0
+initial_population=500
 corporate_tax=0.15
 income_tax=0.1
 oil_per_unit_quantity=0.5
@@ -68,6 +69,7 @@ skill_set_weightage=0.7
 experience_weightage=0.3
 initial_acct_balance=0.0
 
+
 jun_skill_low_limit = 6
 jun_skill_high_limit_offset = 5
 
@@ -80,6 +82,11 @@ exec_skill_high_limit_offset = 7
 junior_skill_level=13
 senior_skill_level=23
 exec_skill_level=33
+
+junior_skill_level=13
+senior_skill_level=23
+exec_skill_level=33
+
 initial_balance_weightage=0.5
 savings_percent=0.1
 

@@ -218,8 +218,7 @@ def get_money_circulation(all_workers_list, country, min_wage_weightage, employe
                 rich_sen = rich_sen - 1
             else:
                 each_worker.worker_account_balance += (sen_sal * 12)
-                money_circulation += sen_sal * 12
-        
+                money_circulation += sen_sal * 12        
         else:
             if rich_exec>0:
                 each_worker.worker_account_balance += (rich_exec_acct_bal)

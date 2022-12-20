@@ -9,6 +9,7 @@ from functools import reduce
 from math import ceil, floor, isnan
 # from utility.config import ConfigurationParser
 # config_parser = ConfigurationParser.get_instance().parser
+
 import logging
 logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 import numpy as np
@@ -43,6 +44,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
     old_money_circulation = country.money_circulation
     metrics.old_money_circulation = old_money_circulation
+
     current_money_circulation = all_emp_workers_acct + all_unemp_workers_acct
     country.money_circulation = current_money_circulation
     velocity_of_money = 1
@@ -187,6 +189,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     if metrics.quantity<=0:
         print("Quantity Zero")
 
+
 # Production cost and Transport Cost
 def import_quantity(produce_quantity, price, country):
 
@@ -220,10 +223,8 @@ def import_quantity(produce_quantity, price, country):
         country.bank.liquid_capital = country.bank.liquid_capital - transport_cost
         # print("Bank Balance after production - ", country.bank.liquid_capital)
         # logging.info("Money Spent - " + str(money_available))
-
         if int(possible_quantity) <= 0:
             print("here")
-            
         return int(possible_quantity)
 
 def calculate_deflation(current_product_price, new_product_price, old_inflation, metrics, country):
@@ -343,6 +344,7 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     metrics.total_filled_sen_pos = employee_details_map["sen_workers"]
     metrics.total_filled_exec_pos = employee_details_map["exec_workers"]
 
+
     if total_exec <= 0:
         print("here")
 
@@ -354,6 +356,7 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     metrics.jun_worker_avg_balance = jun_acct_balance/total_junior  if total_junior>0 else 0
     metrics.sen_worker_avg_balance = sen_acct_balance/total_senior  if total_senior>0 else 0
     metrics.exec_worker_avg_balance = exec_acct_balance/total_exec if total_exec>0 else 0
+
 
     metrics.average_jun_sal = round(employee_details_map["jun_worker_sal"]/employee_details_map["jun_workers"] if employee_details_map["jun_workers"] > 0 else 0, 1)
     metrics.average_sen_sal = round(employee_details_map["sen_worker_sal"]/employee_details_map["sen_workers"] if employee_details_map["sen_workers"] > 0 else 0, 1)

@@ -61,6 +61,7 @@ def export_from_game_metric(game_num, game_metric_list, version_num):
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     writer = pd.ExcelWriter('game_train' + str(version_num)+ '.xlsx')
 
+
     # Write each dataframe to a different worksheet.
     for index,each_df in enumerate(df_list):
         name = "episode" + str(index + 1)
