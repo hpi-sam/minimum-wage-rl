@@ -21,7 +21,7 @@ def pay_loan(company, central_bank):
         if company.loan_amount < 100:
             total_amount = interest_amount + company.loan_amount
             central_bank.deposit_money(total_amount)
-            logging.info("Loan deposited - " + str(total_amount))
+            # logging.info("Loan deposited - " + str(total_amount))
             company.loan_taken = False
             company.loan_amount = 0.0
         
@@ -30,15 +30,15 @@ def pay_loan(company, central_bank):
             total_amount = interest_amount + installment_amount
             central_bank.deposit_money(total_amount)
             company.loan_amount = company.loan_amount - installment_amount
-            logging.info("Loan deposited - " + str(total_amount))
+            # logging.info("Loan deposited - " + str(total_amount))
 
 
 def pay_tax(company, central_bank):
-    tax = Country.CORPORATE_TAX * company.year_income
+    tax = Country.CORPORATE_TAX * company.company_account_balance
     # tax = Country.CORPORATE_TAX * company.company_account_balance
     company.company_account_balance = company.company_account_balance - tax
     central_bank.deposit_money(tax)
-    logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
+    # logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
     return tax
 
 def yearly_financial_transactions(company, country, retired_workers_list):
@@ -65,9 +65,10 @@ def yearly_financial_transactions(company, country, retired_workers_list):
         retire_flag = False
 
         if each_worker.age >= 60:
-            retire(each_worker, country)
-            retire_flag = True
-            retired_workers_list.append(each_worker)
+            # retire(each_worker, country)
+            # retire_flag = True
+            # retired_workers_list.append(each_worker)
+            pass
 
         if not(retire_flag):
             each_worker.skill_improvement_rate =  company.skill_improvement_rate
@@ -92,10 +93,18 @@ def yearly_financial_transactions(company, country, retired_workers_list):
                 company.exec_workers_list.append(each_worker)
 
             # Giving value back to company and getting salary and Pay income tax
-            profit_from_each_worker = get_salary_paid(each_worker, company)
+            # profit_from_each_worker = get_salary_paid(each_worker, company)
             # total_profit = total_profit + profit_from_each_worker
         
-            all_workers_list.append(each_worker)
+            # all_workers_list.append(each_worker)
+
+    all_workers_list.extend(company.exec_workers_list)
+    all_workers_list.extend(company.senior_workers_list)
+    all_workers_list.extend(company.junior_workers_list)
+
+    for worker_obj in all_workers_list:
+        get_salary_paid(worker_obj, company, country)
+
 
 # ***************************************************************************************
 # ****************** CHANGE COMPANY TYPE and IMPROVE WORKER SKILL RATE ******************
@@ -170,11 +179,12 @@ def firing(company, operation_map):
             company.junior_workers_list = company.junior_workers_list[num_juniors_to_be_fired:]
 
             operation_map["fired_workers"].extend(fired_junior_workers)
-            operation_map["employed_workers"].extend(company.junior_workers_list)
+            
             
         company.num_junior_workers = company.num_junior_workers - len(fired_junior_workers)
         deficit = deficit - len(fired_junior_workers) * company.avg_junior_salary
-        
+        # logging.info("Number of fired Juniors - ", len(fired_junior_workers))
+    operation_map["employed_workers"].extend(company.junior_workers_list)
 
     # 2: Firing seniors
     num_seniors_to_be_fired = ceil(deficit/company.avg_senior_salary)
@@ -193,11 +203,12 @@ def firing(company, operation_map):
             operation_map["fired_workers"].extend(fired_senior_workers)
 
             company.senior_workers_list = company.senior_workers_list[num_seniors_to_be_fired:]            
-            operation_map["employed_workers"].extend(company.senior_workers_list)        
+                
         
         company.num_senior_workers = company.num_senior_workers - len(fired_senior_workers)
         deficit = deficit - len(fired_senior_workers) * company.avg_senior_salary
-        
+        # logging.info("Number of fired Seniors - ", len(fired_senior_workers))
+    operation_map["employed_workers"].extend(company.senior_workers_list)
     # 3: Firing executives
     num_exec_to_be_fired = ceil(deficit/company.avg_executive_salary)
 
@@ -214,10 +225,12 @@ def firing(company, operation_map):
             operation_map["fired_workers"].extend(fired_exec_workers)
 
             company.exec_workers_list = company.exec_workers_list[num_exec_to_be_fired:]
-            operation_map["employed_workers"].extend(company.exec_workers_list)            
+                    
         
         company.num_executive_workers = company.num_executive_workers - len(fired_exec_workers)
         deficit = deficit - len(fired_exec_workers) * company.avg_executive_salary
+        # logging.info("Number of fired Execs - ", len(fired_exec_workers))
+    operation_map["employed_workers"].extend(company.exec_workers_list)
 
     if deficit > 0:
         operation_map["close"] = True
@@ -361,7 +374,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
             if key == "junior_pos" and value > 0:
 
                 hiring_budget = hiring_budget - (company.avg_junior_salary * 12)
-                if hiring_budget > 0:
+                if hiring_budget >= 0:
                     open_junior_pos = open_junior_pos + 1
                     job_position_map[key] = value - 1
                 else:
@@ -371,7 +384,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
             if key == "senior_pos" and value > 0:
 
                 hiring_budget = hiring_budget - (company.avg_senior_salary * 12)
-                if hiring_budget > 0:
+                if hiring_budget >= 0:
                     open_senior_pos = open_senior_pos + 1
                     job_position_map[key] = value - 1
                 else:
@@ -381,7 +394,7 @@ def hire_by_ratio(hiring_budget, company, junior_pos, senior_pos, exec_pos):
             if key == "exec_pos" and value > 0:
 
                 hiring_budget = hiring_budget - (company.avg_executive_salary * 12)
-                if hiring_budget > 0:
+                if hiring_budget >= 0:
                     open_exec_pos = open_exec_pos + 1
                     job_position_map[key] = value - 1
                 else:
@@ -502,21 +515,26 @@ def set_company_size(company):
         company.company_size_type = Market.LARGE_COMPANY_TYPE
         company.skill_improvement_rate = Company.LARGE_CMP_SKILL_IMPROVEMENT
 
-def get_salary_paid(worker, company):
-    worker.worker_account_balance += worker.salary * 12
-    company.company_account_balance -= worker.salary * 12
-     
+def get_salary_paid(worker, company, country):
     
-    # Pay income tax
-    worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
+    if (company.company_account_balance + (worker.skill_level * 12) - (worker.salary * 12)) >= 0:
+        
+        worker.worker_account_balance += worker.salary * 12
+        company.company_account_balance -= worker.salary * 12
+                
+        # Pay income tax
+        worker.worker_account_balance = worker.worker_account_balance - worker.salary*12*Country.INCOME_TAX
+        
+        company_earnings = worker.skill_level * country.COMPANY_REVENUE_PERCENTAGE * 12
+        company.company_account_balance += company_earnings
+        company.year_income = company.year_income + company_earnings
+        return company_earnings
+    else:
+        return 0
 
-    earnings = worker.skill_level * 12
-    company.company_account_balance += earnings
-    company.year_income = company.year_income + earnings
-    return earnings
-
-def pay_cost_of_operation(company):
-    cost_of_operation = Company.COST_OF_OPERATION * company.year_income
+def pay_cost_of_operation(country, company, central_bank):
+    cost_of_operation = country.COST_OF_OPERATION * company.company_account_balance
     company.company_account_balance = company.company_account_balance - cost_of_operation
-    logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
+    # central_bank.deposit_money(cost_of_operation)
+    # logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
     return cost_of_operation

@@ -2,7 +2,9 @@
 # import uuid
 
 from utility.config import ConfigurationParser
-config_parser = ConfigurationParser.get_instance().parser
+
+file_name = "config_file.txt"
+config_parser = ConfigurationParser.get_instance(file_name).parser
 
 class Bank():
 

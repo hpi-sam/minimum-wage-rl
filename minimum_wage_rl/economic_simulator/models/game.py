@@ -7,14 +7,17 @@ import torch
 
 class Game():
 
-    def __init__(self, game_number) -> None:        
+    def __init__(self, game_number, level) -> None:        
         self.game_number = game_number
         self.game_ended = False
         self.country = None
         self.game_metric_list = list()
+        self.episode_number=0
+        self.level = level
     
     def test(self):
-        print("------------> " , self.game_number)
+        # print("------------> " , self.game_number)
+        pass
 
     def reset(self, episode_number):
         return start(self, episode_number)

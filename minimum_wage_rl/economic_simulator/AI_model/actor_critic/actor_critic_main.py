@@ -5,6 +5,7 @@ from utility import simulate_2
 from utility.config import ConfigurationParser
 import torch
 # from . import utility
+from torch.utils.tensorboard import SummaryWriter
 
 roll_out_length = 5
 discount = 0.9
@@ -12,7 +13,8 @@ num_steps = 5
 actor_lr = 0.01
 critic_lr = 0.05
 
-config_parser = ConfigurationParser.get_instance().parser
+file_name = "config_file.txt"
+config_parser = ConfigurationParser.get_instance(file_name).parser
 num_steps = int(config_parser.get("training","num_steps"))
 episodes = int(config_parser.get("training","episodes"))
 min_wage_lower_bound = float(config_parser.get("minwage","initial_minimum_wage"))
@@ -29,8 +31,9 @@ class ActorCriticAgent:
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=critic_lr)
         self.user = user
         self.task = task
+        self.writer = None
     
-    def step(self, mu_dict, sigma_dict, step_num, episode_num):
+    def step(self, mu_dict, sigma_dict, step_num,loss_step, episode_num):
         
         state_values = self.task.get_state()
         current_state = torch.tensor(state_values, dtype=torch.float)
@@ -99,11 +102,20 @@ class ActorCriticAgent:
 
         # loss = mu_loss.item() if mu_loss.item() > 0 else 1
 
+        # Actor loss
         policy_loss = -(entries.log_actions * entries.advantages).mean()
-        print("Policy Loss - " , policy_loss)
+        # print("Policy Loss - " , policy_loss)
         # * (loss)
+        
+        # Critic Loss
         value_loss = 0.5 * (entries.expected_returns - entries.state_values).pow(2).mean()
-        print("Value Loss - ", value_loss)
+        # print("Value Loss - ", value_loss)
+
+        self.writer.add_scalar("Actor Loss", policy_loss.item(), loss_step)
+        # self.writer.add_scalar("Actor Loss Game 2", policy_loss[1].item(), loss_step)
+
+        self.writer.add_scalar("Critic Loss", value_loss.item(), loss_step)
+        # self.writer.add_scalar("Critic Loss Game 2", value_loss[1].item(), loss_step)
 
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
@@ -113,7 +125,18 @@ class ActorCriticAgent:
 
         self.actor_optimizer.step()
         self.critic_optimizer.step()
-    
+
+        for name, param in self.actor_model.named_parameters():
+            self.writer.add_histogram(f"{name}_actor", param, loss_step)
+            self.writer.add_histogram(f"{name}_actor.grad", param.grad, loss_step)
+        
+        for name, param in self.critic_model.named_parameters():
+            self.writer.add_histogram(f"{name}_critic", param, loss_step)
+            self.writer.add_histogram(f"{name}_critic.grad", param.grad, loss_step)
+            # print(param.grad)
+
+        # print("here")
+
     def reset(self, episode_num):
         self.task.reset(episode_num)
 
@@ -131,6 +154,8 @@ def train(num_workers, task):
 
     for episode_num in range(episodes):
         
+        a2c_agent.writer = SummaryWriter("new_arch_v4/episode_" + str(episode_num))
+
         current_state = a2c_agent.task.reset(episode_num)
         action_value = current_state[0]["Minimum wage"]
         actions = [action_value]*num_workers
@@ -144,8 +169,10 @@ def train(num_workers, task):
 
         # Normalize initial Inputs
         step_num = 1
-        for _ in range(num_steps):
-            a2c_agent.step(mu_dict, sigma_dict, step_num, episode_num)
+        for loss_step in range(num_steps):
+            a2c_agent.step(mu_dict, sigma_dict, step_num,loss_step, episode_num)
+        
+        a2c_agent.writer.close()
 
         # a2c_agent.reset(episode_num)
         # utility.close_game(user)

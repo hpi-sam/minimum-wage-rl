@@ -30,7 +30,7 @@ class DynamicUpdate():
     def on_launch(self):
         #Set up plot
         self.figure, self.ax = plt.subplots(2,2)
-        self.figure.suptitle('AI Scenario', fontweight="bold", fontsize=18)
+        self.figure.suptitle('RL Model', fontweight="bold", fontsize=18)
 
         self.y_values_1 = 2
         self.y_values_2 = 2
@@ -49,7 +49,7 @@ class DynamicUpdate():
         self.lines_2[0], = self.ax[0,1].plot([],[],label="Poverty")
         self.lines_2[1], = self.ax[0,1].plot([],[], label="Unemployment")
 
-        self.lines_3[0], = self.ax[1,0].plot([],[],label="Population")
+        self.lines_3[0], = self.ax[1,0].plot([],[],label="Balance in Bank")
         # self.lines_3[1], = self.ax[1,0].plot([],[],label="Senior")
         # self.lines_3[2], = self.ax[1,0].plot([],[],label="Executive")
 
@@ -68,7 +68,7 @@ class DynamicUpdate():
 
         self.ax[0,0].set_title("Product price vs Inflation", fontweight="bold", fontsize=12)
         self.ax[0,1].set_title("Poverty vs Unemployment", fontweight="bold", fontsize=12)
-        self.ax[1,0].set_title("Population", fontweight="bold", fontsize=12)
+        self.ax[1,0].set_title("Balance in Bank", fontweight="bold", fontsize=12)
         self.ax[1,1].set_title("Minimum wage", fontweight="bold", fontsize=12)
 
     def on_running(self, xdata, ydata,ax_value):
@@ -164,11 +164,11 @@ d = DynamicUpdate()
 d()
 
 
-df_1 = pd.read_excel("data\\v13\\game_5.xlsx", sheet_name="episode6")
+df_1 = pd.read_excel("new_data\\Level_1500\\game_test_v21.xlsx", sheet_name="episode50")
 # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
 # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
 
-print(df_1.columns)
+# print(df_1.columns)
 
 mini_wage = df_1["Minimum Wage"].tolist()
 
@@ -178,7 +178,7 @@ average_salary = df_1["Inflation"].tolist()
 poverty_rate = df_1["Poverty Rate"].tolist()
 unemployment_rate = df_1["Unemp Rate"].tolist()
 
-population = df_1["Population"].tolist()
+population = df_1["Bank Balance"].tolist()
 
 # junior_pos = df_1["Junior"].tolist() 
 # senior_pos = df_1["Senior"].tolist()

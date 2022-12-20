@@ -1,5 +1,4 @@
 import math
-from cv2 import log
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -50,29 +49,28 @@ class GaussianActor(nn.Module):
 
         self.lower_limit = lower_limit
 
-        # self.input = nn.Linear(in_features=7, out_features=32)
-        # self.hidden1 = nn.Linear(in_features=32,out_features=48)
-        # self.hidden2 = nn.Linear(in_features=48, out_features=32)
-        # self.hidden3 = nn.Linear(in_features=32, out_features=16)
-        # self.hidden4 = nn.Linear(in_features=16, out_features=8)
-
         self.input = nn.Linear(in_features=7, out_features=32)
-        self.hidden1 = nn.Linear(in_features=32,out_features=16)
-        self.hidden2 = nn.Linear(in_features=16, out_features=8)
+        self.hidden1 = nn.Linear(in_features=32,out_features=48)
+        self.hidden2 = nn.Linear(in_features=48, out_features=32)
+        self.hidden3 = nn.Linear(in_features=32, out_features=16)
+        self.hidden4 = nn.Linear(in_features=16, out_features=8)
 
-
+        # self.input = nn.Linear(in_features=7, out_features=32)
+        # self.hidden1 = nn.Linear(in_features=32,out_features=16)
+        # self.hidden2 = nn.Linear(in_features=16, out_features=8)
         self.mu = nn.Linear(in_features=8, out_features=1)
-        self.sigma = nn.Linear(in_features=8,out_features=1)
+
+        # self.sigma = nn.Linear(in_features=8,out_features=1)
         # self.sigma = nn.Parameter(torch.zeros(action_dim))
         self.std = nn.Parameter(torch.zeros(action_dim))
         self.log_std_min =log_std_min
         self.log_std_max = log_std_max
         self.min_mean = min_mean
 
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                m.weight = torch.nn.init.ones_(m.weight)
-                #  orthogonal_
+        # for m in self.modules():
+        #     if isinstance(m, nn.Linear):
+        #         m.weight = torch.nn.init.ones_(m.weight)
+        #         #  orthogonal_
 
     
     def forward(self, obs, action=None, epsilon=1e-6):
@@ -80,21 +78,22 @@ class GaussianActor(nn.Module):
         obs = obs.clone().detach()
         # torch.tensor(obs)
         h1 = self.input(obs)
-        h1_act = torch.tanh(h1)
+        h1_act = torch.relu(h1)
 
-        h2 = self.hidden1(h1)
-        h2_act = torch.tanh(h2)
+        h2 = self.hidden1(h1_act)
+        h2_act = torch.relu(h2)
 
         h3 = self.hidden2(h2_act)
-        h3_act = torch.tanh(h3)
+        h3_act = torch.relu(h3)
 
-        # h4 = self.hidden3(h3_act)
-        # h4_act = torch.relu(h4)
+        h4 = self.hidden3(h3_act)
+        h4_act = torch.relu(h4)
 
-        # h5 = self.hidden4(h4_act)
-        # h5_act = torch.relu(h5)
+        h5 = self.hidden4(h4_act)
+        h5_act = torch.relu(h5)
 
-        mean = torch.relu(self.mu(h3_act))
+        # mean = torch.tanh(self.mu(h5_act))
+        mean = self.mu(h5_act)
         logging.info("Mean - " + str(mean))
         # mean = torch.clamp(mean, self.min_mean)
         sigma = F.softplus(self.std)
@@ -156,43 +155,42 @@ class Critic(nn.Module):
     def __init__(self):
         super(Critic, self).__init__()
 
-        # self.input = nn.Linear(in_features=7, out_features=32)
-        # self.hidden1 = nn.Linear(in_features=32,out_features=48)
-        # self.hidden2 = nn.Linear(in_features=48, out_features=32)
-        # self.hidden3 = nn.Linear(in_features=32, out_features=16)
-        # self.hidden4 = nn.Linear(in_features=16, out_features=8)
-
         self.input = nn.Linear(in_features=7, out_features=32)
-        self.hidden1 = nn.Linear(in_features=32,out_features=16)
-        self.hidden2 = nn.Linear(in_features=16, out_features=8)
+        self.hidden1 = nn.Linear(in_features=32,out_features=48)
+        self.hidden2 = nn.Linear(in_features=48, out_features=32)
+        self.hidden3 = nn.Linear(in_features=32, out_features=16)
+        self.hidden4 = nn.Linear(in_features=16, out_features=8)
 
+        # self.input = nn.Linear(in_features=7, out_features=32)
+        # self.hidden1 = nn.Linear(in_features=32,out_features=16)
+        # self.hidden2 = nn.Linear(in_features=16, out_features=8)
 
         self.out = nn.Linear(in_features=8, out_features=1)
         
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                m.weight = torch.nn.init.ones_(m.weight)
-                #  orthogonal_
+        # for m in self.modules():
+        #     if isinstance(m, nn.Linear):
+        #         m.weight = torch.nn.init.ones_(m.weight)
+        #         #  orthogonal_
             
     def forward(self, obs):
         obs = obs.clone().detach()
         h1 = self.input(obs)
-        h1_act = torch.tanh(h1)
+        h1_act = torch.relu(h1)
 
-        h2 = self.hidden1(h1)
-        h2_act = torch.tanh(h2)
+        h2 = self.hidden1(h1_act)
+        h2_act = torch.relu(h2)
 
         h3 = self.hidden2(h2_act)
-        h3_act = torch.tanh(h3)
+        h3_act = torch.relu(h3)
 
-        # h4 = self.hidden3(h3_act)
-        # h4_act = torch.relu(h4)
+        h4 = self.hidden3(h3_act)
+        h4_act = torch.relu(h4)
 
-        # h5 = self.hidden4(h4_act)
-        # h5_act = torch.relu(h5)
+        h5 = self.hidden4(h4_act)
+        h5_act = torch.relu(h5)
 
         # logits = self.fc_action(h3)
-        v = self.out(h3_act)
+        v = self.out(h5_act)
         # v1 = v.unsqueeze(-1)
         # dist = torch.distributions.Categorical(logits=logits)
         # if action is None:

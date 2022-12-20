@@ -6,7 +6,9 @@ import pandas as pd
 #         "Avg Jun", "Avg Sen", "Avg Exec", "Avg Sal", "Unemp Rate", "Poverty Rate", "Population", "Minimum wage",
 #         "Inflation", "Inflation Rate", "Bank Balance", "Product Price", "Quantity"]
 
-col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", "Inflation", "Product Price", "Quantity", "Bank Balance", "Population", "Mertic Population"]
+col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", "Inflation", "Product Price", 
+"Quantity", "Bank Balance", "Population", "Oil Cost", "Company Revenue",  "Cost of Operation", "Junior Employment", "Senior Unemployment", "Executive Unemployment",
+"Small Comp", "Medium Comp", "Large Comp", "Money Circulation", "Game Level"]
 
 
 def get_metric_data(data_map, metric):
@@ -39,7 +41,7 @@ def get_metric_data(data_map, metric):
     # data_map["Quantity"].append(metric.quantity)
 
 
-def export_from_game_metric(game_num, game_metric_list):
+def export_from_game_metric(game_num, game_metric_list, version_num):
     
     df_list = []
     
@@ -57,7 +59,7 @@ def export_from_game_metric(game_num, game_metric_list):
         df_list.append(new_df)
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter('game_' + str(game_num)+ '.xlsx')
+    writer = pd.ExcelWriter('game_train' + str(version_num)+ '.xlsx')
 
     # Write each dataframe to a different worksheet.
     for index,each_df in enumerate(df_list):

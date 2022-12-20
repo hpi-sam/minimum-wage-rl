@@ -1,3 +1,4 @@
+from math import floor
 import numpy as np
 
 # from ...models import country
@@ -51,42 +52,130 @@ def create_bank(initial_bank_balance):
     return bank
     
 
+def increase_population(country):
+    increased_population = country.population * 0.01
 
-def add_new_workers(country):
+    actual_increased_population = increased_population
+    # int(np.random.normal(loc=increased_population, scale=2.0))
 
-    worker_list = []
+    each_level_population = int(actual_increased_population/3)
+    extra = actual_increased_population%3
+
+    jun_worker_population = each_level_population
+    sen_worker_population = each_level_population
+    exec_worker_population = each_level_population
+
+    while extra > 0:
+        jun_worker_population = jun_worker_population + 1
+        extra = extra - 1
+        if extra>0:
+            sen_worker_population = sen_worker_population + 1
+            extra = extra - 1
+
+    new_workers_list = []
+
+    # Add Juniors
+    for i in range(jun_worker_population):
+        worker = Worker()
+        age = np.random.randint(18,20)
+        skill_level = np.random.randint(7, Worker.JUNIOR_SKILL_LEVEL-5)
+        initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
+        new_workers_list.append(worker)
+    
+    # Add Seniors
+    for i in range(sen_worker_population):
+        worker = Worker()
+        age = np.random.randint(20,23)
+        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL-5)
+        initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
+        new_workers_list.append(worker)
+        
+    # Add Executives
+    for i in range(exec_worker_population):
+        worker = Worker()
+        age = np.random.randint(23,25)
+        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.EXEC_SKILL_LEVEL-5)
+        initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
+        new_workers_list.append(worker)
+
+    new_workers_list = sorted(new_workers_list, key=lambda x: x.worker_score, reverse=True)
+    country.population = country.population + len(new_workers_list)
+
+    return new_workers_list
+
+
+def add_new_workers(country, num_of_citizens, employed_at_startup, JUN_SKILL_LOW_LIM, JUN_SKILL_HIGH_LIM_OFFSET, SEN_SKILL_LOW_LIM_OFFSET, SEN_SKILL_HIGH_LIM_OFFSET, EXEC_SKILL_LOW_LIM_OFFSET, EXEC_SKILL_HIGH_LIM_OFFSET):
+
+    # worker_list = []
+    jun_worker_list = []
+    sen_worker_list = []
+    exec_worker_list = []
 
     # 1: Add 5 - 10 juniors in population
-    num_of_juniors = 20
+    # add-to-web
+    num_of_juniors = num_of_citizens
     for i in range(num_of_juniors):
         worker = Worker()
-        age = np.random.randint(19,25)
-        skill_level = np.random.randint(1, Worker.JUNIOR_SKILL_LEVEL-10)
+        age = np.random.randint(18,20)
+        skill_level = np.random.randint(JUN_SKILL_LOW_LIM, Worker.JUNIOR_SKILL_LEVEL-JUN_SKILL_HIGH_LIM_OFFSET)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
-        worker_list.append(worker)
+        jun_worker_list.append(worker)
+        # worker_list.append(worker)
     
     # 2: Add 5 - 10 seniors in population
-    num_of_seniors = 20
+    num_of_seniors = num_of_citizens
     for i in range(num_of_seniors):
         worker = Worker()
-        age = np.random.randint(30,35)
-        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.JUNIOR_SKILL_LEVEL+3)
+        age = np.random.randint(20,23)
+        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+SEN_SKILL_LOW_LIM_OFFSET, Worker.SENIOR_SKILL_LEVEL-SEN_SKILL_HIGH_LIM_OFFSET)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
-        worker_list.append(worker)
+        sen_worker_list.append(worker)
+        # worker_list.append(worker)
     
     # 3: Add 5 - 10 executives in population
-    num_of_executives = 20
+    num_of_executives = num_of_citizens
     for i in range(num_of_executives):
         worker = Worker()
-        age = np.random.randint(40,45)
-        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL+3)
+        age = np.random.randint(23,25)
+        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+EXEC_SKILL_LOW_LIM_OFFSET, Worker.EXEC_SKILL_LEVEL-EXEC_SKILL_HIGH_LIM_OFFSET)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
-        worker_list.append(worker)
+        exec_worker_list.append(worker)
+        # worker_list.append(worker)
 
-    country.population = country.population + (num_of_juniors + num_of_seniors + num_of_executives)
+    employed_jun_list, employed_sen_list, employed_exec_list, all_workers_list = initialize_employed_population(jun_worker_list, sen_worker_list, exec_worker_list, employed_at_startup)
 
-    return worker_list, num_of_juniors, num_of_seniors, num_of_executives
+    # country.population = country.population + (num_of_juniors + num_of_seniors + num_of_executives)
 
+    unemp_num_of_jun = num_of_juniors - len(employed_jun_list)
+    unemp_num_of_sen = num_of_seniors - len(employed_sen_list)
+    unemp_num_of_exec = num_of_executives - len(employed_exec_list)
+
+    return all_workers_list, unemp_num_of_jun, unemp_num_of_sen, unemp_num_of_exec, employed_jun_list, employed_sen_list, employed_exec_list
+
+
+def initialize_employed_population(jun_worker_list, sen_worker_list, exec_worker_list, employed_at_startup):
+
+    all_workers_list = []
+    employed_at_startup = floor(employed_at_startup/3)
+
+    jun_worker_list = sorted(jun_worker_list, key=lambda x: x.worker_score, reverse=True)
+    sen_worker_list = sorted(sen_worker_list, key=lambda x: x.worker_score, reverse=True)
+    exec_worker_list = sorted(exec_worker_list, key=lambda x: x.worker_score, reverse=True)
+
+    employed_jun_list = jun_worker_list[:employed_at_startup]
+    jun_worker_list = jun_worker_list[employed_at_startup:]
+
+    employed_sen_list = sen_worker_list[:employed_at_startup]
+    sen_worker_list = sen_worker_list[employed_at_startup:]
+
+    employed_exec_list = exec_worker_list[:employed_at_startup]
+    exec_worker_list = exec_worker_list[employed_at_startup:]
+
+    all_workers_list.extend(jun_worker_list)
+    all_workers_list.extend(sen_worker_list)
+    all_workers_list.extend(exec_worker_list)
+
+    return employed_jun_list, employed_sen_list, employed_exec_list, all_workers_list
 
 def initialize_employee(initial_balance, country, worker, age, skill_level):
     

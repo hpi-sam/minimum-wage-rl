@@ -1,69 +1,22 @@
-from django.test import TestCase
+class worker_obj:
 
-# Create your tests here.
-# game = Game(1)
-# game.reset()
-# print("one")
-# action_map = {"minimum_wage":3.2}
-# _, obs, rew, info, done = game.step(action_map)
-
-# all_cmp = game.country.company_list
-# cmp = all_cmp[0]
-
-# print(obs)
-
-# print("two")
-
-# game.reset()
-
-# print("done")
+    def __init__(self, ws, num) -> None:
+        self.worker_score = ws
+        self.num = num
 
 
+w1 = worker_obj(20, 1)
+w2 = worker_obj(19, 2)
+w3 = worker_obj(21, 3)
+w4 = worker_obj(18, 4)
+w5 = worker_obj(22, 5)
 
+w_list  = [w1, w2, w3, w4, w5]
 
+for i, w_obj in enumerate(w_list):
+    print(i, w_obj.worker_score)
 
-# def construct_actions(actions):
+# w_list_2 = sorted(w_list, key=lambda x:x.worker_score, reverse=True)
 
-#     action_list = list()
-#     for each_action in actions:
-#         action_map = {"minimum_wage":round(each_action, 2)}
-#         action_list.append(action_map)
-
-#     return action_list
-
-
-
-# import torch
-# from AI_model.actor_critic.models import GaussianActor
-# from AI_model.actor_critic.models import Critic
-# import numpy as np
-
-# ga = GaussianActor(1)
-
-# data = []
-
-# for i in range(1, 4):
-#     d1 = [[i*0.1,i+0.2,i+0.3, i+0.4,i+0.5,i+0.6,i+0.7], i*0.5, i *2.5, False]
-#     data.append(d1)
-
-# # obs,  np.asarray(reward), message, state = 
-# obs, rew, info, done = zip(*data)
-
-# rew = np.asarray(rew)
-# done = np.asarray(done)
-
-# obs = torch.tensor(obs)
-# rew = torch.tensor(rew).unsqueeze(-1)
-
-# # v = ga(obs)
-# critic = Critic()
-# v1 = critic(obs)
-
-# print(v1)
-
-# actions = v["action"].detach().squeeze().numpy()
-
-# p = construct_actions(actions)
-
-# print(p)
-
+# for w_obj in w_list_2:
+#     print(w_obj.worker_score)
