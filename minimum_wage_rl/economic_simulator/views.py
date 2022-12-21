@@ -25,8 +25,8 @@ from stable_baselines3 import SAC
 
 # Create your views here.
 
-model_Lbasic = SAC.load("economic_simulator/best_model_basic")
-model_L4 = SAC.load("economic_simulator/model_l4_full_sub_v1")
+model_Lbasic = SAC.load("economic_simulator/best_model/lbasic_full_sub_v1")
+model_L4 = SAC.load("economic_simulator/best_model/l4_all_sub_v2")
 
 
 @api_view(http_method_names=['GET'])
