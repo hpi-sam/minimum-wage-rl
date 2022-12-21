@@ -21,9 +21,11 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         inflation_weightage = 0
     else:
         inflation_weightage = country.inflation
-    
-    all_emp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), emp_worker_list, 0 )
-    all_unemp_workers_acct = reduce(lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)), unemp_worker_list, 0 )
+
+    add_acct_bal_func = lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)) if worker.worker_account_balance > 0 else 0
+
+    all_emp_workers_acct = reduce(add_acct_bal_func, emp_worker_list, 0 )    
+    all_unemp_workers_acct = reduce(add_acct_bal_func, unemp_worker_list, 0 )
 
     old_money_circulation = country.money_circulation
     current_money_circulation = all_emp_workers_acct + all_unemp_workers_acct
@@ -158,7 +160,7 @@ def import_quantity(produce_quantity, price, country):
     money_needed = produce_quantity * price
     oil_cost = country.OIL_COST_PER_LITRE
     # oil_cost = np.random.normal(loc=Country.OIL_COST_PER_LITRE, scale=0.2)
-    transport_cost = produce_quantity * Country.OIL_PER_UNIT_QUANTITY * country.OIL_COST_PER_LITRE
+    transport_cost = produce_quantity * Country.OIL_PER_UNIT_QUANTITY * oil_cost
 
     if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > (money_needed + transport_cost):
         country.bank.liquid_capital = country.bank.liquid_capital - money_needed
@@ -244,8 +246,17 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
             worker_money_deposited =  country.product_price * 12                     
 
         else:
-            payable_months = floor(each_worker.worker_account_balance/country.product_price)
+            if each_worker.worker_account_balance > 0:
+                payable_months = floor(each_worker.worker_account_balance/country.product_price)
+            else:
+                payable_months = 0
+
+            non_payable_months = 12-payable_months
+            non_payable_amount = (country.product_price - (country.product_price * Country.SUBSIDY)) * non_payable_months
+
             each_worker.worker_account_balance = each_worker.worker_account_balance - country.product_price * payable_months
+            each_worker.worker_account_balance = each_worker.worker_account_balance - non_payable_amount
+
             country.bank.liquid_capital = country.bank.liquid_capital + country.product_price * payable_months
             country.quantity = country.quantity - payable_months
             poverty_count = poverty_count + 1

@@ -32,11 +32,20 @@ def start(user, level, ai_flag, player_game):
     if game.level == 1:
         config_level = "Level_1"
     elif game.level == 2:
-        config_level = "Level_2"    
+        level = 1
+        # np.random.randint(1,4)
+        config_level = "Level_" + str(level)
+        stagflation_config = True
+        # config_level = "Level_2"    
     elif game.level == 3:
-        config_level = "Level_3"
+        level = 1
+        # np.random.randint(1,4)
+        config_level = "Level_" + str(level)
+        stagflation_config = True        
+        # config_level = "Level_2"
     elif game.level == 4:
-        level = np.random.randint(1,4)
+        level = 1
+        # np.random.randint(1,4)
         config_level = "Level_" + str(level)
         stagflation_config = True
 
@@ -201,7 +210,8 @@ def start(user, level, ai_flag, player_game):
 
 def set_stagflation_parameters(country):
     country.stagflation_flag = True
-    country.stagflation_start = np.random.randint(4,8)
+    country.stagflation_start = 6
+    # np.random.randint(5,7)
     country.stagflation_end = country.stagflation_start + Country.STAGFLATION_DURATION
 
 def get_central_bank_balance(initial_bank_balance_percent, country):

@@ -1,8 +1,9 @@
 # from math import ceil, floor
 
 from math import ceil
+import numpy as np
 from economic_simulator.models.metrics import Metric
-from economic_simulator.utility.code_files.common_module import retire
+# from economic_simulator.utility.code_files.common_module import retire
 from ..models.worker import Worker
 from ..models.bank import Bank
 from ..models.country import Country
@@ -22,7 +23,7 @@ from .code_files import hiring_module
 
 from .config import ConfigurationParser
 from django.db import models
-import numpy as np
+
 # from functools import reduce
 from django.db import transaction
 
@@ -114,7 +115,7 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
 
     metrics.old_bank_account_balance = float(country.bank.liquid_capital)
     # ================ 1: COUNTRY MODULE - Increase population ================
-    if country.year % 2 == 0:
+    if country.year % 4 == 0:
         new_workers_list =  country_module.increase_population(country)
     else:
         new_workers_list = []
@@ -169,7 +170,7 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
 
         # 3.5: Create Jobs/Fire people
         operation_map = {"close":False,"fired_workers":[],"employed_workers":[]}
-        company_module.hiring_and_firing(each_company, operation_map, country)
+        company_module.hiring_and_firing(each_company, operation_map)
 
         total_open_positions = total_open_positions + each_company.open_junior_pos
         total_open_positions = total_open_positions + each_company.open_senior_pos

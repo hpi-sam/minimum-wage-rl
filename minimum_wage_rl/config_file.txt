@@ -51,11 +51,13 @@ startup_skill=0.2
 
 [country]
 initial_printed_cash=500.0
+initial_population=500
 corporate_tax=0.15
 income_tax=0.1
 oil_per_unit_quantity=0.5
 oil_cost_per_litre=0.75
 population_growth=20
+product_subsidy=1.0
 
 [bank]
 initial_interest_rates=0.1
@@ -98,7 +100,7 @@ ai_scenario_file=ai_scenario_data_test.xlsx
 root_folder=data
 
 [meta]
-training_steps=15
+training_steps=30
 market_steps=3600
 
 [training]
@@ -113,19 +115,19 @@ poverty_weightage = 1
 unemp_weightage = 1
 
 [stagflation]
-stagflation_duration=10
-oil_rate_increase=0.2
-cost_of_operation_increase=0.15
+stagflation_duration=6
+oil_rate_increase=0.1
+cost_of_operation_increase=0.1
 revenue_decrease_rate=0.2
 
 [Level_1]
 rich_jun_workers_percentage=0
 rich_sen_workers_percentage=0
 rich_exec_workers_percentage=0
-employed_at_startup=0.10
+employed_at_startup=0.15
 initial_bank_balance_percent=0.5
 initial_each_level_population=500
-population_increase=0.02
+population_increase=0.05
 
 [Level_2]
 rich_jun_workers_percentage=0

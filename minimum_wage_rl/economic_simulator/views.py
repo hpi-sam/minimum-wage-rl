@@ -25,7 +25,9 @@ from stable_baselines3 import SAC
 
 # Create your views here.
 
-model = SAC.load("economic_simulator/sac_model")
+model_Lbasic = SAC.load("economic_simulator/best_model_basic")
+model_L4 = SAC.load("economic_simulator/model_l4_full_sub_v1")
+
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
@@ -133,7 +135,11 @@ def __run_step(user, action_map):
     
     ai_game, ai_current_state, ai_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
     ai_game_state = np.array(ai_state_values)
-    ai_minwage_action, _states = model.predict(ai_game_state, deterministic=True)
+    if ai_game.level == 1:        
+        ai_minwage_action, _states = model_Lbasic.predict(ai_game_state, deterministic=True)
+    else:
+        ai_minwage_action, _states = model_L4.predict(ai_game_state, deterministic=True)
+    
     ai_action_map = {"minimum_wage": ai_minwage_action}
     
     ai_game, ai_game_state, state_values, reward, message, done = step(ai_action_map, user, ai_flag, game.game_number)

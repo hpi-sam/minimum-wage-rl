@@ -32,7 +32,6 @@ class Country(models.Model):
     INCOME_TAX = float(config_parser.get("country","income_tax"))
     INITIAL_BANK_BALANCE = float(config_parser.get("bank","initial_bank_balance"))
     OIL_PER_UNIT_QUANTITY = float(config_parser.get("country","oil_per_unit_quantity"))
-    # OIL_COST_PER_LITRE = float(config_parser.get("country","oil_cost_per_litre"))
     INITIAL_OIL_COST = float(config_parser.get("country","oil_cost_per_litre"))
     POPULATION_GROWTH = int(config_parser.get("country","population_growth"))    
 
@@ -41,7 +40,7 @@ class Country(models.Model):
     OIL_RATE_INCREASE = float(config_parser.get("stagflation","oil_rate_increase"))
     COST_OF_OPERATION_INCREASE = float(config_parser.get("stagflation","cost_of_operation_increase"))
     REVENUE_DECREASE_RATE = float(config_parser.get("stagflation","revenue_decrease_rate"))    
-
+    SUBSIDY = float(config_parser.get("country","product_subsidy"))
 
     # 2: Components
     country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -119,7 +119,7 @@ def yearly_financial_transactions(company, country, retired_workers_list):
 
 # ===================================== HIRING AND FIRING - START ===================================== 
 
-def hiring_and_firing(company, operation_map, country):
+def hiring_and_firing(company, operation_map):
 
     
     if company.company_account_balance < Market.MINIMUM_COMPANY_BALANCE:
