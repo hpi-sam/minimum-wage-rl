@@ -32,6 +32,7 @@ def evaluate_worker(all_workers_list, startup_workers_list, unemp_jun_worker_lis
             
             if max_startup_score < worker.start_up_score:
                 max_startup_score = worker.start_up_score
+            
             if len(startup_workers_list) < 200:
                 startup_workers_list.append(worker)
             else:
@@ -124,6 +125,7 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
             
             # Company could not be created
             else:
+                # if each_startup_founder.skill_level <= MAX_SKILL_LEVEL
                 each_startup_founder.skill_level = each_startup_founder.skill_level + \
                                                 each_startup_founder.skill_level * Market.STARTUP_SKILL_IMPROVEMENT
 

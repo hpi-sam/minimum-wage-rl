@@ -53,7 +53,8 @@ def create_bank(initial_bank_balance):
     
 
 def increase_population(country):
-    increased_population = country.population * 0.01
+    increased_population = country.population * country.population_increase
+    # 0.01
     actual_increased_population = increased_population
     # int(np.random.normal(loc=increased_population, scale=2.0))
     each_level_population = int(actual_increased_population/3)

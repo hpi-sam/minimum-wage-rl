@@ -78,3 +78,4 @@ class Country():
         self.COMPANY_REVENUE_PERCENTAGE = 1.0
         self.OIL_COST_PER_LITRE = Country.INITIAL_OIL_COST
         self.COST_OF_OPERATION = Country.INITIAL_COST_OF_OPERATION
+        self.population_increase = 0.01

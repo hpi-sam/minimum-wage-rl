@@ -17,6 +17,7 @@ from .code_files import workers_module
 from .code_files import inflation_module_2
 from .code_files import metrics_module
 from .code_files import hiring_module
+from .code_files import common_module
 
 from .config import ConfigurationParser
 import logging
@@ -37,6 +38,14 @@ max_steps = int(config_parser.get("meta","training_steps"))
 MAX_SKILL_LEVEL = int(config_parser.get("worker","exec_skill_level"))
 
 
+max_jun_avg_bal = 260
+min_jun_avg_bal = 0.64
+
+max_sen_avg_bal = 368.55
+min_sen_avg_bal = 0.77
+
+max_product_price = 71
+min_product_price = 5
 
 def step(game, action_map):
     
@@ -357,6 +366,9 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     country.employed_workers = emp_worker_list
     country.unemployed_workers = unemp_worker_list
 
+
+    avg_jun_acct_balance, avg_sen_acct_balance, avg_exec_acct_balance =  common_module.get_avg_acct_balance(emp_worker_list, unemp_worker_list)
+
     # save bank
     # country.bank.save()
     
@@ -401,22 +413,23 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     # logging.info("Uemployment Rate - " + str(metrics.unemployment_rate) + " ,Poverty Rate - " + str(metrics.poverty_rate))    
 
     # current_state, 
-    current_state, state_values, reward, done, info =  get_current_state_reward(country, metrics)
+    current_state, state_values, reward, done, info =  get_current_state_reward(avg_jun_acct_balance, avg_sen_acct_balance, avg_exec_acct_balance,  country, metrics)
 
     # For excel
     # country = Country()
     
+    m_avg_jun_acct_balance = info["avg_jun_acct_balance"]
+    m_avg_sen_acct_balance = info["avg_senior_acct_balance"]
+    m_avg_exec_acct_balance = info["avg_exec_acct_balance"]
 
     if game.episode_number>0:
         game_metric = game.game_metric_list[-1]
         m_values = [country.year, round(metrics.minimum_wage,2), metrics.unemployment_rate, metrics.poverty_rate, metrics.inflation,
                     metrics.product_price,  metrics.quantity, round(metrics.bank_account_balance,2), country.population, 
-                    country.OIL_COST_PER_LITRE, country.COMPANY_REVENUE_PERCENTAGE, country.COST_OF_OPERATION,
-                    
-
+                    country.OIL_COST_PER_LITRE, country.COMPANY_REVENUE_PERCENTAGE, country.COST_OF_OPERATION,                    
                     metrics.unemployed_junior_rate, metrics.unemployed_senior_rate, metrics.unemployed_exec_rate, 
                     metrics.num_small_companies, metrics.num_medium_companies, metrics.num_large_companies, 
-                    metrics.money_circulation, game.level]
+                    metrics.money_circulation, m_avg_jun_acct_balance ,m_avg_sen_acct_balance,m_avg_exec_acct_balance, game.level]
         game_metric.metric_list.append(m_values)
         game.game_metric_list[-1] = game_metric
     
@@ -517,7 +530,7 @@ def close_company(each_company, fired_workers):
     return each_company
 
 
-def get_current_state_reward(country, metrics):
+def get_current_state_reward(avg_jun_acct_balance, avg_senior_acct_balance, avg_exec_acct_balance,country, metrics):
 
     country_companies_list = country.company_list
 
@@ -540,7 +553,7 @@ def get_current_state_reward(country, metrics):
     current_state["Start Up Founders Current Year"] = metrics.startup_founders
 
 
-    state_values, reward = get_game_state(metrics)
+    state_values, reward = get_game_state(avg_jun_acct_balance, avg_senior_acct_balance ,metrics)
 
     message = ""
     if country.year >= max_steps:
@@ -559,26 +572,55 @@ def get_current_state_reward(country, metrics):
     else:
         done = False
         message = message + "Episode - " + str(country.year)
-    info = {"message" : message, "money_circulation":country.money_circulation}
+    info = dict()
+    info["message"] = message
+    info["money_circulation"] = country.money_circulation
+    info["avg_jun_acct_balance"] = avg_jun_acct_balance
+    info["avg_senior_acct_balance"] = avg_senior_acct_balance
+    info["avg_exec_acct_balance"]  = avg_exec_acct_balance
+
     return current_state, state_values, float(reward), done, info
 
 
-def calculate_reward(metrics):
+def calculate_reward(avg_jun_acct_balance, avg_senior_acct_balance, metrics):
     poverty_weightage = int(config_parser.get("reward","poverty_weightage"))
     unemp_weightage = int(config_parser.get("reward","unemp_weightage"))
 
     # r1 = metrics.old_poverty_rate - metrics.poverty_rate
     # r2 = metrics.old_unemployment_rate - metrics.unemployment_rate
-
-    r1 = 1- (metrics.unemployment_rate/100)
-    #  * unemp_weightage
-    # r2 =  - (metrics.poverty_rate/100)
-    r2 = -metrics.poverty_rate/100
-
     # r2 = 100 - (metrics.poverty_rate)
     # * poverty_weightage
     # r1 +
+    #  * unemp_weightage
+    # r2 =  - (metrics.poverty_rate/100)
+    max_jun_avg_bal = 260
+    min_jun_avg_bal = 0.64
+
+    max_sen_avg_bal = 368.55
+    min_sen_avg_bal = 0.77
+
+    max_product_price = 71
+    min_product_price = 5
+
+    jun_avg_bal_range = max_jun_avg_bal - min_jun_avg_bal
+    sen_avg_bal_range = max_sen_avg_bal - min_sen_avg_bal
+    product_price_range = max_product_price - min_product_price        
+
+    jun_acct_bal_weight = 0.1
+    sen_acct_bal_weight = 0.25
+    inflation_weight = 0.25
+    product_price_weight = 0.9
+
+    # (inflation_weight * metrics.inflation) -
+    # (sen_acct_bal_weight * avg_senior_acct_balance(sen_avg_bal_range)) - \
+
+    r = (jun_acct_bal_weight * avg_jun_acct_balance/(jun_avg_bal_range)) + \
+        (product_price_weight * metrics.product_price/(product_price_range))
+
+    r1 = 1- (metrics.unemployment_rate/100)
+    r2 = -metrics.poverty_rate/100
     
+    # return r2
     return r2
 
 def get_state(game):
@@ -588,14 +630,17 @@ def get_state(game):
     metric = country.metrics_list[-1] 
     # Metric.objects.filter(country_of_residence=country).last()
     # current_state,
-    current_state, state_values, reward, done, info = get_current_state_reward(country, metric)
 
+    emp_worker_list = country.employed_workers
+    unemp_worker_list = country.unemployed_workers
 
+    avg_jun_acct_balance, avg_sen_acct_balance, avg_exec_acct_balance = common_module.get_avg_acct_balance(emp_worker_list, unemp_worker_list)
 
-    # current_state,
+    current_state, state_values, reward, done, info = get_current_state_reward(avg_jun_acct_balance, avg_sen_acct_balance,avg_exec_acct_balance, country, metric)
+
     return  state_values, reward, done, info
 
-def get_game_state(metric):
+def get_game_state(avg_jun_acct_balance, avg_senior_acct_balance, metric):
     state_values = []
 
     state_values.append(metric.minimum_wage)
@@ -618,6 +663,6 @@ def get_game_state(metric):
     state_values.append(float("{:.6f}".format(np.log(metric.money_circulation) if metric.money_circulation>0 else metric.money_circulation )))
     state_values.append(float("{:.6f}".format(np.log(metric.population))))
 
-    reward = calculate_reward(metric)
+    reward = calculate_reward(avg_jun_acct_balance, avg_senior_acct_balance, metric)
 
     return state_values, reward

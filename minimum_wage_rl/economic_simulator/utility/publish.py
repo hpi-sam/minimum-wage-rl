@@ -8,7 +8,7 @@ import pandas as pd
 
 col_values = ["Year", "Minimum Wage", "Unemp Rate", "Poverty Rate", "Inflation", "Product Price", 
 "Quantity", "Bank Balance", "Population", "Oil Cost", "Company Revenue",  "Cost of Operation", "Junior Employment", "Senior Unemployment", "Executive Unemployment",
-"Small Comp", "Medium Comp", "Large Comp", "Money Circulation", "Game Level"]
+"Small Comp", "Medium Comp", "Large Comp", "Money Circulation", "Avg_Jun_acct_balance", "Avg_Sen_acct_balance", "Avg_Exec_acct_balance",  "Game Level"]
 
 
 def get_metric_data(data_map, metric):
@@ -41,7 +41,7 @@ def get_metric_data(data_map, metric):
     # data_map["Quantity"].append(metric.quantity)
 
 
-def export_from_game_metric(game_num, game_metric_list, version_num):
+def export_from_game_metric(game_num, game_metric_list, version_num, trained_data_folder):
     
     df_list = []
     
@@ -58,8 +58,10 @@ def export_from_game_metric(game_num, game_metric_list, version_num):
 
         df_list.append(new_df)
 
+        poverty_rate = new_df["Poverty Rate"]
+
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter('game_train' + str(version_num)+ '.xlsx')
+    writer = pd.ExcelWriter(trained_data_folder +'game_train' + str(version_num)+ '.xlsx')
 
 
     # Write each dataframe to a different worksheet.
@@ -71,6 +73,7 @@ def export_from_game_metric(game_num, game_metric_list, version_num):
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
     writer.close()
+    return
 
 # def export_to_excel(user):
 #     country_list = list(Country.objects.filter(player=user))

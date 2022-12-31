@@ -24,30 +24,46 @@ import numpy as np
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-mlflow.set_experiment(experiment_name="deploy")
-with mlflow.start_run(run_name="level_4_v3"):
+mlflow.set_experiment(experiment_name="Level3_with_stag")
+
+with mlflow.start_run(run_name="L1_sml_epi_80p_poor_explore"):
+
+    mlflow.log_param("Population_increase" ,0.03)
+    mlflow.log_param("Initial Population", 1500)
+    mlflow.log_param("Stagflation", True)
+    mlflow.log_param("Poverty Penalty",True)
+    mlflow.log_param("Initial Above poverty percentage", 20)
+
     game_env_1 = EconomyEnv()
     game_env_1.env.level=4
 
     test_game = EconomyEnv()
     test_game.env.level=4
     eval_game_env = Monitor(test_game)
-    best_model_name = "l4_v3"
-    sim_eval_callback = SimulatorEvaluationCallBack(eval_env=eval_game_env, eval_freq=500,n_eval_episodes=1,best_model_save_path="best_models/"+best_model_name+"/")
+    best_model_name = "L1_sml_epi_80p_v1"
+    root_folder = "Level3_with_stag/"
+    best_model_folder =  root_folder + "best_model/"
+    train_data_folder = root_folder + "train_data/"
+    test_data_folder = root_folder + "test_data/"
+    trained_model_folder = root_folder + "model/"
+
+    sim_eval_callback = SimulatorEvaluationCallBack(eval_env=eval_game_env, eval_freq=500,n_eval_episodes=1,best_model_save_path=best_model_folder+best_model_name+"/")
     logger = Logger(folder=None, output_formats=[HumanOutputFormat(sys.stdout), MLflowOutputFormat()])
 
     agent = SAC(policy="MlpPolicy", env=game_env_1, verbose=1, learning_starts=15000)
-
-    # agent = SAC.load("best_models/full_subsidy_v1/best_model")
+    # old_best_model_name="L1_PP_v2/"
+    # old_best_model_name="L1_NP_v1/"
+    # agent = SAC.load(trained_model_folder +"model_L1_PP_to_NP_full_model_v1")
     # agent.set_env(game_env_1)    
 
     agent.set_logger(logger=logger)
-    agent.learn(total_timesteps=40000, callback=sim_eval_callback)
+    agent.learn(total_timesteps=45000, callback=sim_eval_callback)
 
     print(" ============================================= here ======================================")
 
     
     env_list = [game_env_1.env]
+    train_excel_file_name = "_" + "L1_stag_sml_epi_80p_v1" +"_"
     for i, each_env in enumerate(env_list):
         j = 1   + i
         my_game = each_env
@@ -55,7 +71,7 @@ with mlflow.start_run(run_name="level_4_v3"):
         gm_list = my_game.game_metric_list
         # [300:]
         # 
-        export_from_game_metric(my_game.game_number, gm_list, "_l4_v3_" + str(j))
+        export_from_game_metric(my_game.game_number, gm_list, train_excel_file_name + str(j), train_data_folder)
 
 
     game_env_2 = EconomyEnv()
@@ -64,7 +80,7 @@ with mlflow.start_run(run_name="level_4_v3"):
 
     results = list()
 
-    for i in range(50):
+    for i in range(30):
         action, _states = agent.predict(obs, deterministic=True)
         obs, reward, done, info = game_env_2.step(action)
         # env.render()
@@ -72,10 +88,11 @@ with mlflow.start_run(run_name="level_4_v3"):
         if done:
             obs = game_env_2.reset()
 
-    test_version = "_test_l4_v3_"
-    export_test_data(results, test_version)
+    test_excel_file_name = "_" + "L1_stag_sml_epi_80p_v1" + "_"
+    export_test_data(results, test_excel_file_name, test_data_folder)
 
-    agent.save("model_l4_v3")
+    final_model_prefix = "_" + "L1_stag_sml_epi_80p_v1"
+    agent.save(trained_model_folder + "model"+final_model_prefix)
 
     # =============================================================================================
 

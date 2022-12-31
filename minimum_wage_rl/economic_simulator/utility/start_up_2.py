@@ -25,7 +25,7 @@ def start(game, episode_num):
     config_level = None
     stagflation_config = False
 
-    # level = np.random.randint(1,4)
+    # level = np.random.randint(1,3)
     # game.level = level
 
     if game.level == 1:
@@ -33,10 +33,11 @@ def start(game, episode_num):
     elif game.level == 2:
         config_level = "Level_2"    
     elif game.level == 3:
-        config_level = "Level_3"
+        config_level = "Level_1"
     elif game.level == 4:
 
-        level = np.random.randint(1,3)
+        level = 1
+        # np.random.randint(1,3)
 
         config_level = "Level_" + str(level)
         stagflation_config = True    
@@ -85,6 +86,7 @@ def start(game, episode_num):
     country = Country(each_level_population)
     # country.total_money_printed = Country.INITIAL_BANK_BALANCE
     country_module.create_country(country)
+    country.population_increase = float(config_parser.get(config_level,"population_increase"))
     
     initial_bank_balance = get_central_bank_balance(initial_bank_balance_percent, country)
     country.INITIAL_BANK_BALANCE = initial_bank_balance
@@ -167,7 +169,7 @@ def start(game, episode_num):
 def set_stagflation_parameters(country):
     country.stagflation_flag = True
     country.stagflation_start = 6
-    # np.random.randint(5,8)
+    # np.random.randint(5,7)
     country.stagflation_end = country.stagflation_start + Country.STAGFLATION_DURATION
 
 def get_central_bank_balance(initial_bank_balance_percent, country):
