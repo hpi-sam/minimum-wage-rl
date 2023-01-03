@@ -32,17 +32,9 @@ def start(user, level, ai_flag, player_game):
     if game.level == 1:
         config_level = "Level_1"
     elif game.level == 2:
-        level = 1
-        # np.random.randint(1,4)
-        config_level = "Level_" + str(level)
-        stagflation_config = True
-        # config_level = "Level_2"    
+        config_level = "Level_2"
     elif game.level == 3:
-        level = 1
-        # np.random.randint(1,4)
-        config_level = "Level_" + str(level)
-        stagflation_config = True        
-        # config_level = "Level_2"
+        config_level = "Level_1"
     elif game.level == 4:
         level = 1
         # np.random.randint(1,4)

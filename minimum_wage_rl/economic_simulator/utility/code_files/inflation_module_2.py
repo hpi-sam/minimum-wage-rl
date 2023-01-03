@@ -28,6 +28,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     all_unemp_workers_acct = reduce(add_acct_bal_func, unemp_worker_list, 0 )
 
     old_money_circulation = country.money_circulation
+    metrics.old_money_circulation = old_money_circulation
+    
     current_money_circulation = all_emp_workers_acct + all_unemp_workers_acct
     country.money_circulation = current_money_circulation    
     velocity_of_money = 1

@@ -656,11 +656,9 @@ def calculate_reward(metrics):
     unemp_weightage = int(config_parser.get("reward","unemp_weightage"))
 
     r1 = 1 - (metrics.unemployment_rate/100)
-    #  * unemp_weightage
-    r2 = 1 - (metrics.poverty_rate/100)
-    # * poverty_weightage
-    # r1 +
-    return  r1 + r2
+    r2 = - (metrics.poverty_rate/100)
+
+    return r2
 
 def get_state(user, ai_flag, player_game_number):
     game = __get_latest_game(user, player_game_number)
@@ -694,15 +692,27 @@ def get_state(user, ai_flag, player_game_number):
 
 def get_game_state(metric):
     state_values = []
+    # state_values.append(metric.minimum_wage)
+    # state_values.append(metric.product_price)
+    # state_values.append(float("{:.6f}".format(np.log(metric.produced_quantity))))
+    # state_values.append(metric.unemployment_rate/100)
+    # state_values.append(metric.inflation)
+    # state_values.append(float("{:.6f}".format(np.log(metric.bank_account_balance))))    
+    # state_values.append(metric.poverty_rate/100)
+    # state_values.append(float("{:.6f}".format(np.log(metric.money_circulation))))
+    # state_values.append(float("{:.6f}".format(np.log(metric.population))))
+
+
     state_values.append(metric.minimum_wage)
-    state_values.append(metric.product_price)
+    state_values.append(float("{:.6f}".format(np.log(metric.product_price))))
     state_values.append(float("{:.6f}".format(np.log(metric.produced_quantity))))
     state_values.append(metric.unemployment_rate/100)
     state_values.append(metric.inflation)
     state_values.append(float("{:.6f}".format(np.log(metric.bank_account_balance))))    
     state_values.append(metric.poverty_rate/100)
-    state_values.append(float("{:.6f}".format(np.log(metric.money_circulation))))
+    state_values.append(float("{:.6f}".format(np.log(metric.money_circulation) if metric.money_circulation>0 else metric.money_circulation )))
     state_values.append(float("{:.6f}".format(np.log(metric.population))))
+
 
     reward = calculate_reward(metric)
 

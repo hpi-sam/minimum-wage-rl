@@ -23,10 +23,19 @@ from rest_framework.authtoken.views import ObtainAuthToken
 import numpy as np
 from stable_baselines3 import SAC
 
-# Create your views here.
+model_root_folder = "economic_simulator/trained_models/"
+Level1_AI_model_name = "model_L1_1500"
+Level2_AI_model_name = "model_L2_3000"
+Level3_AI_model_name = "model_L3_Stagflation"
 
-model_Lbasic = SAC.load("economic_simulator/best_model/lbasic_full_sub_v1")
-model_L4 = SAC.load("economic_simulator/best_model/l4_all_sub_v2")
+# Level-1 AI model
+model_L1 = SAC.load(model_root_folder + Level1_AI_model_name)
+
+# Level-2 AI model
+model_L2 = SAC.load(model_root_folder + Level2_AI_model_name)
+
+# Level-3 AI model
+model_L3_Stagflation = SAC.load(model_root_folder + Level3_AI_model_name)
 
 
 @api_view(http_method_names=['GET'])
@@ -34,7 +43,7 @@ model_L4 = SAC.load("economic_simulator/best_model/l4_all_sub_v2")
 @permission_classes([IsAuthenticated])
 def start_game(request):
 
-    default_level = "1"
+    default_level = "4"
     level = int(request.GET.get('level', default_level))
     # request.GET.get('level', default_level)
 
@@ -133,12 +142,9 @@ def __run_step(user, action_map):
 
     ai_flag = True
     
-    ai_game, ai_current_state, ai_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
-    ai_game_state = np.array(ai_state_values)
-    if ai_game.level == 1:        
-        ai_minwage_action, _states = model_Lbasic.predict(ai_game_state, deterministic=True)
-    else:
-        ai_minwage_action, _states = model_L4.predict(ai_game_state, deterministic=True)
+    ai_game, ai_unnormalized_state, ai_normalized_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
+    ai_game_state = np.array(ai_normalized_state_values)
+    ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
     
     ai_action_map = {"minimum_wage": ai_minwage_action}
     
@@ -148,6 +154,19 @@ def __run_step(user, action_map):
 
     json_reponse = json.loads(json.dumps(final_response))
     return Response({'status':200, 'message':json_reponse})
+
+def predict_minwage_action(ai_game, ai_game_state):
+    
+    if ai_game.level == 1:
+        # Level 1: 1500 Population level
+        ai_minwage_action, _states = model_L1.predict(ai_game_state, deterministic=True)
+    elif ai_game.level == 2:
+        # Level 2: 3000 Population level        
+        ai_minwage_action, _states = model_L2.predict(ai_game_state, deterministic=True)
+    else:
+        # Level 3: 1500 Population level along with Stagflation
+        ai_minwage_action, _states = model_L3_Stagflation.predict(ai_game_state, deterministic=True)        
+    return ai_minwage_action
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])

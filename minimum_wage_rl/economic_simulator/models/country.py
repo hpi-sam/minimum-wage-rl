@@ -89,3 +89,4 @@ class Country(models.Model):
     COMPANY_REVENUE_PERCENTAGE = models.FloatField(default=1.0)
     OIL_COST_PER_LITRE = models.FloatField(default=INITIAL_OIL_COST)  
     COST_OF_OPERATION = models.FloatField(default=INITIAL_COST_OF_OPERATION)
+    population_increase = models.FloatField(default=0.01)

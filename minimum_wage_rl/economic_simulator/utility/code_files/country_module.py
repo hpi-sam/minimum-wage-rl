@@ -53,7 +53,7 @@ def create_bank(bank, initial_bank_balance):
     return bank
     
 def increase_population(country):
-    increased_population = country.population * 0.01
+    increased_population = country.population * country.population_increase
 
     actual_increased_population = increased_population
     # int(np.random.normal(loc=increased_population, scale=2.0))
@@ -77,24 +77,30 @@ def increase_population(country):
     # Add Juniors
     for i in range(jun_worker_population):
         worker = Worker()
-        age = np.random.randint(18,20)
-        skill_level = np.random.randint(7, Worker.JUNIOR_SKILL_LEVEL-5)
+        age = 19
+        # np.random.randint(18,20)
+        skill_level = 8
+        # np.random.randint(7, Worker.JUNIOR_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         new_workers_list.append(worker)
     
     # Add Seniors
     for i in range(sen_worker_population):
         worker = Worker()
-        age = np.random.randint(20,23)
-        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL-5)
+        age = 21
+        # np.random.randint(20,23)
+        skill_level = 16
+        # np.random.randint(Worker.JUNIOR_SKILL_LEVEL+1, Worker.SENIOR_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         new_workers_list.append(worker)
         
     # Add Executives
     for i in range(exec_worker_population):
         worker = Worker()
-        age = np.random.randint(23,25)
-        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.EXEC_SKILL_LEVEL-5)
+        age = 24
+        # np.random.randint(23,25)
+        skill_level = 26
+        # np.random.randint(Worker.SENIOR_SKILL_LEVEL+1, Worker.EXEC_SKILL_LEVEL-5)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         new_workers_list.append(worker)
 
@@ -115,8 +121,10 @@ def add_new_workers(country, num_of_citizens, employed_at_startup, JUN_SKILL_LOW
     num_of_juniors = num_of_citizens
     for _ in range(num_of_juniors):
         worker = Worker()
-        age = np.random.randint(18,20)
-        skill_level = np.random.randint(JUN_SKILL_LOW_LIM, Worker.JUNIOR_SKILL_LEVEL-JUN_SKILL_HIGH_LIM_OFFSET)
+        age = 19
+        # np.random.randint(18,20)
+        skill_level = 8
+        # np.random.randint(JUN_SKILL_LOW_LIM, Worker.JUNIOR_SKILL_LEVEL-JUN_SKILL_HIGH_LIM_OFFSET)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         jun_worker_list.append(worker)        
         # worker_list.append(worker)
@@ -125,8 +133,10 @@ def add_new_workers(country, num_of_citizens, employed_at_startup, JUN_SKILL_LOW
     num_of_seniors = num_of_citizens
     for _ in range(num_of_seniors):
         worker = Worker()
-        age = np.random.randint(20,23)
-        skill_level = np.random.randint(Worker.JUNIOR_SKILL_LEVEL+SEN_SKILL_LOW_LIM_OFFSET, Worker.SENIOR_SKILL_LEVEL-SEN_SKILL_HIGH_LIM_OFFSET)
+        age = 21
+        # np.random.randint(20,23)
+        skill_level = 16
+        # np.random.randint(Worker.JUNIOR_SKILL_LEVEL+SEN_SKILL_LOW_LIM_OFFSET, Worker.SENIOR_SKILL_LEVEL-SEN_SKILL_HIGH_LIM_OFFSET)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         sen_worker_list.append(worker)
         # worker_list.append(worker)
@@ -135,8 +145,10 @@ def add_new_workers(country, num_of_citizens, employed_at_startup, JUN_SKILL_LOW
     num_of_executives = num_of_citizens
     for _ in range(num_of_executives):
         worker = Worker()
-        age = np.random.randint(23,25)
-        skill_level = np.random.randint(Worker.SENIOR_SKILL_LEVEL+EXEC_SKILL_LOW_LIM_OFFSET, Worker.EXEC_SKILL_LEVEL-EXEC_SKILL_HIGH_LIM_OFFSET)
+        age = 24
+        # np.random.randint(23,25)
+        skill_level = 26
+        # np.random.randint(Worker.SENIOR_SKILL_LEVEL+EXEC_SKILL_LOW_LIM_OFFSET, Worker.EXEC_SKILL_LEVEL-EXEC_SKILL_HIGH_LIM_OFFSET)
         initialize_employee(Worker.INITIAL_WORKER_BANK_BALANCE, country, worker, age, skill_level)
         exec_worker_list.append(worker)
         # worker_list.append(worker)
