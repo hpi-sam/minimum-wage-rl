@@ -99,7 +99,7 @@ def create_start_up(country, new_companies_list, startup_workers_list, unemp_jun
 
     index = 0
 
-    if len(open_companies_list) < 200:
+    if len(open_companies_list) < 2000:
         for each_startup_founder in startup_workers_list:
 
             amount_needed = 3 * Market.SMALL_CMP_INIT_BALANCE - each_startup_founder.worker_account_balance

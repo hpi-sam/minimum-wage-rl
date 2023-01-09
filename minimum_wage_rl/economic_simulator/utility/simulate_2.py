@@ -98,7 +98,8 @@ def step(game, action_map):
 
         done = True
         
-        info = {"message" : message, "money_circulation": country.money_circulation}
+        info = {"message" : message, "money_circulation": country.money_circulation, "poverty_rate":country.poverty_rate}
+
         return state_values, float(reward), done, info
 
 
@@ -552,6 +553,13 @@ def get_current_state_reward(avg_jun_acct_balance, avg_senior_acct_balance, avg_
     current_state["Retired Current Year"] = metrics.num_retired
     current_state["Start Up Founders Current Year"] = metrics.startup_founders
 
+    # print("--------------------------------------------------------------------------------")
+    # print("=========================== Every Step State - Start ===========================")
+    # for each_key in current_state.keys():
+    #     print(each_key, " ---> ", current_state[each_key])
+    # print("=========================== Every Step State - End ===========================")
+    # print("--------------------------------------------------------------------------------")
+
 
     state_values, reward = get_game_state(avg_jun_acct_balance, avg_senior_acct_balance ,metrics)
 
@@ -578,6 +586,7 @@ def get_current_state_reward(avg_jun_acct_balance, avg_senior_acct_balance, avg_
     info["avg_jun_acct_balance"] = avg_jun_acct_balance
     info["avg_senior_acct_balance"] = avg_senior_acct_balance
     info["avg_exec_acct_balance"]  = avg_exec_acct_balance
+    info["poverty_rate"] = metrics.poverty_rate
 
     return current_state, state_values, float(reward), done, info
 
@@ -645,21 +654,11 @@ def get_game_state(avg_jun_acct_balance, avg_senior_acct_balance, metric):
 
     state_values.append(metric.minimum_wage)
     state_values.append(float("{:.6f}".format(np.log(metric.product_price))))
-    # state_values.append(metric.quantity)
     state_values.append(float("{:.6f}".format(np.log(metric.produced_quantity))))
-    # /(Quantity_MAX-Quantity_MIN)
-    # 
-
     state_values.append(metric.unemployment_rate/100)
     state_values.append(metric.inflation)
-
-    # state_values.append(metric.bank_account_balance - metric.old_bank_account_balance)
-    # state_values.append(metric.bank_account_balance/(Bank_Balance_MAX-Bank_Balance_MIN))
-    state_values.append(float("{:.6f}".format(np.log(metric.bank_account_balance))))
-    
+    state_values.append(float("{:.6f}".format(np.log(metric.bank_account_balance))))    
     state_values.append(metric.poverty_rate/100)
-    # /100
-    # state_values.append(metric.money_circulation/(Money_Circulation_MAX-Money_Circulation_MIN))
     state_values.append(float("{:.6f}".format(np.log(metric.money_circulation) if metric.money_circulation>0 else metric.money_circulation )))
     state_values.append(float("{:.6f}".format(np.log(metric.population))))
 

@@ -132,18 +132,18 @@ initial_each_level_population=500
 population_increase=0.03
 
 [Level_2]
-rich_jun_workers_percentage=0
-rich_sen_workers_percentage=0
-rich_exec_workers_percentage=0
+rich_jun_workers_percentage=20
+rich_sen_workers_percentage=20
+rich_exec_workers_percentage=20
 employed_at_startup=0.15
 initial_bank_balance_percent=0.5
 initial_each_level_population=1000
 population_increase=0.03
 
 [Level_3]
-rich_jun_workers_percentage=0
-rich_sen_workers_percentage=0
-rich_exec_workers_percentage=0
+rich_jun_workers_percentage=20
+rich_sen_workers_percentage=20
+rich_exec_workers_percentage=20
 employed_at_startup=0.10
 initial_bank_balance_percent=0.5
 initial_each_level_population=1000

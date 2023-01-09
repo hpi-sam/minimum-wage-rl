@@ -61,6 +61,7 @@ def export_from_game_metric(game_num, game_metric_list, version_num, trained_dat
         poverty_rate = new_df["Poverty Rate"]
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
+    # d = 'Test_model/demo/'
     writer = pd.ExcelWriter(trained_data_folder +'game_train' + str(version_num)+ '.xlsx')
 
 
@@ -73,7 +74,7 @@ def export_from_game_metric(game_num, game_metric_list, version_num, trained_dat
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
     writer.close()
-    return
+    # return df_list[0]
 
 # def export_to_excel(user):
 #     country_list = list(Country.objects.filter(player=user))

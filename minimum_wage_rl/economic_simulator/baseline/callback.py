@@ -40,6 +40,7 @@ class SimulatorEvaluationCallBack(EvalCallback):
                         log_path, best_model_save_path, deterministic, render, verbose, warn)
         
         self.money_circulation = []
+        self.poverty_rate = []
             
 
     def _on_step(self) -> bool:
@@ -73,10 +74,15 @@ class SimulatorEvaluationCallBack(EvalCallback):
     
     def _reset_metrics(self):
         self.money_circulation = []
+        self.poverty_rate = []
 
     def _economic_metric_callback(self, locals_, globals_):
         self.money_circulation.append(locals_['info']['money_circulation'])
+        self.poverty_rate.append(locals_['info']['poverty_rate'])
     
     def _record_economic_metrics(self):
         average_money_circulation = np.mean(self.money_circulation)
+        average_poverty_rate = np.mean(self.poverty_rate)
         self.logger.record("eval/average_money_circulation", average_money_circulation)
+        self.logger.record("eval/average_poverty", average_poverty_rate)
+
