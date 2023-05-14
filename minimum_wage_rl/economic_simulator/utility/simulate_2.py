@@ -423,7 +423,7 @@ def run_market(country, country_companies_list, unemployed_workers_list, game):
     m_avg_sen_acct_balance = info["avg_senior_acct_balance"]
     m_avg_exec_acct_balance = info["avg_exec_acct_balance"]
 
-    if game.episode_number>0:
+    if game.episode_number > 0:
         game_metric = game.game_metric_list[-1]
         m_values = [country.year, round(metrics.minimum_wage,2), metrics.unemployment_rate, metrics.poverty_rate, metrics.inflation,
                     metrics.product_price,  metrics.quantity, round(metrics.bank_account_balance,2), country.population, 
@@ -630,7 +630,9 @@ def calculate_reward(avg_jun_acct_balance, avg_senior_acct_balance, metrics):
     r2 = -metrics.poverty_rate/100
     
     # return r2
-    return r2
+    # reward_here
+    scale = 1
+    return r2 * scale
 
 def get_state(game):
     # game = __get_latest_game(user)

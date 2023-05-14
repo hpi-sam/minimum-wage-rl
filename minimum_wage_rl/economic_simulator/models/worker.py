@@ -7,9 +7,14 @@
 # from .country import Country
 # from .company import Company
 
+# For Pycharm
+# from economic_simulator.utility.config import ConfigurationParser
+
+# For VS code
 from utility.config import ConfigurationParser
 
-file_name = "config_file.txt"
+root_folder = "C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\"
+file_name = root_folder + "config_file.txt"
 config_parser = ConfigurationParser.get_instance(file_name).parser
 
 
@@ -18,7 +23,7 @@ class Worker():
     BUY_EXTRA_ACCT_BALANCE = 5
     BUY_LUXURY_ACCT_BALANCE = 10
     # GENERAL_SKILL_LEVEL = int(config_parser.get("worker","general_skill_level"))
-    JUNIOR_SKILL_LEVEL = int(config_parser.get("worker","junior_skill_level"))
+    JUNIOR_SKILL_LEVEL = int(config_parser.get("worker", "junior_skill_level"))
     SENIOR_SKILL_LEVEL = int(config_parser.get("worker","senior_skill_level"))
     EXEC_SKILL_LEVEL = int(config_parser.get("worker","exec_skill_level"))    
     INITIAL_WORKER_BANK_BALANCE = float(config_parser.get("worker","initial_acct_balance")) 

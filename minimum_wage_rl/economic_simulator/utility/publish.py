@@ -62,7 +62,7 @@ def export_from_game_metric(game_num, game_metric_list, version_num, trained_dat
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     # d = 'Test_model/demo/'
-    writer = pd.ExcelWriter(trained_data_folder +'game_train' + str(version_num)+ '.xlsx')
+    writer = pd.ExcelWriter(trained_data_folder +'game_eval' + str(version_num)+ '.xlsx')
 
 
     # Write each dataframe to a different worksheet.

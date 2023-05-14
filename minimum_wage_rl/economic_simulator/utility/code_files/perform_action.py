@@ -40,6 +40,13 @@ def perform_action(action_map, country, discrete):
         else:
             country.minimum_wage = country.minimum_wage + get_discrete_action(min_wage_value)
     else:
+        # if country.minimum_wage + min_wage_value[0] < 7.0:
+        #     pass
+        # elif country.minimum_wage + min_wage_value[0] > 15:
+        #     pass
+        # else:
+        #     country.minimum_wage = country.minimum_wage + min_wage_value[0]
+
         country.minimum_wage = min_wage_value[0]
 
     # if discrete:

@@ -1,8 +1,17 @@
 # from ..utility.config import ConfigurationParser
 # config_parser = ConfigurationParser.get_instance().parser
+
+# For Pycharm
+# from economic_simulator.utility.start_up_2 import start
+# from economic_simulator.utility.simulate_2 import step
+# from economic_simulator.utility.simulate_2 import get_state
+
+# For VS Code
 from utility.start_up_2 import start
 from utility.simulate_2 import step
 from utility.simulate_2 import get_state
+
+
 import torch
 
 class Game():

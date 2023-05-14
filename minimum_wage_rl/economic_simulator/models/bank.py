@@ -1,9 +1,14 @@
 # from django.db import models
 # import uuid
 
+# For Pycharm
+# from economic_simulator.utility.config import ConfigurationParser/
+
+# For VS code
 from utility.config import ConfigurationParser
 
-file_name = "config_file.txt"
+root_folder = "C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\"
+file_name = root_folder + "config_file.txt"
 config_parser = ConfigurationParser.get_instance(file_name).parser
 
 class Bank():
