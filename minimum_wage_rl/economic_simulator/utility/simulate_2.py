@@ -38,14 +38,14 @@ max_steps = int(config_parser.get("meta","training_steps"))
 MAX_SKILL_LEVEL = int(config_parser.get("worker","exec_skill_level"))
 
 
-max_jun_avg_bal = 260
-min_jun_avg_bal = 0.64
+# max_jun_avg_bal = 260
+# min_jun_avg_bal = 0.64
 
-max_sen_avg_bal = 368.55
-min_sen_avg_bal = 0.77
+# max_sen_avg_bal = 368.55
+# min_sen_avg_bal = 0.77
 
-max_product_price = 71
-min_product_price = 5
+# max_product_price = 71
+# min_product_price = 5
 
 def step(game, action_map):
     
@@ -66,6 +66,8 @@ def step(game, action_map):
     # 
     # 
     if len(country_companies_list) > 0 and country.bank.liquid_capital > 0:
+        
+        # Increase age of all workers by 1
         for each_worker in country.unemployed_workers:
             each_worker.age = each_worker.age + 1
 
@@ -602,18 +604,18 @@ def calculate_reward(avg_jun_acct_balance, avg_senior_acct_balance, metrics):
     # r1 +
     #  * unemp_weightage
     # r2 =  - (metrics.poverty_rate/100)
-    max_jun_avg_bal = 260
-    min_jun_avg_bal = 0.64
+    # max_jun_avg_bal = 260
+    # min_jun_avg_bal = 0.64
 
-    max_sen_avg_bal = 368.55
-    min_sen_avg_bal = 0.77
+    # max_sen_avg_bal = 368.55
+    # min_sen_avg_bal = 0.77
 
-    max_product_price = 71
-    min_product_price = 5
+    # max_product_price = 71
+    # min_product_price = 5
 
-    jun_avg_bal_range = max_jun_avg_bal - min_jun_avg_bal
-    sen_avg_bal_range = max_sen_avg_bal - min_sen_avg_bal
-    product_price_range = max_product_price - min_product_price        
+    # jun_avg_bal_range = max_jun_avg_bal - min_jun_avg_bal
+    # sen_avg_bal_range = max_sen_avg_bal - min_sen_avg_bal
+    # product_price_range = max_product_price - min_product_price        
 
     jun_acct_bal_weight = 0.1
     sen_acct_bal_weight = 0.25
@@ -623,8 +625,8 @@ def calculate_reward(avg_jun_acct_balance, avg_senior_acct_balance, metrics):
     # (inflation_weight * metrics.inflation) -
     # (sen_acct_bal_weight * avg_senior_acct_balance(sen_avg_bal_range)) - \
 
-    r = (jun_acct_bal_weight * avg_jun_acct_balance/(jun_avg_bal_range)) + \
-        (product_price_weight * metrics.product_price/(product_price_range))
+    # r = (jun_acct_bal_weight * avg_jun_acct_balance/(jun_avg_bal_range)) + \
+    #     (product_price_weight * metrics.product_price/(product_price_range))
 
     r1 = 1- (metrics.unemployment_rate/100)
     r2 = -metrics.poverty_rate/100

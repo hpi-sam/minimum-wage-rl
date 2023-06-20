@@ -77,9 +77,10 @@ class Company():
         self.senior_workers_list = []
         self.exec_workers_list = []
 
+        # Only for standalone - start
         self.employed_workers_list = list()
-
         self.start_up_worker_list = list()
+        # Only for standalone - end
 
         # Connection to country
         # self.country = None

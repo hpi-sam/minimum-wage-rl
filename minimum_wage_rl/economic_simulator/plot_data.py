@@ -6,6 +6,7 @@ from numpy.lib.function_base import average
 plt.ion()
 import numpy as np
 import pandas as pd
+import time
 
 plt.style.use("dark_background")
 
@@ -160,49 +161,59 @@ class DynamicUpdate():
         plt.show(block=block_value)
         
 
-d = DynamicUpdate()
-d()
+def plot_my_data(file_name):
+    d = DynamicUpdate()
+    d()
+
+    # root_dir = "C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\"
+    # root_dir = "C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\SAC\\stagflation\\normal\\"
+    root_dir = ""
+    
+    # sub_dir  = "demo\\"
+    sub_dir = ""
+    # sub_dir  = "new_data\\Level_1500\\"
+
+    df_1 = pd.read_excel(root_dir + sub_dir + file_name, sheet_name="episode1")
+    # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+    # df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+
+    # print(df_1.columns)
 
 
-df_1 = pd.read_excel("new_data\\Level_1500\\game_test_v21.xlsx", sheet_name="episode50")
-# df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
-# df_1 = pd.read_excel("data\\v7\\game_5.xlsx", sheet_name="episode5")
+    mini_wage = df_1["Minimum Wage"].tolist()
 
-# print(df_1.columns)
+    monthly_expense = df_1["Product Price"].tolist()
+    average_salary = df_1["Inflation"].tolist()
 
-mini_wage = df_1["Minimum Wage"].tolist()
+    poverty_rate = df_1["Poverty Rate"].tolist()
+    unemployment_rate = df_1["Unemp Rate"].tolist()
 
-monthly_expense = df_1["Product Price"].tolist()
-average_salary = df_1["Inflation"].tolist()
+    population = df_1["Bank Balance"].tolist()
 
-poverty_rate = df_1["Poverty Rate"].tolist()
-unemployment_rate = df_1["Unemp Rate"].tolist()
+    # junior_pos = df_1["Junior"].tolist() 
+    # senior_pos = df_1["Senior"].tolist()
+    # exec_pos = df_1["Executive"].tolist()
 
-population = df_1["Bank Balance"].tolist()
+    count = 0
+    x = 1
+    y = 2
+    z = 3
 
-# junior_pos = df_1["Junior"].tolist() 
-# senior_pos = df_1["Senior"].tolist()
-# exec_pos = df_1["Executive"].tolist()
+    all_count = len(mini_wage)
 
-count = 0
-x = 1
-y = 2
-z = 3
+    for year_val, wage in enumerate(mini_wage):
 
-all_count = len(mini_wage)
+        if year_val < all_count-1:
+            block_value = False
+        else:
+            block_value = True
 
-for year_val,wage in enumerate(mini_wage):
-
-    if year_val < all_count-1:
-        block_value = False
-    else:
-        block_value = True
-
-    d.update_xdata(year_val)
-    d.plot_repeated(year_val, [monthly_expense[count],average_salary[count]], 1, block_value)
-    d.plot_repeated(year_val, [poverty_rate[count],unemployment_rate[count]], 2, block_value)
-    d.plot_repeated(year_val, [population[count]], 3, block_value)
-    # d.plot_repeated(year_val, [junior_pos[count], senior_pos[count], exec_pos[count]], 3, block_value)
-    d.plot_repeated(year_val,[mini_wage[count]],4, block_value)
-    count = count + 1
-    d.draw()
+        d.update_xdata(year_val)
+        d.plot_repeated(year_val, [monthly_expense[count],average_salary[count]], 1, block_value)
+        d.plot_repeated(year_val, [poverty_rate[count],unemployment_rate[count]], 2, block_value)
+        d.plot_repeated(year_val, [population[count]], 3, block_value)
+        # d.plot_repeated(year_val, [junior_pos[count], senior_pos[count], exec_pos[count]], 3, block_value)
+        d.plot_repeated(year_val,[mini_wage[count]],4, block_value)
+        count = count + 1
+        d.draw()
+        time.sleep(0.25)
