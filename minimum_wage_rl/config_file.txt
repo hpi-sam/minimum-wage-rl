@@ -109,7 +109,7 @@ training_steps=100
 market_steps=3600
 
 [training]
-# 0 for discrete and 1 for continuous
+# 0 for discrete and 1 for continuous action
 min_wage_policy=0
 num_steps=40
 episodes=5
