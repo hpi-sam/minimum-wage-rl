@@ -150,7 +150,10 @@ def __run_step(user, action_map):
     
     ai_game, ai_game_state, state_values, reward, message, done = step(ai_action_map, user, ai_flag, game.game_number)
 
-    final_response = {"User Data": user_data, "AI Data": ai_game_state, "end flag":done, "message":message}
+    year = user_data["Year"]
+    interact_data = getDialogue(year)
+
+    final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
 
     json_reponse = json.loads(json.dumps(final_response))
     return Response({'status':200, 'message':json_reponse})
@@ -167,6 +170,20 @@ def predict_minwage_action(ai_game, ai_game_state):
         # Level 3: 1500 Population level along with Stagflation
         ai_minwage_action, _states = model_L3_Stagflation.predict(ai_game_state, deterministic=True)        
     return ai_minwage_action
+
+def getDialogue(year):
+    role = [1,2,3]
+    dialogue_list = ["Message from Government", "Message from Workers", "Message from CEO"]
+
+    index = year%len(role)
+    index2 = (year+1)%len(role)
+    interact_dict = [{"role" : role[index], "Message":dialogue_list[index]},
+                    {"role" : role[index2], "Message":dialogue_list[index2]}]
+
+    return interact_dict
+
+
+
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])

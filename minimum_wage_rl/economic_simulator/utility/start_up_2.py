@@ -74,6 +74,7 @@ def start(user, level, ai_flag, player_game):
     country = Country(each_level_population)
     # country.total_money_printed = Country.INITIAL_BANK_BALANCE    
     country_module.create_country(country, each_level_population, ai_flag)
+    country.population_increase = float(config_parser.get(config_level,"population_increase"))
 
     initial_bank_balance = get_central_bank_balance(initial_bank_balance_percent, country)
     country.INITIAL_BANK_BALANCE = initial_bank_balance

@@ -7,7 +7,7 @@ from math import ceil, floor
 from ...utility.config import ConfigurationParser
 config_parser = ConfigurationParser.get_instance().parser
 import logging
-logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
+logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 
 # initial_product_price = float(config_parser.get("market","initial_product_price"))
 
@@ -47,7 +47,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     new_quantity = 0
 
     bank_money_spent = 0
-    logging.info("old quantity - " + str(old_quantity))
+    # logging.info("old quantity - " + str(old_quantity))
     needed_quantity = country.population * 12
     produce_quantity = needed_quantity - old_quantity if needed_quantity - old_quantity > 0 else 0
 
@@ -133,10 +133,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             # produce_quantity = import_quantity(produce_quantity,current_product_price, country)
 
             # Import with new price, above code is commented
-            produce_quantity = import_quantity(produce_quantity,new_price, country)
-            
-
-            # But selling locally at new rate
+            produce_quantity = import_quantity(produce_quantity,new_price, country)            
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
             
             if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
@@ -167,7 +164,7 @@ def import_quantity(produce_quantity, price, country):
     if country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION > (money_needed + transport_cost):
         country.bank.liquid_capital = country.bank.liquid_capital - money_needed
         country.bank.liquid_capital = country.bank.liquid_capital - transport_cost
-        logging.info("Money Spent - " + str(money_needed))
+        # logging.info("Money Spent - " + str(money_needed))
         return int(produce_quantity)
     else:
         money_available =  country.bank.liquid_capital * Market.MIN_BALANCE_INFLATION
@@ -180,7 +177,7 @@ def import_quantity(produce_quantity, price, country):
 
         country.bank.liquid_capital = country.bank.liquid_capital - money_available
         country.bank.liquid_capital = country.bank.liquid_capital - transport_cost
-        logging.info("Money Spent - " + str(money_available))
+        # logging.info("Money Spent - " + str(money_available))
         return int(possible_quantity)
 
 def calculate_deflation(current_product_price, new_product_price, old_inflation, metrics, country):
@@ -231,10 +228,6 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     jun_acct_balance = 0.0
     sen_acct_balance = 0.0
     exec_acct_balance = 0.0
-
-    if country.product_price < 0.0:
-        # print("=========================== LOW PRICE =======================")
-        pass
     
     total_money_deposited = 0
     for each_worker in fin_workers_list:
@@ -291,8 +284,8 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
             else:
                 unemployed_exec = unemployed_exec + 1            
 
-    logging.info("Total Money deposited - " + str(total_money_deposited))
-    logging.info("Country Quantity - " + str(country.quantity))
+    # logging.info("Total Money deposited - " + str(total_money_deposited))
+    # logging.info("Country Quantity - " + str(country.quantity))
 
     # Add mertrics
     metrics.total_filled_jun_pos = employee_details_map["jun_workers"]
@@ -315,7 +308,7 @@ def buy_products(fin_workers_list, country, poverty_count, metrics):
     metrics.old_poverty_rate = metrics.poverty_rate
     metrics.old_unemployment_rate = metrics.unemployment_rate
 
-    total_employed = employee_details_map["jun_workers"] + employee_details_map["sen_workers"] + employee_details_map["exec_workers"]
+    # total_employed = employee_details_map["jun_workers"] + employee_details_map["sen_workers"] + employee_details_map["exec_workers"]
 
     metrics.unemployed_junior_rate = round((unemployed_jun/total_junior) *100 , 2) if total_junior> 0 else 0
     metrics.unemployed_senior_rate = round((unemployed_sen/total_senior) *100 , 2) if total_senior> 0 else 0

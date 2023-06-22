@@ -6,7 +6,7 @@ from ...models.country import Country
 from ...models.company import Company
 from ...models.worker import Worker
 from ...models.market import Market
-logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
+# logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 
 
 def pay_loan(company, central_bank):
@@ -18,7 +18,7 @@ def pay_loan(company, central_bank):
         if company.loan_amount < 100:
             total_amount = interest_amount + company.loan_amount
             central_bank.deposit_money(total_amount)
-            logging.info("Loan deposited - " + str(total_amount))            
+            # logging.info("Loan deposited - " + str(total_amount))            
             company.loan_taken = False
             company.loan_amount = 0.0
         
@@ -27,19 +27,19 @@ def pay_loan(company, central_bank):
             total_amount = interest_amount + installment_amount
             central_bank.deposit_money(total_amount)
             company.loan_amount = company.loan_amount - installment_amount
-            logging.info("Loan deposited - " + str(total_amount))
+            # logging.info("Loan deposited - " + str(total_amount))
 
 
 def pay_tax(company, central_bank):
     tax = Country.CORPORATE_TAX * company.company_account_balance
     company.company_account_balance = company.company_account_balance - tax
     central_bank.deposit_money(tax)
-    logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
+    # logging.info("Corporate tax paid - " + str(tax) + " - Account Balance - " + str(company.company_account_balance))
     return tax    
 
-def yearly_financial_transactions(company, country, retired_workers_list):
+def yearly_financial_transactions(company, country, retired_workers_list, cmp_worker_list):
     
-    worker_list = list(company.worker_set.filter(retired=False))
+    worker_list = cmp_worker_list
 
     all_workers_list = []    
 
@@ -519,5 +519,5 @@ def pay_cost_of_operation(country, company, central_bank):
     # Add to standalone
     # central_bank.deposit_money(cost_of_operation)
 
-    logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
+    # logging.info("Cost of operation - " + str(cost_of_operation) + " - Account Balance - " + str(company.company_account_balance))
     return cost_of_operation

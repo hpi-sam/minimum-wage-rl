@@ -27,6 +27,11 @@ from django.db import models
 # from functools import reduce
 from django.db import transaction
 
+import time
+import logging
+logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
+
+
 
 config_parser = ConfigurationParser.get_instance().parser
 discrete_action = config_parser.getboolean("game","discrete_action")
@@ -37,29 +42,48 @@ def step(action_map, user, ai_flag, player_game_number):
     
     # Get all data from DB
 
+    start = time.time()
     game = __get_latest_game(user, player_game_number)
     country = Country.objects.get(player=user, game=game)
 
+    end = time.time()
+
+    logging.info("=============================================================================")
+    logging.info("=============================================================================")
+    logging.info("1. Get Game object and Country object - " + str (end-start))
+
     # Get all "OPEN" companies 
+    start = time.time()
     country_companies_list = list(country.company_set.filter(closed=False))
+    end = time.time()
+
+    logging.info("2. Get all companies - " + str (end-start))
+
 
     if len(country_companies_list) > 0 and country.bank.liquid_capital > 0:
+        
         # Increase age of all workers by 1
+        start = time.time()
         Worker.objects.filter(country_of_residence=country).update(age=F("age") + 1)
+        end = time.time()
+        logging.info("3. Increase worker age - " + str (end-start))
 
         # Get all workers
-        country_workers_list = list(country.worker_set.filter(retired=False))
+        # country_workers_list = list(country.worker_set.filter(retired=False))
 
         # Get all unemployed workers
+        start = time.time()
         unemployed_workers_list = country.worker_set.filter(retired=False, is_employed=False)
+        end = time.time()
+        logging.info("4. Get unemployed workers - " + str (end-start))
 
         # action_map = {"minimum_wage":action}
         # Step 1 - Change minimum wage - Perform action function
         # discrete_action = False
         perform_action(action_map,country,discrete_action)
 
-        country.temp_worker_list.extend(country_workers_list)
-        country.temp_company_list.extend(country_companies_list)
+        # country.temp_worker_list.extend(country_workers_list)
+        # country.temp_company_list.extend(country_companies_list)
         # Step 2 - Change inflation rate : fixed as of now
         
         # Step 3 - run market step
@@ -114,6 +138,9 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
     total_open_exec_pos = 0
 
     metrics.old_bank_account_balance = float(country.bank.liquid_capital)
+
+    start = time.time()
+
     # ================ 1: COUNTRY MODULE - Increase population ================
     if country.year % 4 == 0:
         new_workers_list =  country_module.increase_population(country)
@@ -141,8 +168,12 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
     #         non_retired_workers.append(each_unemployed_worker)
 
     # unemployed_workers_list = list(non_retired_workers)
+    end = time.time()
+    logging.info("5. Country Module- " + str (end-start))
 
     # ================ 3: COMPANY MODULE - pay tax, pay salary, earn, hire and fire ================
+    start = time.time()
+
     open_companies_list = []
     closed_companies_list = []
     comp_count = 0    
@@ -166,7 +197,10 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
         # company_module.pay_tax(each_company,country.bank)
 
         # 3.4: Pay salary to workers and Earn money from workers
-        company_module.yearly_financial_transactions(each_company,country, retired_workers_list)
+        # Note: DB Acess
+            # Get list of all workers in the company
+        cmp_worker_list = list(company.worker_set.filter(retired=False))
+        company_module.yearly_financial_transactions(each_company,country, retired_workers_list, cmp_worker_list)
 
         # 3.5: Create Jobs/Fire people
         operation_map = {"close":False,"fired_workers":[],"employed_workers":[]}
@@ -196,6 +230,11 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
             closed_companies_list.append(company)    
         else:
             open_companies_list.append(each_company)
+
+    end = time.time()
+    logging.info("6. Company Module - " + str (end-start))
+
+    start = time.time()
 
     # ================ 4: WORKERS MODULE ================
     all_workers_list = []
@@ -266,8 +305,7 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
     
 
 
-    # Hire second 50% by equal distribution of workers among companies
-    
+    # Hire second 50% by equal distribution of workers among companies    
     jun_salary = country.minimum_wage
     senior_salary = country.minimum_wage + country.minimum_wage * Market.SENIOR_SALARY_PERCENTAGE
     exec_salary = country.minimum_wage + country.minimum_wage * Market.EXEC_SALARY_PERCENTAGE
@@ -313,7 +351,11 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
         company_item.year_income = 0.0
 
     print("")
+    end = time.time()
+    logging.info("7. Worker Module - " + str (end-start))
 
+
+    start = time.time()
     # 5: INFLATION MODULE
     metrics.unemployed_jun_pos = len(unemp_jun_worker_list)
     metrics.unemployed_sen_pos = len(unemp_sen_worker_list)
@@ -335,10 +377,13 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
 
     metrics.bank_account_balance = float(country.bank.liquid_capital)
     metrics.money_circulation = country.money_circulation
+    end = time.time()
+    logging.info("8. Inflation and Product Module - " + str (end-start))
     
     # 7: Save all data
     # Try bulk update and bulk create 
-    
+
+    start = time.time()
     # save bank
     country.bank.save()
     
@@ -369,10 +414,17 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
     for each_worker in retired_workers_list:
         retired_people = retired_people + 1
         each_worker.save()
+    end = time.time()
+    logging.info("9. Save all data - " + str (end-start))
 
-    cmp_metrics(metrics, country)
+    start =  time.time()
+    # cmp_metrics(metrics, country)
 
-    print_needed_data(metrics, country, retired_people)
+    end = time.time()
+    logging.info("10. Compare metrics - " + str (end-start))
+
+
+    # print_needed_data(metrics, country, retired_people)
 
     return get_current_state_reward(game, country, metrics)
     
@@ -565,9 +617,9 @@ def print_needed_data(metrics, country,retired_people):
     print("Num medium cmp - ", metrics.num_medium_companies)
     print("Num large cmp - ", metrics.num_large_companies)
 
-    print("Unemployed Jun Acct balance - ", metrics.uemp_jun_acct_balance)
-    print("Unemployed Sen Acct balance - ", metrics.uemp_sen_acct_balance)
-    print("Unemployed Exec Acct balance - ", metrics.uemp_exec_acct_balance)
+    # print("Unemployed Jun Acct balance - ", metrics.uemp_jun_acct_balance)
+    # print("Unemployed Sen Acct balance - ", metrics.uemp_sen_acct_balance)
+    # print("Unemployed Exec Acct balance - ", metrics.uemp_exec_acct_balance)
     # print("Junior Jobs - ", metrics.total_filled_jun_pos)
     # print("Senior Jobs - ", metrics.total_filled_sen_pos)
     # print("Executive Jobs - ", metrics.total_filled_exec_pos)
