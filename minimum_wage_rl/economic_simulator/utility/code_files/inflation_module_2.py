@@ -13,6 +13,10 @@ logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\3_MinWage\\minim
 
 def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, metrics):
 
+    print("============================== Inflation Logs ============================")
+    print("0.1 - Employed people - ", len(emp_worker_list))
+    print("0.1 - unEmployed people - ", len(unemp_worker_list))
+
     inflation_weightage = country.inflation if country.inflation > 0 else 0.0
     
     if country.inflation > 5.0:
@@ -25,15 +29,24 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     add_acct_bal_func = lambda result, worker: result + (worker.worker_account_balance - (worker.worker_account_balance * Worker.SAVINGS_PERCENT * inflation_weightage)) if worker.worker_account_balance > 0 else 0
 
     all_emp_workers_acct = reduce(add_acct_bal_func, emp_worker_list, 0 )    
+    print("1. Employed Account Balance - ",  all_emp_workers_acct)
+
     all_unemp_workers_acct = reduce(add_acct_bal_func, unemp_worker_list, 0 )
+    print("2. UnEmployed Account Balance - ",  all_unemp_workers_acct)
+
 
     old_money_circulation = country.money_circulation
+    print("3. old money circulation - ",  old_money_circulation)
+
     metrics.old_money_circulation = old_money_circulation
     
     current_money_circulation = all_emp_workers_acct + all_unemp_workers_acct
+    print("4. Current money circulation - ",  current_money_circulation)
+
     country.money_circulation = current_money_circulation    
     velocity_of_money = 1
     current_product_price = country.product_price
+    print("5. Old Product Price - ",  current_product_price)
 
     if Market.EXPIRABLE_GOODS:
         old_quantity = 0.0
@@ -41,6 +54,8 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         old_quantity = country.quantity
     
     old_inflation = country.inflation
+    print("6. Old inflation - ",  old_inflation)
+
     inflation = 0.0
     inflation_rate = 0.0
     steady_product_price = False
@@ -51,24 +66,35 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
     needed_quantity = country.population * 12
     produce_quantity = needed_quantity - old_quantity if needed_quantity - old_quantity > 0 else 0
 
+    print("7. Needed Quantity - ", needed_quantity, "  Produce Quantity - ", produce_quantity)
+
     # 1. Check if latest money circulation is less than previous money circulation
     if current_money_circulation <= old_money_circulation:
         
         new_price = current_money_circulation/(produce_quantity)
+        print("8. New Price 1 - ", new_price)
+
         if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
             new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
+            print("9. New Price 2 - ", new_price)
 
         new_price, deflation = calculate_deflation(current_product_price, new_price, old_inflation, metrics, country)
+        print("10. New Price 3 - ", new_price, "  and deflation - ", deflation)
 
         if produce_quantity > 0:
             produce_quantity = import_quantity(produce_quantity, new_price, country)
+            print("11. Produce Quantity - ", produce_quantity)
         
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+        print("12. New Price 4 - ", new_price)
 
         if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
             new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
+            print("13. New Price 5 - ", new_price)
 
         new_price, deflation = calculate_deflation(current_product_price, new_price, old_inflation, metrics, country)
+        print("14. New Price 6 - ", new_price, "  deflation - ", deflation)
+
         country.product_price = new_price
         country.quantity = produce_quantity + old_quantity
 
@@ -80,25 +106,34 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
 
         # if produce_quantity > 0:
         new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+        print("15. New price 7 - ", new_price)
 
         if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
             new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
+            print("16. New price 8 - ", new_price)
 
         inflation = calculate_inflation(current_product_price, new_price, old_inflation, metrics, country)
+        print("17. Inflation - ", inflation)
         
         # 1.1 Inflation below a given threshold  OR Inflation above a given threshold
         # then - Increase Quantity (maybe price)
         if inflation <= Market.LOW_THRESHOLD_INFLATION or inflation > Market.HIGH_THRESHOLD_INFLATION:
             new_quantity = int(current_money_circulation/current_product_price)
             new_quantity = max(new_quantity, needed_quantity)
+            print("18. new quantity - ", new_quantity)
 
             produce_quantity = new_quantity - old_quantity
+            print("19. produce quantity - ", produce_quantity)
 
             produce_quantity = import_quantity(produce_quantity,current_product_price,country)
+            print("20. produce quantity - ", produce_quantity)
+
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+            print("21. new price 9 - ", new_price)
 
             if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
                 new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
+                print("22. new price 10 - ", new_price)
     
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
@@ -133,14 +168,14 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
             # produce_quantity = import_quantity(produce_quantity,current_product_price, country)
 
             # Import with new price, above code is commented
-            produce_quantity = import_quantity(produce_quantity,new_price, country)
-            
-
+            produce_quantity = import_quantity(produce_quantity,new_price, country)            
             # But selling locally at new rate
             new_price = round(current_money_circulation/(produce_quantity + old_quantity), 2)
+            print("23. new price 11 - ", new_price, "  produce quantity - ", produce_quantity)
             
             if new_price < Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD:
                 new_price = Market.INITIAL_PRODUCT_PRICE * Market.PRODUCT_PRICE_THRESHOLD
+                print("24. new price 12 - ", new_price)
 
             country.product_price = new_price
             country.quantity = produce_quantity + old_quantity
@@ -156,6 +191,7 @@ def set_product_price_and_quantity(emp_worker_list, unemp_worker_list, country, 
         if country.product_price <= 0.0:
             country.product_price = 0.01
             metrics.product_price = 0.01
+    print("============================== Inflation Logs End ============================")
 
 def import_quantity(produce_quantity, price, country):
 
@@ -207,6 +243,7 @@ def calculate_inflation(current_product_price, new_product_price, old_inflation,
     metrics.inflation = round(inflation, 2)
     country.inflation = round(inflation, 2)
     metrics.inflation_rate = round(inflation_rate, 2)
+    print("25. inflation - ", inflation,  " inflation rate - ", inflation_rate)
 
     return inflation
 
