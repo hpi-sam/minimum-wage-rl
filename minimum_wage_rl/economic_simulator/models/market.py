@@ -49,10 +49,10 @@ class Market(models.Model):
     MEDIUM_COMPANY_TYPE=1
     LARGE_COMPANY_TYPE=2
 
-    all_data = list()
-    out_file_name = None
-    month = models.IntegerField(default=0)
-    year = models.IntegerField(default=0)
+    # all_data = list()
+    # out_file_name = None
+    # month = models.IntegerField(default=0)
+    # year = models.IntegerField(default=0)
 
     # unregulatedScenario = None
     # adjustedScenario = None
@@ -60,9 +60,9 @@ class Market(models.Model):
     # aiScenario = None
     
     # SET LATER
-    market_value_year = models.FloatField()
-    amount_of_new_citizens = models.IntegerField(default=0)    
-    inflation_rate = models.FloatField(default=config_parser.get("market","inflation"))
+    # market_value_year = models.FloatField()
+    # amount_of_new_citizens = models.IntegerField(default=0)    
+    # inflation_rate = models.FloatField(default=config_parser.get("market","inflation"))
 
     # SET LATER
-    product_price = models.FloatField(default=INITIAL_PRODUCT_PRICE)
+    # product_price = models.FloatField(default=INITIAL_PRODUCT_PRICE)

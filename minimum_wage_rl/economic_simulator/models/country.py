@@ -43,13 +43,21 @@ class Country(models.Model):
     SUBSIDY = float(config_parser.get("country","product_subsidy"))
 
     # 2: Components
+
+    # only for cached version - start
+    company_list =  list()
+    employed_workers = list()
+    unemployed_workers = list()
+    metrics_list = list()
+    # only for cached version - end
+
     country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     market = models.ForeignKey(to=Market, unique=True, on_delete=models.CASCADE)
     bank = models.ForeignKey(to=Bank, unique=True, on_delete=models.CASCADE)
     player = models.ForeignKey(User, on_delete=models.CASCADE)
     game = models.OneToOneField(Game, on_delete=models.CASCADE)
-    companies =  dict() # new Dictionary<int, MWCompany>() = None
-    workers = dict() # new Dictionary<int, MWEmployee>() = None
+    # companies =  dict() # new Dictionary<int, MWCompany>() = None
+    # workers = dict() # new Dictionary<int, MWEmployee>() = None
 
     # 3: High level Metrics and Stats
     money_circulation = models.FloatField(default=0.0)    
@@ -76,8 +84,8 @@ class Country(models.Model):
     total_jun_jobs = models.FloatField(default=0.0)
     total_senior_jobs = models.FloatField(default=0.0)
     total_executive_jobs = models.FloatField(default=0.0)
-    temp_worker_list = []
-    temp_company_list = []     
+    # temp_worker_list = []
+    # temp_company_list = []     
 
     ai_flag = models.BooleanField(False)
 

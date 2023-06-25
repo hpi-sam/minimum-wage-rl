@@ -63,12 +63,12 @@ def start(user, level, ai_flag, player_game):
     all_companies_list = []
 
     metric_obj = Metric()
-    metric_obj.year = 0    
+    metric_obj.year = 1
 
     # 1: Create Market 
     market_obj = Market()
-    market_obj.month = market_obj.year = 0
-    market_obj.market_value_year = 0
+    # market_obj.month = market_obj.year = 0
+    # market_obj.market_value_year = 0
 
     # 2: Create Country
     country = Country(each_level_population)

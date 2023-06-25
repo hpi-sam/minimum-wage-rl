@@ -80,3 +80,8 @@ class Company(models.Model):
     loan_amount = models.FloatField(default=0.0)
 
     closed = models.BooleanField(default=False)
+
+    # Only for cached - start
+    employed_workers_list = list()
+    start_up_worker_list = list()
+    # Only for cached - end

@@ -20,6 +20,7 @@ from .code_files import workers_module
 from .code_files import inflation_module_2
 from .code_files import metrics_module
 from .code_files import hiring_module
+from .code_files import definitions
 
 from .config import ConfigurationParser
 from django.db import models
@@ -29,7 +30,12 @@ from django.db import transaction
 
 import time
 import logging
-logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
+import os
+
+log_file_name = os.path.join(definitions.get_project_root(), "my_log.log")
+
+#"C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log"
+logging.basicConfig(filename=log_file_name, level=logging.INFO)
 
 
 
@@ -146,6 +152,7 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
         new_workers_list =  country_module.increase_population(country)
     else:
         new_workers_list = []
+        
     # new_workers_list = []
     fired_workers = []
     employed_workers_list = []
@@ -199,7 +206,7 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
         # 3.4: Pay salary to workers and Earn money from workers
         # Note: DB Acess
             # Get list of all workers in the company
-        cmp_worker_list = list(company.worker_set.filter(retired=False))
+        cmp_worker_list = list(each_company.worker_set.filter(retired=False))
         company_module.yearly_financial_transactions(each_company,country, retired_workers_list, cmp_worker_list)
 
         # 3.5: Create Jobs/Fire people
@@ -380,151 +387,126 @@ def run_market(game, country, country_companies_list, unemployed_workers_list):
     end = time.time()
     logging.info("8. Inflation and Product Module - " + str (end-start))
     
-    # 7: Save all data
-    # Try bulk update and bulk create 
+    # 7: Make dictionary of all the objects to be saved
 
-    start = time.time()
-    # save bank
-    country.bank.save()
+    model_dictionary = dict()
+    model_dictionary["country"] = country
+    model_dictionary["metrics"] = metrics
+    model_dictionary["open_company_list"] = open_companies_list
+    model_dictionary["closed_company_list"] = closed_companies_list
+    model_dictionary["final_workers_list"] = fin_workers_list
+    model_dictionary["retired_workers_list"] = retired_workers_list
+
     
-    # save market
-    country.market.save()
 
-    # save country
-    country.save()
-
-    # save metrics
-    metrics.country_of_residence = country
-    metrics.product_price = country.product_price
-    metrics.quantity  = country.quantity
-    metrics.num_of_open_companies = len(open_companies_list)
-    metrics.save()
-    
-    # save company list
-    for each_company in open_companies_list:
-        each_company.save()
-    
-    for each_company in closed_companies_list:
-        each_company.save()
-
-    # save workers list
-    for each_worker in fin_workers_list:
-        each_worker.save()
-    
-    for each_worker in retired_workers_list:
-        retired_people = retired_people + 1
-        each_worker.save()
-    end = time.time()
-    logging.info("9. Save all data - " + str (end-start))
-
-    start =  time.time()
+    # start =  time.time()
     # cmp_metrics(metrics, country)
 
-    end = time.time()
-    logging.info("10. Compare metrics - " + str (end-start))
+    # end = time.time()
+    # logging.info("10. Compare metrics - " + str (end-start))
 
 
     # print_needed_data(metrics, country, retired_people)
-
-    return get_current_state_reward(game, country, metrics)
+    game, current_state, state_values, reward, info, done = get_current_state_reward(game, country, metrics)
+    return model_dictionary, game, current_state, state_values, reward, info, done
     
 
-def cmp_metrics(metrics, country):
-    # select num(workers) from companies inner join workers on company_id == worker.company_id where worker_skill < 10
-    # Average juniors, seniors, executes in small, medium, large companies
-    small_cmps = 0
-    small_jun_workers = 0
-    small_sen_workers = 0
-    small_exec_workers = 0
+# def cmp_metrics(metrics, country):
+#     # select num(workers) from companies inner join workers on company_id == worker.company_id where worker_skill < 10
+#     # Average juniors, seniors, executes in small, medium, large companies
+#     small_cmps = 0
+#     small_jun_workers = 0
+#     small_sen_workers = 0
+#     small_exec_workers = 0
 
-    medium_cmps = 0
-    medium_jun_workers = 0
-    medium_sen_workers = 0
-    medium_exec_workers = 0
+#     medium_cmps = 0
+#     medium_jun_workers = 0
+#     medium_sen_workers = 0
+#     medium_exec_workers = 0
 
-    large_cmps = 0
-    large_jun_workers = 0
-    large_sen_workers = 0
-    large_exec_workers = 0
+#     large_cmps = 0
+#     large_jun_workers = 0
+#     large_sen_workers = 0
+#     large_exec_workers = 0
 
-    smll_acct_balance = 0.0
-    medium_acct_balance = 0.0
-    large_acct_balance = 0.0
+#     smll_acct_balance = 0.0
+#     medium_acct_balance = 0.0
+#     large_acct_balance = 0.0
 
-    all_cmps = list(country.company_set.filter(closed=False))
+#     all_cmps = list(country.company_set.filter(closed=False))
 
-    for company in all_cmps:
-        #Small Company:
-        if company.company_account_balance < Market.MEDIUM_CMP_INIT_BALANCE:
-            small_cmps = small_cmps + 1
-            smll_acct_balance = smll_acct_balance + company.company_account_balance
-            # juniors
-            jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
-            small_jun_workers = small_jun_workers + len(jun_workers)
+#     for company in all_cmps:
+#         #Small Company:
+#         if company.company_account_balance < Market.MEDIUM_CMP_INIT_BALANCE:
+#             small_cmps = small_cmps + 1
+#             smll_acct_balance = smll_acct_balance + company.company_account_balance
+#             # juniors
+#             jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
+#             small_jun_workers = small_jun_workers + len(jun_workers)
 
-            sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
-            small_sen_workers = small_sen_workers + len(sen_workers)
+#             sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
+#             small_sen_workers = small_sen_workers + len(sen_workers)
 
-            exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
-            small_exec_workers = small_exec_workers + len(exec_workers)
+#             exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
+#             small_exec_workers = small_exec_workers + len(exec_workers)
 
-        elif company.company_account_balance >= Market.MEDIUM_CMP_INIT_BALANCE and company.company_account_balance < Market.LARGE_CMP_INIT_BALANCE:
-            medium_cmps = medium_cmps + 1
-            medium_acct_balance = medium_acct_balance + company.company_account_balance
-            # juniors
-            jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
-            medium_jun_workers = medium_jun_workers + len(jun_workers)
+#         elif company.company_account_balance >= Market.MEDIUM_CMP_INIT_BALANCE and company.company_account_balance < Market.LARGE_CMP_INIT_BALANCE:
+#             medium_cmps = medium_cmps + 1
+#             medium_acct_balance = medium_acct_balance + company.company_account_balance
+#             # juniors
+#             jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
+#             medium_jun_workers = medium_jun_workers + len(jun_workers)
 
-            sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
-            medium_sen_workers = medium_sen_workers + len(sen_workers)
+#             sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
+#             medium_sen_workers = medium_sen_workers + len(sen_workers)
 
-            exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
-            medium_exec_workers = medium_exec_workers + len(exec_workers)
-        else:
-            large_cmps = large_cmps + 1
-            large_acct_balance = large_acct_balance + company.company_account_balance
-            # juniors
-            jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
-            large_jun_workers = large_jun_workers + len(jun_workers)
+#             exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
+#             medium_exec_workers = medium_exec_workers + len(exec_workers)
+#         else:
+#             large_cmps = large_cmps + 1
+#             large_acct_balance = large_acct_balance + company.company_account_balance
+#             # juniors
+#             jun_workers = list(company.worker_set.filter(retired=False).filter(skill_level__lte=10))
+#             large_jun_workers = large_jun_workers + len(jun_workers)
 
-            sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
-            large_sen_workers = large_sen_workers + len(sen_workers)
+#             sen_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=10).filter(skill_level__lte=20))
+#             large_sen_workers = large_sen_workers + len(sen_workers)
 
-            exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
-            large_exec_workers = large_exec_workers + len(exec_workers)
+#             exec_workers = list(company.worker_set.filter(retired=False).filter(skill_level__gt=20))
+#             large_exec_workers = large_exec_workers + len(exec_workers)
 
-    jun_data = Worker.objects.filter(is_employed=False).filter(skill_level__lte=10).aggregate(jun_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
-    sen_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=10).filter(skill_level__lte=20).aggregate(sen_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
-    exec_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=20).aggregate(exec_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
-    # jun_count = Worker.objects.filter(is_employed=False and skill_level<)
+#     jun_data = Worker.objects.filter(is_employed=False).filter(skill_level__lte=10).aggregate(jun_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
+#     sen_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=10).filter(skill_level__lte=20).aggregate(sen_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
+#     exec_data = Worker.objects.filter(is_employed=False).filter(skill_level__gt=20).aggregate(exec_sum=models.Sum("worker_account_balance"), count_people=models.Count("worker_id"))
+#     # jun_count = Worker.objects.filter(is_employed=False and skill_level<)
 
-    if jun_data["jun_sum"] == None or jun_data["count_people"] <=0:
-        metrics.uemp_jun_acct_balance = 0
-    else:
-        metrics.uemp_jun_acct_balance = jun_data["jun_sum"]/jun_data["count_people"]
+#     if jun_data["jun_sum"] == None or jun_data["count_people"] <=0:
+#         metrics.uemp_jun_acct_balance = 0
+#     else:
+#         metrics.uemp_jun_acct_balance = jun_data["jun_sum"]/jun_data["count_people"]
     
-    if sen_data["sen_sum"] == None or sen_data["count_people"] <=0:
-        metrics.uemp_sen_acct_balance = 0
-    else:
-        metrics.uemp_sen_acct_balance = sen_data["sen_sum"]/sen_data["count_people"]
+#     if sen_data["sen_sum"] == None or sen_data["count_people"] <=0:
+#         metrics.uemp_sen_acct_balance = 0
+#     else:
+#         metrics.uemp_sen_acct_balance = sen_data["sen_sum"]/sen_data["count_people"]
     
-    if exec_data["exec_sum"] == None or exec_data["count_people"] <=0:
-        metrics.uemp_exec_acct_balance = 0
-    else:
-        metrics.uemp_exec_acct_balance = exec_data["exec_sum"]/exec_data["count_people"]
+#     if exec_data["exec_sum"] == None or exec_data["count_people"] <=0:
+#         metrics.uemp_exec_acct_balance = 0
+#     else:
+#         metrics.uemp_exec_acct_balance = exec_data["exec_sum"]/exec_data["count_people"]
 
-    metrics.avg_juniors_small_cmp = ceil(small_jun_workers/small_cmps) if small_cmps>0 else 0
-    metrics.avg_seniors_small_cmp = ceil(small_sen_workers/small_cmps) if small_cmps>0 else 0
-    metrics.avg_execs_small_cmp = ceil(small_exec_workers/small_cmps) if small_cmps>0 else 0
-    metrics.avg_juniors_medium_cmp = ceil(medium_jun_workers/medium_cmps) if medium_cmps>0 else 0
-    metrics.avg_seniors_medium_cmp = ceil(medium_sen_workers/medium_cmps) if medium_cmps>0 else 0
-    metrics.avg_execs_medium_cmp = ceil(medium_exec_workers/medium_cmps) if medium_cmps>0 else 0
-    metrics.avg_juniors_large_cmp = ceil(large_jun_workers/large_cmps) if large_cmps>0 else 0
-    metrics.avg_seniors_large_cmp = ceil(large_sen_workers/large_cmps) if large_cmps>0 else 0
-    metrics.avg_execs_large_cmp = ceil(large_exec_workers/large_cmps) if large_cmps>0 else 0
-    metrics.small_comp_acct_balance = smll_acct_balance/small_cmps if small_cmps>0 else 0
-    metrics.medium_comp_acct_balance = medium_acct_balance/medium_cmps if medium_cmps>0 else 0
-    metrics.large_comp_acct_balance = large_acct_balance/large_cmps if large_cmps>0 else 0
+#     metrics.avg_juniors_small_cmp = ceil(small_jun_workers/small_cmps) if small_cmps>0 else 0
+#     metrics.avg_seniors_small_cmp = ceil(small_sen_workers/small_cmps) if small_cmps>0 else 0
+#     metrics.avg_execs_small_cmp = ceil(small_exec_workers/small_cmps) if small_cmps>0 else 0
+#     metrics.avg_juniors_medium_cmp = ceil(medium_jun_workers/medium_cmps) if medium_cmps>0 else 0
+#     metrics.avg_seniors_medium_cmp = ceil(medium_sen_workers/medium_cmps) if medium_cmps>0 else 0
+#     metrics.avg_execs_medium_cmp = ceil(medium_exec_workers/medium_cmps) if medium_cmps>0 else 0
+#     metrics.avg_juniors_large_cmp = ceil(large_jun_workers/large_cmps) if large_cmps>0 else 0
+#     metrics.avg_seniors_large_cmp = ceil(large_sen_workers/large_cmps) if large_cmps>0 else 0
+#     metrics.avg_execs_large_cmp = ceil(large_exec_workers/large_cmps) if large_cmps>0 else 0
+#     metrics.small_comp_acct_balance = smll_acct_balance/small_cmps if small_cmps>0 else 0
+#     metrics.medium_comp_acct_balance = medium_acct_balance/medium_cmps if medium_cmps>0 else 0
+#     metrics.large_comp_acct_balance = large_acct_balance/large_cmps if large_cmps>0 else 0
 
 def set_stagflation_values(country):
     if country.year > country.stagflation_end:

@@ -19,3 +19,10 @@ class Game(models.Model):
     game_ended = models.BooleanField(default=False)
     player_game_number = models.IntegerField(default=0)
     level = models.IntegerField()
+
+
+# only for cached version - start
+    country = None
+    game_metric_list = list()    
+    episode_number=0
+# only for cached version - start    

@@ -7,7 +7,16 @@ from math import ceil, floor
 from ...utility.config import ConfigurationParser
 config_parser = ConfigurationParser.get_instance().parser
 import logging
-logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
+from . import definitions
+import os
+
+log_file_name = os.path.join(definitions.get_project_root(), "my_log.log")
+
+#"C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log"
+logging.basicConfig(filename=log_file_name, level=logging.INFO)
+
+
+# logging.basicConfig(filename="C:\\Users\\AkshayGudi\\Documents\\2_Model_MinWage\\minimum_wage_rl\\economic_simulator\\my_log.log", level=logging.INFO)
 
 # initial_product_price = float(config_parser.get("market","initial_product_price"))
 
