@@ -143,6 +143,11 @@ def __run_step(user, action_map):
     ai_flag = True
     
     ai_game, ai_unnormalized_state, ai_normalized_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
+
+    print("=========================================================================")
+    print(ai_normalized_state_values)
+    print("=========================================================================")
+
     ai_game_state = np.array(ai_normalized_state_values)
     ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
     
