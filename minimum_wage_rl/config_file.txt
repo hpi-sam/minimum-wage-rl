@@ -1,6 +1,7 @@
 [game]
 discrete_action=False
 
+
 [market]
 inflation=0.01
 num_small_business=3
