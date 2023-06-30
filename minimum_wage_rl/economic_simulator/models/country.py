@@ -1,6 +1,6 @@
 import uuid
 
-from economic_simulator.models.game import Game
+# from economic_simulator.models.game import Game
 from .market import Market
 from .bank import Bank
 from django.contrib.auth.models import User
@@ -47,7 +47,6 @@ class Country(models.Model):
     market = models.ForeignKey(to=Market, unique=True, on_delete=models.CASCADE)
     bank = models.ForeignKey(to=Bank, unique=True, on_delete=models.CASCADE)
     player = models.ForeignKey(User, on_delete=models.CASCADE)
-    game = models.OneToOneField(Game, on_delete=models.CASCADE)
     companies =  dict() # new Dictionary<int, MWCompany>() = None
     workers = dict() # new Dictionary<int, MWEmployee>() = None
 

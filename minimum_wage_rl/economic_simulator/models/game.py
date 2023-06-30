@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 from ..utility.config import ConfigurationParser
 config_parser = ConfigurationParser.get_instance().parser
+from .country import Country
 
 class Game(models.Model):
 
@@ -19,3 +20,4 @@ class Game(models.Model):
     game_ended = models.BooleanField(default=False)
     player_game_number = models.IntegerField(default=0)
     level = models.IntegerField()
+    country = models.OneToOneField(Country, on_delete=models.CASCADE)

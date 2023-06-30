@@ -38,7 +38,8 @@ def step(action_map, user, ai_flag, player_game_number):
     # Get all data from DB
 
     game = __get_latest_game(user, player_game_number)
-    country = Country.objects.get(player=user, game=game)
+    country = game.country
+    # Country.objects.get(player=user, game=game)
 
     # Get all "OPEN" companies 
     country_companies_list = list(country.company_set.filter(closed=False))
@@ -95,7 +96,7 @@ def __get_latest_game(user, player_game_number):
         pass
     else:
         max_game_number = max_game_query["max_game_number"]
-        game_obj = Game.objects.filter(player=user, game_ended = False, game_number = max_game_number).first()
+        game_obj = Game.objects.select_related("country").filter(player=user, game_ended = False, game_number = max_game_number).first()
 
     return game_obj
 
@@ -663,7 +664,8 @@ def calculate_reward(metrics):
 def get_state(user, ai_flag, player_game_number):
     game = __get_latest_game(user, player_game_number)
 
-    country = Country.objects.get(player=user, game=game, ai_flag=ai_flag)
+    country = game.country
+    # Country.objects.get(player=user, game=game, ai_flag=ai_flag)
     max_query = Metric.objects.filter(country_of_residence=country).aggregate(max_year=models.Max("year"))
     max_metric_year = max_query["max_year"]
     metric = Metric.objects.filter(country_of_residence=country, year=max_metric_year).first()
