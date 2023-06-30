@@ -82,6 +82,11 @@ class Company(models.Model):
     closed = models.BooleanField(default=False)
 
     # Only for cached - start
-    employed_workers_list = list()
-    start_up_worker_list = list()
+      
+    
     # Only for cached - end
+
+    def __init__(self, *args, **kwargs):
+        super(Company, self).__init__(*args, **kwargs)
+        self.employed_workers_list = list()
+        self.start_up_worker_list = list()

@@ -22,7 +22,11 @@ class Game(models.Model):
 
 
 # only for cached version - start
-    country = None
-    game_metric_list = list()    
-    episode_number=0
+    def __init__(self, *args, **kwargs):
+        super(Game, self).__init__(*args, **kwargs)
+        self.country = None
+        self.game_metric_list = list()    
+        self.episode_number=0
+
+    
 # only for cached version - start    

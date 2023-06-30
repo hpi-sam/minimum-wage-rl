@@ -44,12 +44,6 @@ class Country(models.Model):
 
     # 2: Components
 
-    # only for cached version - start
-    company_list =  list()
-    employed_workers = list()
-    unemployed_workers = list()
-    metrics_list = list()
-    # only for cached version - end
 
     country_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     market = models.ForeignKey(to=Market, unique=True, on_delete=models.CASCADE)
@@ -98,3 +92,12 @@ class Country(models.Model):
     OIL_COST_PER_LITRE = models.FloatField(default=INITIAL_OIL_COST)  
     COST_OF_OPERATION = models.FloatField(default=INITIAL_COST_OF_OPERATION)
     population_increase = models.FloatField(default=0.01)
+
+    # only for cached version - start
+    def __init__(self, *args, **kwargs):
+        super(Country, self).__init__(*args, **kwargs)
+        self.company_list =  list()
+        self.employed_workers = list()
+        self.unemployed_workers = list()
+        self.metrics_list = list()
+    # only for cached version - end

@@ -7,6 +7,7 @@ from .utility.simulate_2 import step
 from .utility.simulate_2 import get_state
 from .utility.publish import export_to_excel
 from .utility.save import save_data_to_db
+from .utility.save import save_cached_data
 
 from .cached_utility.start_game import initialize_and_start
 from .cached_utility.cached_simulation import game_step
@@ -81,12 +82,9 @@ def start_cached_game(request, level):
     final_response = {"User Data": player_game_state, "AI Data": ai_game_state, "end flag":False, "message":""}
     json_reponse = json.loads(json.dumps(final_response))    
 
-    companies = player_game.country.company_list
-
-    for each_company in companies:
-        if len(each_company.employed_workers_list) > 0:
-            print(each_company.employed_workers_list[0].salary)
-            print(type(each_company.employed_workers_list[0].salary))
+    # companies = player_game.country.company_list
+    # for i, each_company in enumerate(companies):
+    #     print("Company ", i, " -",  len(each_company.employed_workers_list)) 
 
     cache.set('player_game', player_game)
     cache.set('ai_game', ai_game)
@@ -99,8 +97,18 @@ def start_cached_game(request, level):
 @permission_classes([IsAuthenticated])
 def end_game(request):
 
-    user = request.user
-    return close_game(user)
+    player_game = cache.get('player_game')
+    ai_game = cache.get('ai_game')
+    normalized_ai_game_state = cache.get('normazlized_ai_state')
+
+    close_cached_game(player_game)
+    close_cached_game(ai_game)
+
+    # user = request.user
+    # return close_game(user)
+
+def close_cached_game(game):
+    save_cached_data(game)    
 
 def close_game(user):
     # game_obj = get_latest_game(user)
@@ -171,11 +179,10 @@ def __run_cached_game_step(request, action_map):
     ai_flag = False
     player_game_number = 0
    
-    # companies = player_game.country.company_list
-    # for each_company in companies:
-    #     if len(each_company.employed_workers_list) > 0:
-    #         print(each_company.employed_workers_list[0].salary)
-    #         print(type(each_company.employed_workers_list[0].salary))
+    companies = player_game.country.company_list
+    for i, each_company in enumerate(companies):
+        print("Company ", i, " -",  len(each_company.employed_workers_list)) 
+            
 
 
     player_game, user_data, normalized_state_values, reward, done, message  = game_step(player_game, action_map)
@@ -331,6 +338,7 @@ def clear_cache(request):
     cache.clear()
 
     player_game = cache.get('player_game')
+    
 
     if player_game !=None:
         print(player_game.level)

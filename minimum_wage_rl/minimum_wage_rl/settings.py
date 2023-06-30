@@ -107,7 +107,7 @@ WSGI_APPLICATION = 'minimum_wage_rl.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE'  : 'django.db.backends.mysql',
-        'NAME'    : 'djangodbtest2',
+        'NAME'    : 'djangocached',
         'USER'    : 'root',
         'PASSWORD': 'root123',
         'HOST'    : 'localhost',
