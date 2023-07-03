@@ -9,17 +9,24 @@ RUN pip install --no-cache-dir -r requirements.txt
 #set directoty where CMD will execute 
 WORKDIR /usr/src/app
 
+# Set environment variables for MySQL and Redis
+ENV MYSQL_HOST=db
+ENV MYSQL_PORT=3306
+ENV MYSQL_USER=defaultuser
+ENV MYSQL_PASSWORD=defaultpassword
+ENV MYSQL_DB=ecodb
+
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+
 #add project files to the usr/src/app folder
 COPY ./minimum_wage_rl /usr/src/app/
 
 # Expose ports
-EXPOSE 8001
+EXPOSE 8081
 
-RUN rm -f db.sqlite3
-RUN rm -f economic_simulator/migrations/00*
-RUN python manage.py makemigrations
-RUN python manage.py migrate
-
-
+# RUN rm -f db.sqlite3
 # default command to execute
-CMD exec gunicorn minimum_wage_rl.wsgi:application --bind 0.0.0.0:8001 --workers 3
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

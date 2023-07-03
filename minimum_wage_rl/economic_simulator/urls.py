@@ -11,8 +11,8 @@ urlpatterns = [
     path("token-auth", auth_view.obtain_auth_token),
     path("del-user",views.delete_user,name="del-user"),
     path("end-game", views.end_game, name="end_game-endpoint"),
-    path("train", views.train, name="train-endpoint"),
     path("test-url", views.test_url, name="test-endpoint"),
     path("api-token-auth", views.CustomAuthToken.as_view()),
-    path('c', views.clear_cache, name="clear-cache")
+    path('clear-cache', views.clear_cache, name="clear-cache"),
+    path('get-game-stats', views.get_stats, name="game-stats-endpoint")
 ]

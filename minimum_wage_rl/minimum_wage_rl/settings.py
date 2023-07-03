@@ -1,3 +1,5 @@
+import os
+
 """
 Django settings for minimum_wage_rl project.
 
@@ -45,9 +47,10 @@ INSTALLED_APPS = [
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://localhost:6379/1',  # Replace with your Redis connection details
+        'LOCATION': f"redis://{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}/0",
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'DEFAULT_TIMEOUT': 14400
         },
     },
 }
@@ -107,11 +110,11 @@ WSGI_APPLICATION = 'minimum_wage_rl.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE'  : 'django.db.backends.mysql',
-        'NAME'    : 'djangocached',
-        'USER'    : 'root',
-        'PASSWORD': 'root123',
-        'HOST'    : 'localhost',
-        'PORT'    : '3306',
+        'NAME'    : os.getenv("MYSQL_DB"),
+        'USER'    : os.getenv("MYSQL_USER"),
+        'PASSWORD': os.getenv("MYSQL_PASSWORD"),
+        'HOST'    : os.getenv("MYSQL_HOST"),
+        'PORT'    : os.getenv("MYSQL_PORT"),
     }
 }
 

@@ -102,6 +102,7 @@ root_folder=data
 [meta]
 training_steps=30
 market_steps=3600
+game_duration=30
 
 [training]
 # 0 for discrete and 1 for continuous

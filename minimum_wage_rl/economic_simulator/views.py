@@ -6,8 +6,9 @@ from .utility.start_up_2 import start
 from .utility.simulate_2 import step
 from .utility.simulate_2 import get_state
 from .utility.publish import export_to_excel
-from .utility.save import save_data_to_db
-from .utility.save import save_cached_data
+from .common.save import save_data_to_db, save_cached_data, extract_info
+from .common.utility_func import get_game_stats
+
 
 from .cached_utility.start_game import initialize_and_start
 from .cached_utility.cached_simulation import game_step
@@ -27,6 +28,12 @@ from .AI_model.actor_critic import actor_critic_main
 from rest_framework.authtoken.views import ObtainAuthToken
 import numpy as np
 from stable_baselines3 import SAC
+from .config import ConfigurationParser
+
+
+file_name = "config_file.txt"
+config_parser = ConfigurationParser.get_instance(file_name).parser
+
 
 model_root_folder = "economic_simulator/trained_models/"
 Level1_AI_model_name = "model_L1_1500"
@@ -42,6 +49,7 @@ model_L2 = SAC.load(model_root_folder + Level2_AI_model_name)
 # Level-3 AI model
 model_L3_Stagflation = SAC.load(model_root_folder + Level3_AI_model_name)
 
+game_duration = int(config_parser.get("meta","game_duration"))
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
@@ -50,25 +58,14 @@ def start_game(request):
 
     default_level = "1"
     level = int(request.GET.get('level', default_level))
-
-    # ai_flag = False
-    # player_game = None
-    # player_game_state, player_game = start(request.user, level, ai_flag, player_game)
-
-    # player_game_number
-    # ai_flag = True
-    # ai_game_state, ai_game = start(request.user, level, ai_flag, player_game)
-    # ai_game_state = player_game_state.copy()
-
-    # final_response = {"User Data": player_game_state, "AI Data": ai_game_state, "end flag":False, "message":""}
-    # json_reponse = json.loads(json.dumps(final_response))
-    # Response({'status':200, 'message':json_reponse})
-
     return start_cached_game(request, level) 
 
 
 def start_cached_game(request, level):
     
+    # 1. Clear cache
+    __clear_redis_cache()
+
     # 1. Start player Game
     ai_flag = False
     player_game = None
@@ -80,15 +77,12 @@ def start_cached_game(request, level):
 
     # 3. Prepare response
     final_response = {"User Data": player_game_state, "AI Data": ai_game_state, "end flag":False, "message":""}
-    json_reponse = json.loads(json.dumps(final_response))    
-
-    # companies = player_game.country.company_list
-    # for i, each_company in enumerate(companies):
-    #     print("Company ", i, " -",  len(each_company.employed_workers_list)) 
+    json_reponse = json.loads(json.dumps(final_response))
 
     cache.set('player_game', player_game)
     cache.set('ai_game', ai_game)
     cache.set('normazlized_ai_state', normalized_ai_game_state)
+    cache.set("game_ended", False)
 
     return Response({'status':200, 'message':json_reponse})
 
@@ -97,18 +91,34 @@ def start_cached_game(request, level):
 @permission_classes([IsAuthenticated])
 def end_game(request):
 
+    # Check save flag
+    save_game_value = request.GET.get('save_game',"False")
+    save_flag = save_game_value.lower() == "true"
+
+    # Get Cached values
     player_game = cache.get('player_game')
     ai_game = cache.get('ai_game')
-    normalized_ai_game_state = cache.get('normazlized_ai_state')
 
-    close_cached_game(player_game)
-    close_cached_game(ai_game)
+    # Get stats and save game
+    player_game_stats = close_cached_game(player_game, save_flag)
+    ai_game_stats = close_cached_game(ai_game, save_flag)
 
+    # Clear redis cache
+    __clear_redis_cache()
+
+    final_response = {"player_game_stats":player_game_stats, "ai_game_stats":ai_game_stats}
+    json_reponse = json.loads(json.dumps(final_response))
+
+    return Response({'status':200, 'message':json_reponse})
     # user = request.user
     # return close_game(user)
 
-def close_cached_game(game):
-    save_cached_data(game)    
+def close_cached_game(game, save_flag):
+    game_stats = extract_info(game)
+    if save_flag:
+        save_cached_data(game)    
+    
+    return game_stats
 
 def close_game(user):
     # game_obj = get_latest_game(user)
@@ -158,8 +168,6 @@ def create_user(request):
 
         token_value  = Token.objects.create(user=my_user)
 
-        print(token_value.key)
-
     return Response({'status':200, 'message':'User Created'})
 
 
@@ -175,45 +183,44 @@ def perform_action(request):
 
 def __run_cached_game_step(request, action_map):
 
-    player_game = cache.get('player_game')
-    ai_flag = False
-    player_game_number = 0
-   
-    companies = player_game.country.company_list
-    for i, each_company in enumerate(companies):
-        print("Company ", i, " -",  len(each_company.employed_workers_list)) 
-            
+    game_ended = cache.get("game_ended")
+
+    if not(game_ended):
+        # 1. Simulate Game for Player
+        ai_flag = False
+        player_game = cache.get('player_game')    
+        player_game, user_data, normalized_state_values, reward, done, message  = game_step(player_game, action_map)
+
+        # 2. Simulate Game for AI
+        ai_flag = True
+        ai_game = cache.get('ai_game')
+        normalized_ai_game_state = cache.get('normazlized_ai_state')            
+
+        # 2.1 Predicted Minimum Wage
+        ai_game_state = np.array(normalized_ai_game_state)
+        ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
+        
+        # 2.2 Run AI Game Simulation
+        ai_action_map = {"minimum_wage": ai_minwage_action}
+        ai_game, ai_game_state, normalized_ai_state_values, reward, done, message = game_step(ai_game, ai_action_map)
+
+        year = user_data["Year"]
+        interact_data = getDialogue(year)
+
+        if year >= game_duration:
+            cache.set("game_ended", True)
+
+        cache.set('player_game', player_game)
+        cache.set('ai_game', ai_game)
+        cache.set('normazlized_ai_state', normalized_ai_state_values)
 
 
-    player_game, user_data, normalized_state_values, reward, done, message  = game_step(player_game, action_map)
-
-    ai_game = cache.get('ai_game')
-    normalized_ai_game_state = cache.get('normazlized_ai_state')
+        final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
+        json_reponse = json.loads(json.dumps(final_response))
     
-    print("==========================================================")
-    print(normalized_ai_game_state)
-    print("==========================================================")
-
-    ai_flag = True    
-    # ai_game, ai_unnormalized_state, ai_normalized_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
-    ai_game_state = np.array(normalized_ai_game_state)
-    ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
-    
-    ai_action_map = {"minimum_wage": ai_minwage_action}
-    ai_game, ai_game_state, normalized_ai_state_values, reward, done, message = game_step(ai_game, ai_action_map)
-
-
-
-    year = user_data["Year"]
-    interact_data = getDialogue(year)
-
-    cache.set('player_game', player_game)
-    cache.set('ai_game', ai_game)
-    cache.set('normazlized_ai_state', normalized_ai_state_values)
-
-
-    final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
-    json_reponse = json.loads(json.dumps(final_response))
+    else:
+        final_response = {"Game Ended":True, "end_flag": True}
+        json_reponse = json.loads(json.dumps(final_response))
 
     return Response({'status':200, 'message':json_reponse})
 
@@ -227,12 +234,6 @@ def __run_step(user, action_map):
     ai_flag = True
     
     ai_game, ai_unnormalized_state, ai_normalized_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
-
-    print("==========================================================")    
-    print(ai_normalized_state_values)
-    print("==========================================================")
-
-
 
     ai_game_state = np.array(ai_normalized_state_values)
     ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
@@ -252,8 +253,8 @@ def __run_step(user, action_map):
     interact_data = getDialogue(year)
 
     final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
-
     json_reponse = json.loads(json.dumps(final_response))
+    
     return Response({'status':200, 'message':json_reponse})
 
 def predict_minwage_action(ai_game, ai_game_state):
@@ -281,25 +282,19 @@ def getDialogue(year):
     return interact_dict
 
 
-
-
-@api_view(http_method_names=['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def train(request):
-    actor_critic_main.train(request.user)
-    return Response({'status':200, 'message':"Traning completed"})
-
-
-@api_view(http_method_names=['GET'])
+# @api_view(http_method_names=['GET'])
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated])
+# def train(request):
+#     actor_critic_main.train(request.user)
+#     return Response({'status':200, 'message':"Traning completed"})
+
+
+@api_view(http_method_names=['GET'])
 @authentication_classes([])
 @permission_classes([])
-#@api_view(http_method_names=['GET'])
 def test_url(request):
-    # export_to_excel(request.user)
-    print("test code")
+    print("test URL")
     return Response({'status':200, 'message':"test code"})
 
 
@@ -335,37 +330,32 @@ def perform_get_action(request):
 
 @api_view(http_method_names=['GET'])
 def clear_cache(request):
+    __clear_redis_cache()
+
+
+def __clear_redis_cache():
+    
     cache.clear()
 
+    # Check if cache is cleared
     player_game = cache.get('player_game')
+    ai_game = cache.get('ai_game')
+    normalized_ai_game_state = cache.get('normazlized_ai_state')
     
-
-    if player_game !=None:
-        print(player_game.level)
+    if player_game !=None or ai_game != None or normalized_ai_game_state !=None:
+        cache.delete("player_game")
+        cache.delete("ai_game")
+        cache.delete("normazlized_ai_state")
+        print("Cache had to be cleared manually")
     else:
-        print("already deleted")
+        print("Cache Cleared")
 
     return Response({'status':200, 'message':"cleared"})
 
+@api_view(http_method_names=["GET"])
+def get_stats(request):
+    user = request.user
+    stats_map = get_game_stats(user)
 
-    # if min_wage_action:
-    #     user_data, state_values, reward, message, done = step(action_map, request.user)
-
-    #     ai_data = user_data.copy()
-
-    #     final_response = {"User Data": user_data, "AI Data": ai_data}
-
-    #     json_reponse = json.loads(json.dumps(final_response))
-    #     return Response({'status':200, 'message':json_reponse})
-    # else:
-    #     return Response({'status':400, 'message':"Invalid Minimum wage"})
-
-# @api_view(http_method_names=['POST'])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated])
-# def test_post(request):
-#     d = request.data
-#     print(d["minwage"])
-#     print(d["interest"])
-#     print("hello")
-#     return Response({'status':200, 'message':"test completed"})
+    json_reponse = json.loads(json.dumps(stats_map))
+    return Response({'status':200, 'message':json_reponse})

@@ -3,7 +3,51 @@ version: '3'
 services:
   simulator_app:
     build: .
+
+    depends_on:
+      - db
+      - redis
+
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_USER=defaultuser
+      - MYSQL_PASSWORD=defaultpassword
+      - MYSQL_DB=ecodb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    
+    networks:
+      - eco_game_network
+
   proxy_server:
     build: ./nginx
     ports:
         - 8080:80
+    depends_on:
+        - simulator_app
+    networks:
+      - eco_game_network       
+        
+  db:
+    image: mysql:8.0
+    volumes:
+      - eco_db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=ecodb
+      - MYSQL_USER=defaultuser
+      - MYSQL_PASSWORD=defaultpassword
+    networks:
+      - eco_game_network
+
+  redis:
+    image: redis:7.0.11
+    networks:
+      - eco_game_network
+
+networks:
+  eco_game_network:
+
+volumes:
+  eco_db_data:

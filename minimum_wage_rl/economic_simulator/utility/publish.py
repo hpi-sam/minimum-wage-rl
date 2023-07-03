@@ -94,9 +94,10 @@ def export_from_game_metric(game_num, game_metric_list):
 def export_to_excel(user):
     game_num = get_latest_game_number(user)
     print(game_num)
-    latest_game = Game.objects.filter(game_number=game_num)[0]
+    latest_game = Game.objects.select_related("country").filter(game_number=game_num)[0]
 
-    country_list = list(Country.objects.filter(player=user, game=latest_game))
+    country_list = [latest_game.country]
+    # list(Country.objects.filter(player=user, game=latest_game))
     df_list = list()
 
     for each_country in country_list:

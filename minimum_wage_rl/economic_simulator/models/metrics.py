@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 
-from .country import Country
+from .game import Game
 
 
 class Metric(models.Model):
@@ -44,7 +44,7 @@ class Metric(models.Model):
     population = models.IntegerField(default=0)
     minimum_wage = models.FloatField(default=0.0)
 
-    country_of_residence = models.ForeignKey(to=Country, null=True, blank=True, on_delete=models.CASCADE)
+    game = models.ForeignKey(to=Game, null=True, blank=True, on_delete=models.CASCADE)
 
     inflation = models.FloatField()
     inflation_rate = models.FloatField()
