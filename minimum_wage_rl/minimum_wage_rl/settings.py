@@ -55,6 +55,17 @@ CACHES = {
     },
 }
 
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': "redis://localhost:6379/0",
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#             'DEFAULT_TIMEOUT': 14400
+#         },
+#     },
+# }
+
 
 REST_FRAMEWORK = {
 
@@ -118,6 +129,18 @@ DATABASES = {
     }
 }
 
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE'  : 'django.db.backends.mysql',
+#         'NAME'    : os.getenv("MYSQL_DB"),
+#         'USER'    : os.getenv("MYSQL_USER"),
+#         'PASSWORD': os.getenv("MYSQL_PASSWORD"),
+#         'HOST'    : os.getenv("MYSQL_HOST"),
+#         'PORT'    : os.getenv("MYSQL_PORT"),
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

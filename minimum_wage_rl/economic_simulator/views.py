@@ -8,6 +8,7 @@ from .utility.simulate_2 import get_state
 from .utility.publish import export_to_excel
 from .common.save import save_data_to_db, save_cached_data, extract_info
 from .common.utility_func import get_game_stats
+from .common.comment_module import get_interactive_comments
 
 
 from .cached_utility.start_game import initialize_and_start
@@ -29,10 +30,22 @@ from rest_framework.authtoken.views import ObtainAuthToken
 import numpy as np
 from stable_baselines3 import SAC
 from .config import ConfigurationParser
+from configparser import ConfigParser
+from pathlib import Path
+import os
 
+BASEDIR = Path(__file__).parent.parent
 
-file_name = "config_file.txt"
+file_name = os.path.join(BASEDIR, "config_file.txt")
 config_parser = ConfigurationParser.get_instance(file_name).parser
+
+worker_file_name = os.path.join(BASEDIR, "worker_comments.ini")
+worker_config_parser = ConfigParser()
+worker_config_parser.read(worker_file_name)
+
+company_file_name = os.path.join(BASEDIR, "company_comments.ini")
+company_config_parser = ConfigParser()
+company_config_parser.read(company_file_name)
 
 
 model_root_folder = "economic_simulator/trained_models/"
@@ -205,7 +218,11 @@ def __run_cached_game_step(request, action_map):
         ai_game, ai_game_state, normalized_ai_state_values, reward, done, message = game_step(ai_game, ai_action_map)
 
         year = user_data["Year"]
-        interact_data = getDialogue(year)
+        interact_data = get_interactive_comments(player_game, worker_config_parser, company_config_parser)
+        # getDialogue(year)
+
+        print("Interact Data - ")
+        print(interact_data)
 
         if year >= game_duration:
             cache.set("game_ended", True)
