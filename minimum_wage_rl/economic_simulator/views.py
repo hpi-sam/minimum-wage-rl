@@ -177,12 +177,16 @@ def get_all_games_for_user(user):
     return game_objects
 
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def delete_user(request):
     u = User.objects.get(username="Test")
     u.delete()
     return Response({'status':200, 'message':'Delete it'})
 
 @api_view(http_method_names=['POST'])
+@authentication_classes([])
+@permission_classes([])
 def create_user(request):
 
     serialized = UserSerializer(data=request.data)

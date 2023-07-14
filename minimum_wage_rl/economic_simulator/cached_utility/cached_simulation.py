@@ -1,6 +1,6 @@
 # from math import ceil, floor
 import numpy as np
-from economic_simulator.models.metrics import Metric
+from ..models.metrics import Metric
 # from economic_simulator.utility.code_files.common_module import retire
 # from ..models.worker import Worker
 # from ..models.bank import Bank
