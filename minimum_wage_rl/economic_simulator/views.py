@@ -99,10 +99,26 @@ def start_cached_game(request, level):
 
     return Response({'status':200, 'message':json_reponse})
 
+
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def end_game(request):
+def stop_game(request):
+    player_game = cache.get('player_game')
+    ai_game = cache.get('ai_game')
+    
+    player_game_stats = extract_info(player_game)
+    ai_game_stats = extract_info(ai_game)
+    
+    final_response = {"player_game_stats":player_game_stats, "ai_game_stats":ai_game_stats}
+    json_reponse = json.loads(json.dumps(final_response))
+
+    return Response({'status':200, 'message':json_reponse})
+
+@api_view(http_method_names=['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def end_and_save_game(request):
 
     # Check save flag
     save_game_value = request.GET.get('save_game',"False")
@@ -113,13 +129,14 @@ def end_game(request):
     ai_game = cache.get('ai_game')
 
     # Get stats and save game
-    player_game_stats = close_cached_game(player_game, save_flag)
-    ai_game_stats = close_cached_game(ai_game, save_flag)
+    close_cached_game(player_game, save_flag)
+    close_cached_game(ai_game, save_flag)
 
     # Clear redis cache
     __clear_redis_cache()
 
-    final_response = {"player_game_stats":player_game_stats, "ai_game_stats":ai_game_stats}
+    # final_response = {"player_game_stats":player_game_stats, "ai_game_stats":ai_game_stats}
+    final_response = {"game_ended":True}
     json_reponse = json.loads(json.dumps(final_response))
 
     return Response({'status':200, 'message':json_reponse})
@@ -127,23 +144,23 @@ def end_game(request):
     # return close_game(user)
 
 def close_cached_game(game, save_flag):
-    game_stats = extract_info(game)
+    # game_stats = extract_info(game)
     if save_flag:
         save_cached_data(game)    
     
-    return game_stats
+    return
 
-def close_game(user):
-    # game_obj = get_latest_game(user)
-    game_obj_list = get_all_games_for_user(user)
+# def close_game(user):
+#     # game_obj = get_latest_game(user)
+#     game_obj_list = get_all_games_for_user(user)
 
-    if game_obj_list == None:
-        return Response({"status":200, "message":"No Game to end"})
-    else:
-        for each_game in game_obj_list:
-            each_game.game_ended = True
-            each_game.save()
-        return Response({"status":200, "message":"Game to ended successfully"})
+#     if game_obj_list == None:
+#         return Response({"status":200, "message":"No Game to end"})
+#     else:
+#         for each_game in game_obj_list:
+#             each_game.game_ended = True
+#             each_game.save()
+#         return Response({"status":200, "message":"Game to ended successfully"})
 
 def get_all_games_for_user(user):
     
@@ -227,12 +244,23 @@ def __run_cached_game_step(request, action_map):
         if year >= game_duration:
             cache.set("game_ended", True)
 
+            player_game_stats = extract_info(player_game)
+            ai_game_stats = extract_info(ai_game)
+
+            game_stats_map = dict()
+            game_stats_map["player_game_stats"] = player_game_stats
+            game_stats_map["ai_game_stats"]  = ai_game_stats
+            final_response = {"User Data": user_data, "AI Data": ai_game_state, "game_stats":game_stats_map , "interact": interact_data, "end flag":done, "message":message}
+        else:
+            final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
+
+
         cache.set('player_game', player_game)
         cache.set('ai_game', ai_game)
         cache.set('normazlized_ai_state', normalized_ai_state_values)
 
 
-        final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
+        # final_response = {"User Data": user_data, "AI Data": ai_game_state, "game_stats":game_stats_map , "interact": interact_data, "end flag":done, "message":message}
         json_reponse = json.loads(json.dumps(final_response))
     
     else:
@@ -242,37 +270,37 @@ def __run_cached_game_step(request, action_map):
     return Response({'status':200, 'message':json_reponse})
 
 
-def __run_step(user, action_map):
+# def __run_step(user, action_map):
     
-    ai_flag = False
-    player_game_number = 0
-    player_model_dictionary, game, user_data, state_values, reward, message, done = step(action_map, user, ai_flag, player_game_number)
+#     ai_flag = False
+#     player_game_number = 0
+#     player_model_dictionary, game, user_data, state_values, reward, message, done = step(action_map, user, ai_flag, player_game_number)
 
-    ai_flag = True
+#     ai_flag = True
     
-    ai_game, ai_unnormalized_state, ai_normalized_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
+#     ai_game, ai_unnormalized_state, ai_normalized_state_values, ai_reward, ai_info, ai_done = get_state(user, ai_flag, game.game_number)
 
-    ai_game_state = np.array(ai_normalized_state_values)
-    ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
+#     ai_game_state = np.array(ai_normalized_state_values)
+#     ai_minwage_action = predict_minwage_action(ai_game, ai_game_state)
     
-    ai_action_map = {"minimum_wage": ai_minwage_action}
+#     ai_action_map = {"minimum_wage": ai_minwage_action}
     
-    ai_model_dictionary, ai_game, ai_game_state, state_values, reward, message, done = step(ai_action_map, user, ai_flag, game.game_number)
+#     ai_model_dictionary, ai_game, ai_game_state, state_values, reward, message, done = step(ai_action_map, user, ai_flag, game.game_number)
 
 
-    save_data_to_db(player_model_dictionary["country"], player_model_dictionary["metrics"], player_model_dictionary["open_company_list"], 
-                    player_model_dictionary["closed_company_list"], player_model_dictionary["final_workers_list"], player_model_dictionary["retired_workers_list"])
+#     save_data_to_db(player_model_dictionary["country"], player_model_dictionary["metrics"], player_model_dictionary["open_company_list"], 
+#                     player_model_dictionary["closed_company_list"], player_model_dictionary["final_workers_list"], player_model_dictionary["retired_workers_list"])
     
-    save_data_to_db(ai_model_dictionary["country"], ai_model_dictionary["metrics"], ai_model_dictionary["open_company_list"], 
-                    ai_model_dictionary["closed_company_list"], ai_model_dictionary["final_workers_list"], ai_model_dictionary["retired_workers_list"])
+#     save_data_to_db(ai_model_dictionary["country"], ai_model_dictionary["metrics"], ai_model_dictionary["open_company_list"], 
+#                     ai_model_dictionary["closed_company_list"], ai_model_dictionary["final_workers_list"], ai_model_dictionary["retired_workers_list"])
 
-    year = user_data["Year"]
-    interact_data = getDialogue(year)
+#     year = user_data["Year"]
+#     interact_data = getDialogue(year)
 
-    final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
-    json_reponse = json.loads(json.dumps(final_response))
+#     final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
+#     json_reponse = json.loads(json.dumps(final_response))
     
-    return Response({'status':200, 'message':json_reponse})
+#     return Response({'status':200, 'message':json_reponse})
 
 def predict_minwage_action(ai_game, ai_game_state):
     
@@ -332,22 +360,22 @@ class CustomAuthToken(ObtainAuthToken):
         })
 
 
-@api_view(http_method_names=['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def perform_get_action(request):
+# @api_view(http_method_names=['GET'])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+# def perform_get_action(request):
     
-    min_wage_action = request.GET.get('minimum_wage',None)
-    action_map = dict()
-    action_map["minimum_wage"] = float(min_wage_action)
+#     min_wage_action = request.GET.get('minimum_wage',None)
+#     action_map = dict()
+#     action_map["minimum_wage"] = float(min_wage_action)
 
-    user = request.user
-    return __run_step(user, action_map)
+#     user = request.user
+#     return __run_step(user, action_map)
 
 
 @api_view(http_method_names=['GET'])
 def clear_cache(request):
-    __clear_redis_cache()
+    return __clear_redis_cache()
 
 
 def __clear_redis_cache():

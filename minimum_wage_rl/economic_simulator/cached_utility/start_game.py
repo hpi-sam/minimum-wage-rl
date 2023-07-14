@@ -318,6 +318,7 @@ def collect_metrics(country, num_workers_hired):
     normazlized_current_state.append(float("{:.6f}".format(np.log(country.population))))
 
     current_state = dict()
+    current_state["Year"] = country.year
     current_state["Unemployment Rate"] = float("{:.2f}".format(100.0))
     current_state["Poverty Rate"] = float("{:.2f}".format(100.0))
     current_state["Minimum wage"] = country.minimum_wage

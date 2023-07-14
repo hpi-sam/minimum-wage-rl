@@ -79,12 +79,14 @@ def extract_info(game):
         product_cost_list.append(each_metric.product_price)
         min_wage_list.append(each_metric.minimum_wage)
 
+    year = len(metric_list)
     avg_unemp = round(sum(unemp_list)/len(unemp_list), 2)
     avg_poverty = round(sum(poverty_list)/len(poverty_list), 2)
     avg_inflation = round(sum(inflation_list)/len(inflation_list), 2)
     avg_product_cost = round(sum(product_cost_list)/len(product_cost_list), 2)
     avg_minwage = round(sum(min_wage_list)/len(min_wage_list), 2)
 
+    game_stats["year"] =  year
     game_stats["average_poverty"] = avg_poverty
     game_stats["average_unemployment"] = avg_unemp
     game_stats["average_inflation"] = avg_inflation

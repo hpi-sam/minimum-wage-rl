@@ -61,10 +61,13 @@ def get_worker_comments(diff_value, file_config):
     data_dict = [{"role":role_map["worker"], "Message":worker_comment},              
              {"role":role_map["government"], "Message":government_comment}]
 
-    # interact_data = {"emotion":emotion, "comments":data_dict, "has_comments":has_comments}
+    if has_comments:
+        interact_data = {"emotion":emotion, "comments":data_dict, "has_comments":has_comments}
+    else:
+        interact_data = {"emotion":"", "comments":data_dict, "has_comments":has_comments}
 
     print("Exiting Worker")
-    return data_dict
+    return interact_data
 
 
 def get_company_comments(diff_value, file_config):
@@ -105,10 +108,13 @@ def get_company_comments(diff_value, file_config):
     data_dict = [{"role":role_map["company"], "Message":company_comment},              
              {"role":role_map["government"], "Message":government_comment}]
     
-    # interact_data = {"emotion":emotion, "comments":data_dict, "has_comments":has_comments}
+    if has_comments:
+        interact_data = {"emotion":emotion, "comments":data_dict, "has_comments":has_comments}
+    else:
+        interact_data = {"emotion":"", "comments":data_dict, "has_comments":has_comments}
 
     print("Exiting Company")
-    return data_dict
+    return interact_data
 
 
 def get_emotion():
