@@ -7,46 +7,167 @@
 +Advisors SAP: Frank Feinbube
 
 # Endpoints - Web based simulator
-
-
-Old version **base_url = http://ccloud@minwage-app.sp.only.sap:8000**
-
-or
-
-New version **base_url = http://ccloud@minwage-app.sp.only.sap:8001**
-
-
-Latest version **base_url = http://ccloud@minwage-app.sp.only.sap:8002**
+**base_url = http://ccloud@minwage-app.sp.only.sap:8080**
 
 1. Create User
     * Method: POST
     * Endpoint: base_url/reg-user
-    * Input: ```{ "username":"My-User-Name", "password":"My-Password", "email":"myemail@email.com" }```
+    * Input:
+      ```javascript
+      {"username":"My-User-Name",
+      "password":"My-Password",
+      "email":"myemail@email.com"}
+      ```
     
 2. Getting API Token
     * Method : POST
     * Endpoint : base_url/api-token-auth
-    * Input: ```{ "username":"My-User-Name", "password":"My-Password" }```
+    * Input:
+      ```javascript
+      {"username":"My-User-Name", "password":"My-Password"}
+      ```
+    * Response:
+      ```javascript
+      {"token": "<token here>",
+      "user_id": "<id here>",
+      "email": "<email here>"}
+      ```
 
-3. Start Game (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
+3. Start Game 
     * Method : GET
     * Endpoint: base_url/start-game?level=<level_number>
     * Authorization: API Key  Token <>
+    * Response:
+      ```javascript
+      {"status": 200,
+      "message": {
+         "User Data": {
+            "Year": 1,
+            "Unemployment Rate": 100,
+            "Poverty Rate": 100,
+            "Minimum wage": 7,
+            "Inflation Rate": 0,
+            "population": 1500
+                },
+          "AI Data": {
+            "Year": 1,
+            "Unemployment Rate": 100,
+            "Poverty Rate": 100,
+            "Minimum wage": 7,
+            "Inflation Rate": 0,
+            "population": 1500
+                },
+          "end flag": false,
+          "message": ""
+            }
+         }
+      ```
 
-4. Perform Get Action (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
-    * Method : GET
-    * Endpoint: base_url/perform-get-action?minimum_wage=<value for minimum wage>
-    * Authorization: API Key  Token <>
-
-5. Perform Action (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
+4. Perform Action
     * Method : POST
     * Endpoint: base_url/perform-action/<action-value>
     * Authorization: API Key  Token <>
-    * Input: ```{ "minimum_wage": <value> }```
+    * Input: ```javascript {"minimum_wage": <value>}```
+    * Response (For last step of game):
+      ```javascript
+      {
+        "status": 200,
+        "message": {
+          "User Data": {
+               "Year": 30,
+               "Minimum wage": 7.1,
+               "Unemployment Rate": 0,
+               "Poverty Rate": 46.86,
+               "Quantity": 1395,
+               "Inflation": -0.01,
+               "Product Price": 7.32,
+               "Population": 1848,
+               "Small Companies": 0,
+               "Medium Companies": 0,
+               "Large Companies": 6,
+               "Bank Balance": 656117.4013145872,
+               "Retired Current Year": 0,
+               "Start Up Founders Current Year": 0
+          },
+         "AI Data": {
+               "Year": 30,
+               "Minimum wage": 10.74,
+               "Unemployment Rate": 0,
+               "Poverty Rate": 2.98,
+               "Quantity": 29925,
+               "Inflation": 0.98,
+               "Product Price": 11.96,
+               "Population": 1848,
+               "Small Companies": 0,
+               "Medium Companies": 0,
+               "Large Companies": 6,
+               "Bank Balance": 323638.6078008192,
+               "Retired Current Year": 0,
+               "Start Up Founders Current Year": 0
+                },
+          "game_stats": {
+               "player_game_stats": {
+                     "year": 30,
+                     "average_poverty": 69.76,
+                     "average_unemployment": 16.13,
+                     "average_inflation": 0.22,
+                     "average_product_price": 11.41,
+                     "average_minimum_wage": 7.1
+                     },
+               "ai_game_stats": {
+                    "year": 30,
+                    "average_poverty": 32.84,
+                    "average_unemployment": 18.71,
+                    "average_inflation": 0.4,
+                    "average_product_price": 11.87,
+                    "average_minimum_wage": 9.39
+                     }
+                },
+          "interact": {
+               "emotion": "",
+               "comments": [
+                  { "role": 1, "Message": "" },
+                  {"role": 3, "Message": ""}],
+               "has_comments": false
+                   },
+          "end flag": true,
+          "message": {"message": "End of Episode"}
+        }
+      }
+      ```
   
-6. End Game (In front of "Token" add API Token acquired from "/api-token-auth" endpoint)
+5. Stop Game: To stop the game before last step of episode
     * Method : GET
-    * Endpoint: base_url/end-game
+    * Endpoint: base_url/stop-game
+    * Authorization: API Key  Token <>
+    * Response
+      ```javascript
+      {
+       "status": 200,
+       "message": {
+           "player_game_stats": {
+               "year": 11,
+               "average_poverty": 93.74,
+               "average_unemployment": 50.32,
+               "average_inflation": 0.69,
+               "average_product_price": 19.17,
+               "average_minimum_wage": 7.56
+                 },
+           "ai_game_stats": {
+               "year": 11,
+               "average_poverty": 70.92,
+               "average_unemployment": 50.4,
+               "average_inflation": 0.7,
+               "average_product_price": 16.53,
+               "average_minimum_wage": 8.32
+                 }
+             }
+      }
+      ```
+
+6. Save and Game: Option to save the game
+    * Method : GET
+    * Endpoint: base_url/save-game?save_game=false
     * Authorization: API Key  Token <>
 
 # Launch the Application using Docker
