@@ -172,12 +172,13 @@
 
 # Launch the Application using Docker
    
-   1. Switch to the branch 'web-branch'.
-         `git checkout web-branch`
+   1. Switch to the branch 'new-web-branch'.
+         `git checkout new-web-branch`
    2. Launch Docker container
+         `docker compose build`
          `docker compose up`
-   3. Access the application using above end-points at address `localhost:8080/` using Postman.
-   4. Stop the containers after using the application
+   4. Access the application using above end-points at address `localhost:8080/` using Postman.
+   5. Stop the containers after using the application
          `docker compose down`
 
 # Hints to play
