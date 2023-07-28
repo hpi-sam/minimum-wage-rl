@@ -76,8 +76,10 @@ def start_game(request):
 
 def start_cached_game(request, level):
     
+    current_user_name = request.user.username
+
     # 1. Clear cache
-    __clear_redis_cache()
+    __clear_redis_cache_for_user(current_user_name)
 
     # 1. Start player Game
     ai_flag = False
@@ -92,10 +94,10 @@ def start_cached_game(request, level):
     final_response = {"User Data": player_game_state, "AI Data": ai_game_state, "end flag":False, "message":""}
     json_reponse = json.loads(json.dumps(final_response))
 
-    cache.set('player_game', player_game)
-    cache.set('ai_game', ai_game)
-    cache.set('normazlized_ai_state', normalized_ai_game_state)
-    cache.set("game_ended", False)
+    cache.set(str(current_user_name) + '_player_game', player_game)
+    cache.set(str(current_user_name) + '_ai_game', ai_game)
+    cache.set(str(current_user_name) + '_normazlized_ai_state', normalized_ai_game_state)
+    cache.set(str(current_user_name) + "_game_ended", False)
 
     return Response({'status':200, 'message':json_reponse})
 
@@ -104,8 +106,11 @@ def start_cached_game(request, level):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def stop_game(request):
-    player_game = cache.get('player_game')
-    ai_game = cache.get('ai_game')
+
+    current_user_name = request.user.username
+
+    player_game = cache.get(str(current_user_name) + '_player_game')
+    ai_game = cache.get(str(current_user_name) + '_ai_game')
     
     player_game_stats = extract_info(player_game)
     ai_game_stats = extract_info(ai_game)
@@ -120,20 +125,21 @@ def stop_game(request):
 @permission_classes([IsAuthenticated])
 def end_and_save_game(request):
 
+    current_user_name  = request.user
     # Check save flag
     save_game_value = request.GET.get('save_game',"False")
     save_flag = save_game_value.lower() == "true"
 
     # Get Cached values
-    player_game = cache.get('player_game')
-    ai_game = cache.get('ai_game')
+    player_game = cache.get(str(current_user_name) + '_player_game')
+    ai_game = cache.get(str(current_user_name) + '_ai_game')
 
     # Get stats and save game
     close_cached_game(player_game, save_flag)
     close_cached_game(ai_game, save_flag)
 
     # Clear redis cache
-    __clear_redis_cache()
+    __clear_redis_cache_for_user(current_user_name)
 
     # final_response = {"player_game_stats":player_game_stats, "ai_game_stats":ai_game_stats}
     final_response = {"game_ended":True}
@@ -192,6 +198,7 @@ def create_user(request):
     serialized = UserSerializer(data=request.data)
 
     if serialized.is_valid():        
+
         User.objects.create_user(
             username = serialized.validated_data['username'],
             email = serialized.validated_data['email'],
@@ -201,8 +208,14 @@ def create_user(request):
         my_user = User.objects.get(username=serialized.validated_data['username'])
 
         token_value  = Token.objects.create(user=my_user)
+        message_data = f"New User {my_user.username} Created"
+        status_value = 200
+    
+    else:
+        message_data = "User with given name already exists"
+        status_value = 403
 
-    return Response({'status':200, 'message':'User Created'})
+    return Response({'status':status_value, 'message':message_data})
 
 
 @api_view(http_method_names=['POST'])
@@ -217,18 +230,20 @@ def perform_action(request):
 
 def __run_cached_game_step(request, action_map):
 
-    game_ended = cache.get("game_ended")
+    current_user_name = request.user.username
+
+    game_ended = cache.get(str(current_user_name) + "_game_ended")
 
     if not(game_ended):
         # 1. Simulate Game for Player
         ai_flag = False
-        player_game = cache.get('player_game')    
+        player_game = cache.get(str(current_user_name) + '_player_game')    
         player_game, user_data, normalized_state_values, reward, done, message  = game_step(player_game, action_map)
 
         # 2. Simulate Game for AI
         ai_flag = True
-        ai_game = cache.get('ai_game')
-        normalized_ai_game_state = cache.get('normazlized_ai_state')            
+        ai_game = cache.get(str(current_user_name) + '_ai_game')
+        normalized_ai_game_state = cache.get(str(current_user_name) + '_normazlized_ai_state')            
 
         # 2.1 Predicted Minimum Wage
         ai_game_state = np.array(normalized_ai_game_state)
@@ -246,7 +261,7 @@ def __run_cached_game_step(request, action_map):
         print(interact_data)
 
         if year >= game_duration:
-            cache.set("game_ended", True)
+            cache.set(str(current_user_name) + "_game_ended", True)
 
             player_game_stats = extract_info(player_game)
             ai_game_stats = extract_info(ai_game)
@@ -259,9 +274,9 @@ def __run_cached_game_step(request, action_map):
             final_response = {"User Data": user_data, "AI Data": ai_game_state, "interact": interact_data, "end flag":done, "message":message}
 
 
-        cache.set('player_game', player_game)
-        cache.set('ai_game', ai_game)
-        cache.set('normazlized_ai_state', normalized_ai_state_values)
+        cache.set(str(current_user_name) + '_player_game', player_game)
+        cache.set(str(current_user_name) + '_ai_game', ai_game)
+        cache.set(str(current_user_name) + '_normazlized_ai_state', normalized_ai_state_values)
 
 
         # final_response = {"User Data": user_data, "AI Data": ai_game_state, "game_stats":game_stats_map , "interact": interact_data, "end flag":done, "message":message}
@@ -379,27 +394,48 @@ class CustomAuthToken(ObtainAuthToken):
 
 @api_view(http_method_names=['GET'])
 def clear_cache(request):
-    return __clear_redis_cache()
+
+    current_user_name = request.user.username
+    return __clear_redis_cache(current_user_name)
 
 
-def __clear_redis_cache():
+def __clear_redis_cache(current_user_name):
     
     cache.clear()
 
     # Check if cache is cleared
-    player_game = cache.get('player_game')
-    ai_game = cache.get('ai_game')
-    normalized_ai_game_state = cache.get('normazlized_ai_state')
+    player_game = cache.get(str(current_user_name) + '_player_game')
+    ai_game = cache.get(str(current_user_name) + '_ai_game')
+    normalized_ai_game_state = cache.get(str(current_user_name) + '_normazlized_ai_state')
     
     if player_game !=None or ai_game != None or normalized_ai_game_state !=None:
-        cache.delete("player_game")
-        cache.delete("ai_game")
-        cache.delete("normazlized_ai_state")
+        cache.delete(str(current_user_name) + "_player_game")
+        cache.delete(str(current_user_name) + "_ai_game")
+        cache.delete(str(current_user_name) + "_normazlized_ai_state")
         print("Cache had to be cleared manually")
     else:
         print("Cache Cleared")
 
     return Response({'status':200, 'message':"cleared"})
+
+
+def __clear_redis_cache_for_user(current_user_name):
+    
+    # Check if cache is cleared
+    player_game = cache.get(str(current_user_name) + '_player_game')
+    ai_game = cache.get(str(current_user_name) + '_ai_game')
+    normalized_ai_game_state = cache.get(str(current_user_name) + '_normazlized_ai_state')
+    
+    if player_game !=None or ai_game != None or normalized_ai_game_state !=None:
+        cache.delete(str(current_user_name) + "_player_game")
+        cache.delete(str(current_user_name) + "_ai_game")
+        cache.delete(str(current_user_name) + "_normazlized_ai_state")
+        print("Cache had to be cleared manually")
+    else:
+        print("Cache Cleared")
+
+    return Response({'status':200, 'message':"cleared"})
+
 
 @api_view(http_method_names=["GET"])
 def get_stats(request):
