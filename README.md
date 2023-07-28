@@ -165,7 +165,7 @@
       }
       ```
 
-6. Save and Game: Option to save the game
+6. Save and End Game: Option to save the game
     * Method : GET
     * Endpoint: base_url/save-game?save_game=false
     * Authorization: API Key  Token <>
